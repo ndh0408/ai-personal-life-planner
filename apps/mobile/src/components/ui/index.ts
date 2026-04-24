@@ -13,3 +13,4 @@ export { ProgressCard } from './ProgressCard';
 export { InsightCard } from './InsightCard';
 export { RecommendationCard } from './RecommendationCard';
 export { StepProgress } from './StepProgress';
+export { BarChart } from './BarChart';

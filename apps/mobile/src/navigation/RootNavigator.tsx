@@ -13,9 +13,11 @@ import { CreateTaskScreen } from '../screens/tasks/CreateTaskScreen';
 import { CreateHabitScreen } from '../screens/habits/CreateHabitScreen';
 import { ScheduleDetailScreen } from '../screens/today/ScheduleDetailScreen';
 import { SleepMoodCheckinScreen } from '../screens/today/SleepMoodCheckinScreen';
+import { ReportsScreen } from '../screens/reports/ReportsScreen';
 import { WeeklyReportScreen } from '../screens/reports/WeeklyReportScreen';
 import { DailyReviewScreen } from '../screens/reports/DailyReviewScreen';
 import { MonthlyFinanceReportScreen } from '../screens/reports/MonthlyFinanceReportScreen';
+import { GoalProgressReportScreen } from '../screens/reports/GoalProgressReportScreen';
 import { TasksScreen } from '../screens/tasks/TasksScreen';
 import { HabitsScreen } from '../screens/habits/HabitsScreen';
 import { MealsScreen } from '../screens/meals/MealsScreen';
@@ -101,8 +103,10 @@ export function RootNavigator() {
               <Stack.Screen name="PersonalGoals" component={PersonalGoalsScreen} options={{ title: 'Goals' }} />
               <Stack.Screen name="GoalDetail" component={GoalDetailScreen} options={{ title: 'Goal' }} />
               <Stack.Screen name="CreateGoal" component={CreateGoalScreen} options={{ title: 'New goal', presentation: 'modal' }} />
+              <Stack.Screen name="Reports" component={ReportsScreen} options={{ title: 'Reports' }} />
               <Stack.Screen name="DailyReview" component={DailyReviewScreen} options={{ title: 'Daily review' }} />
               <Stack.Screen name="MonthlyFinanceReport" component={MonthlyFinanceReportScreen} options={{ title: 'Monthly report' }} />
+              <Stack.Screen name="GoalProgressReport" component={GoalProgressReportScreen} options={{ title: 'Goal progress' }} />
             </Stack.Group>
 
             {/* Modal-style */}

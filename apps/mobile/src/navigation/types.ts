@@ -40,9 +40,11 @@ export type RootStackParamList = {
   CreateHabit: { habitId?: string } | undefined;
   ScheduleDetail: { date: string };
   SleepMoodCheckin: undefined;
+  Reports: undefined;
   WeeklyReport: undefined;
   DailyReview: undefined;
   MonthlyFinanceReport: undefined;
+  GoalProgressReport: undefined;
   Tasks: undefined;
   Habits: undefined;
   Meals: undefined;
