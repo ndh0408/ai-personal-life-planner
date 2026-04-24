@@ -17,9 +17,15 @@ export function useErrorMessage() {
   return (err: unknown): string => {
     if (!err) return t('errors.UNKNOWN_ERROR');
 
-    // ApiError shape from services/api/client.ts
-    type ApiErrorLike = { status?: number; body?: { errorCode?: string } | null; message?: string };
+    // ApiError shape from services/api/client.ts + OfflineAiBlocked sentinel
+    type ApiErrorLike = {
+      status?: number;
+      body?: { errorCode?: string } | null;
+      message?: string;
+      errorCode?: string;
+    };
     const maybe = err as ApiErrorLike;
+    if (maybe.errorCode === 'AI_OFFLINE') return t('offline.ai.blockedBody');
     const code = maybe.body?.errorCode;
     if (code && t(`errors.${code}`, { defaultValue: '' })) {
       return t(`errors.${code}`);

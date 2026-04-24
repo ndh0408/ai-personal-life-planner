@@ -94,6 +94,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // ignore — clearing tokens is what matters
     }
     await tokenStore.clear();
+    try {
+      const { resetOfflineState } = await import('../services/offline');
+      await resetOfflineState();
+    } catch {
+      // Best-effort — never block logout on cache purge.
+    }
     set({ status: 'unauthenticated', user: null, profile: null, needsOnboarding: false });
   },
 

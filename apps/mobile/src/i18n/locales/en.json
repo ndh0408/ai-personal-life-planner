@@ -1015,7 +1015,23 @@
   },
   "offline": {
     "title": "You’re offline",
-    "description": "Some actions (AI, sync) are paused. Data will refresh once you’re back online."
+    "description": "Some actions (AI, sync) are paused. Data will refresh once you’re back online.",
+    "banner": {
+      "offline": "You’re offline — showing cached data.",
+      "syncing_one": "Syncing {{count}} pending action…",
+      "syncing_other": "Syncing {{count}} pending actions…",
+      "syncing": "Syncing {{count}} pending actions…"
+    },
+    "ai": {
+      "blockedTitle": "AI is offline",
+      "blockedBody": "AI suggestions need an internet connection. Your data still works — try again when you're back online."
+    },
+    "queued": {
+      "title": "Saved for later",
+      "expenseBody": "You’re offline — the expense will sync automatically when you’re back online.",
+      "taskBody": "You’re offline — this will sync when you’re back online.",
+      "habitBody": "You’re offline — your check-in will sync when you’re back online."
+    }
   },
   "meals": {
     "title": "Meals",

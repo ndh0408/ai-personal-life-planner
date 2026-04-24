@@ -1015,7 +1015,23 @@
   },
   "offline": {
     "title": "Không có mạng",
-    "description": "Một số thao tác (AI, đồng bộ) đang bị tạm dừng. Dữ liệu sẽ cập nhật khi online lại."
+    "description": "Một số thao tác (AI, đồng bộ) đang bị tạm dừng. Dữ liệu sẽ cập nhật khi online lại.",
+    "banner": {
+      "offline": "Đang ngoại tuyến — đang hiển thị dữ liệu đã lưu.",
+      "syncing_one": "Đang đồng bộ {{count}} thao tác chờ…",
+      "syncing_other": "Đang đồng bộ {{count}} thao tác chờ…",
+      "syncing": "Đang đồng bộ {{count}} thao tác chờ…"
+    },
+    "ai": {
+      "blockedTitle": "AI cần mạng",
+      "blockedBody": "Gợi ý AI cần kết nối internet. Dữ liệu của bạn vẫn dùng được — thử lại khi có mạng nhé."
+    },
+    "queued": {
+      "title": "Đã lưu để đồng bộ sau",
+      "expenseBody": "Bạn đang ngoại tuyến — khoản chi sẽ tự đồng bộ khi có mạng lại.",
+      "taskBody": "Bạn đang ngoại tuyến — sẽ đồng bộ khi có mạng lại.",
+      "habitBody": "Bạn đang ngoại tuyến — check-in sẽ đồng bộ khi có mạng lại."
+    }
   },
   "meals": {
     "title": "Bữa ăn",

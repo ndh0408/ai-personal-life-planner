@@ -24,6 +24,7 @@ import {
   ErrorView,
 } from '../../components/ui';
 import { tasksApi } from '../../services/api/tasks.api';
+import { syncQueue } from '../../services/offline/sync-queue';
 import { QUERY_KEYS } from '../../constants';
 import { useErrorMessage } from '../../i18n/useErrorMessage';
 import { formatDateByLocale, todayIso } from '../../utils/format';
@@ -105,8 +106,13 @@ export function TasksScreen() {
    * returns the authoritative row on success.
    */
   const completeMut = useMutation({
-    mutationFn: (task: Task) =>
-      tasksApi.setStatus(task.id, task.status === 'COMPLETED' ? 'TODO' : 'COMPLETED'),
+    mutationFn: (task: Task) => {
+      const next: TaskStatus = task.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
+      return syncQueue.runOrQueue(
+        { kind: 'task:setStatus', payload: { taskId: task.id, status: next } },
+        () => tasksApi.setStatus(task.id, next),
+      );
+    },
     onMutate: async (task) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
       const snapshots = queryClient.getQueriesData<{ items: Task[] }>({

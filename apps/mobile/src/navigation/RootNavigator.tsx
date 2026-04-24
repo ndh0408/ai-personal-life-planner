@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
+import { View } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuthStore } from '../store/auth.store';
 import { useTheme } from '../theme';
 import { SplashScreen } from '../screens/SplashScreen';
+import { OfflineBanner } from '../components/ui/OfflineBanner';
 import { AuthNavigator } from './AuthNavigator';
 import { OnboardingNavigator } from './OnboardingNavigator';
 import { MainTabsNavigator } from './MainTabsNavigator';
@@ -69,6 +71,8 @@ export function RootNavigator() {
 
   return (
     <NavigationContainer theme={navTheme}>
+      <View style={{ flex: 1 }}>
+        <OfflineBanner />
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {status === 'loading' ? (
           <Stack.Screen name="Splash" component={SplashScreen} />
@@ -127,6 +131,7 @@ export function RootNavigator() {
           </>
         )}
       </Stack.Navigator>
+      </View>
     </NavigationContainer>
   );
 }

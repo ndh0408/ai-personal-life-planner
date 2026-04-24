@@ -14,3 +14,4 @@ export { InsightCard } from './InsightCard';
 export { RecommendationCard } from './RecommendationCard';
 export { StepProgress } from './StepProgress';
 export { BarChart } from './BarChart';
+export { OfflineBanner } from './OfflineBanner';

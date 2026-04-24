@@ -6,6 +6,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './src/theme';
 import { queryClient } from './src/services/query-client';
 import { configureNotifications } from './src/services/notifications';
+import { bootOfflineServices } from './src/services/offline';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { initI18n } from './src/i18n';
@@ -18,6 +19,7 @@ export default function App() {
       // i18n must be initialised before any screen mounts — otherwise
       // t() calls during the first render return raw keys.
       await initI18n();
+      await bootOfflineServices(queryClient);
       configureNotifications();
       setReady(true);
     })();

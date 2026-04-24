@@ -13,6 +13,7 @@ import {
 import { useErrorMessage } from '../../i18n/useErrorMessage';
 import { todayIso } from '../../utils/format';
 import { parseMoneyInput } from '../../utils/money';
+import { syncQueue, mintTempId } from '../../services/offline/sync-queue';
 
 const NEED_LEVELS: NeedLevel[] = ['NEED', 'WANT', 'WASTE', 'INVESTMENT', 'SAVING'];
 
@@ -52,26 +53,33 @@ export function AddExpenseScreen() {
       return;
     }
     setSaving(true);
+    const payload = {
+      title: title.trim(),
+      amount: parsed,
+      category,
+      expenseDate: date,
+      walletId: walletId ?? undefined,
+      needLevel,
+      note: note.trim() || undefined,
+    };
     try {
-      await expensesApi.create({
-        title: title.trim(),
-        amount: parsed,
-        category,
-        expenseDate: date,
-        walletId: walletId ?? undefined,
-        needLevel,
-        note: note.trim() || undefined,
-      });
+      const outcome = await syncQueue.runOrQueue(
+        { kind: 'expense:create' as const, tempId: mintTempId(), payload },
+        () => expensesApi.create(payload),
+      );
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      if (outcome.mode === 'queued') {
+        Alert.alert(t('offline.queued.title'), t('offline.queued.expenseBody'));
+      }
       nav.goBack();
     } catch (e) {
+      // Form data stays on-screen so a real failure (validation, 4xx) doesn't
+      // discard what the user typed — the catch only fires for non-network
+      // errors because `runOrQueue` converts network failures into queued actions.
       Alert.alert(t('errors.UNKNOWN_ERROR'), translateError(e));
-      // Rollback isn't needed here — we never optimistically touched anything.
-      // The wallet balance adjustment happens server-side in a transaction;
-      // a failed create leaves the wallet untouched.
     } finally {
       setSaving(false);
     }

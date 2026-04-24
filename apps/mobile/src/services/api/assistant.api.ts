@@ -1,4 +1,18 @@
 import { api } from './client';
+import { networkStatus } from '../offline/network-status';
+import i18n from '../../i18n';
+
+class OfflineAiBlocked extends Error {
+  readonly errorCode = 'AI_OFFLINE';
+  constructor() {
+    super(i18n.t('offline.ai.blockedBody'));
+    this.name = 'OfflineAiBlocked';
+  }
+}
+
+function assertOnlineForAi(): void {
+  if (!networkStatus.get()) throw new OfflineAiBlocked();
+}
 
 export type RecommendationStatus = 'NEW' | 'VIEWED' | 'APPLIED' | 'DISMISSED';
 
@@ -59,18 +73,24 @@ export const assistantApi = {
     ),
   patchStatus: (id: string, status: RecommendationStatus) =>
     api.patch<Recommendation>(`/assistant/recommendations/${id}/status`, { status }),
-  runDailyMonitoring: (date?: string) =>
-    api.post<AssistantSnapshot>('/assistant/run-daily-monitoring', { date }),
-  generateDailyReview: (date: string) =>
-    api.post<{ review: DailyReviewOutput; locale: string; usedFallback: boolean }>(
+  runDailyMonitoring: (date?: string) => {
+    assertOnlineForAi();
+    return api.post<AssistantSnapshot>('/assistant/run-daily-monitoring', { date });
+  },
+  generateDailyReview: (date: string) => {
+    assertOnlineForAi();
+    return api.post<{ review: DailyReviewOutput; locale: string; usedFallback: boolean }>(
       '/assistant/generate-daily-review',
       { date },
-    ),
-  generateWeeklyReview: (weekStart: string) =>
-    api.post<{ insight: WeeklyInsightOutput; locale: string; usedFallback: boolean }>(
+    );
+  },
+  generateWeeklyReview: (weekStart: string) => {
+    assertOnlineForAi();
+    return api.post<{ insight: WeeklyInsightOutput; locale: string; usedFallback: boolean }>(
       '/assistant/generate-weekly-review',
       { weekStart },
-    ),
+    );
+  },
 };
 
 export type DailyReviewOutput = {

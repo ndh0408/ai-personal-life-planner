@@ -23,6 +23,7 @@ import {
   ErrorView,
 } from '../../components/ui';
 import { habitsApi, type HabitLog } from '../../services/api/habits.api';
+import { syncQueue } from '../../services/offline/sync-queue';
 import { QUERY_KEYS } from '../../constants';
 import { useErrorMessage } from '../../i18n/useErrorMessage';
 import { todayIso } from '../../utils/format';
@@ -113,16 +114,21 @@ export function HabitsScreen() {
     mutationFn: async (vars: { habit: Habit; direction: 'up' | 'undo' }) => {
       const { habit, direction } = vars;
       const existing = byHabitToday.get(habit.id);
+      const date = todayIso();
       if (direction === 'undo') {
         // Undo: set count back to 0 + completed=false.
-        return habitsApi.log(habit.id, { count: 0, completed: false });
+        return syncQueue.runOrQueue(
+          { kind: 'habit:log', payload: { habitId: habit.id, date, completed: false, count: 0 } },
+          () => habitsApi.log(habit.id, { count: 0, completed: false }),
+        );
       }
       const currentCount = existing?.count ?? 0;
       const next = Math.min(currentCount + 1, habit.targetCount);
-      return habitsApi.log(habit.id, {
-        count: next,
-        completed: next >= habit.targetCount,
-      });
+      const completed = next >= habit.targetCount;
+      return syncQueue.runOrQueue(
+        { kind: 'habit:log', payload: { habitId: habit.id, date, completed, count: next } },
+        () => habitsApi.log(habit.id, { count: next, completed }),
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
