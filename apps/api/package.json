@@ -5,7 +5,7 @@
   "description": "AI Personal Life Planner — backend API (NestJS + Prisma + PostgreSQL)",
   "main": "dist/main.js",
   "scripts": {
-    "prebuild": "rimraf dist",
+    "prebuild": "rimraf dist tsconfig.tsbuildinfo tsconfig.build.tsbuildinfo",
     "build": "nest build",
     "start": "node dist/main.js",
     "start:dev": "nest start --watch",

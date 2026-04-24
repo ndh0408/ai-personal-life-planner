@@ -1,18 +1,19 @@
 import type { ID, ISODateString } from './common';
 
-export type TaskPriority = 'low' | 'medium' | 'high';
-export type TaskStatus = 'pending' | 'in_progress' | 'done' | 'skipped';
+export type Priority = 'LOW' | 'MEDIUM' | 'HIGH';
+export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
 export type Task = {
   id: ID;
   userId: ID;
   title: string;
   description: string | null;
-  priority: TaskPriority;
-  status: TaskStatus;
-  dueAt: ISODateString | null;
-  scheduledFor: ISODateString | null;
+  dueDate: ISODateString | null;
+  priority: Priority;
   estimatedMinutes: number | null;
+  status: TaskStatus;
+  category: string | null;
+  completedAt: ISODateString | null;
   createdAt: ISODateString;
   updatedAt: ISODateString;
 };

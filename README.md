@@ -163,6 +163,24 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full picture.
 
 ---
 
+## Database port
+
+Postgres is exposed on **5440** (not the usual 5432) so it doesn't collide with any
+locally-installed PostgreSQL service. Override via `POSTGRES_PORT` in `docker/.env`.
+
+## Demo account
+
+After `npm run db:seed`:
+
+```
+email:    demo@planner.local
+password: demo1234
+```
+
+The demo user is fully populated — profile, today's schedule, tasks, habits with 7 days of logs,
+meal plan, sleep/mood logs, AI conversation, recommendations, notification log. See
+[docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) for the full data model.
+
 ## What's next
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the planned feature modules.

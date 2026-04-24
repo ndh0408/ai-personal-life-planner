@@ -8,6 +8,11 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 type JwtPayload = { sub: string; email: string };
 
+export type IssueContext = {
+  userAgent?: string | null;
+  ipAddress?: string | null;
+};
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -16,33 +21,44 @@ export class AuthService {
     private readonly config: ConfigService,
   ) {}
 
-  async register(input: RegisterInput): Promise<AuthTokens> {
+  async register(input: RegisterInput, ctx: IssueContext = {}): Promise<AuthTokens> {
     const existing = await this.prisma.user.findUnique({ where: { email: input.email } });
     if (existing) throw new ConflictException('Email already registered');
 
+    const displayName = input.name ?? input.email.split('@')[0];
     const passwordHash = await bcrypt.hash(input.password, 10);
+
     const user = await this.prisma.user.create({
       data: {
         email: input.email,
         passwordHash,
-        name: input.name ?? null,
-        timezone: input.timezone,
+        displayName,
+        profile: {
+          create: {
+            fullName: displayName,
+            timezone: input.timezone,
+          },
+        },
+        notificationSetting: {
+          create: {},
+        },
       },
     });
-    return this.issueTokens(user.id, user.email);
+    return this.issueTokens(user.id, user.email, ctx);
   }
 
-  async login(input: LoginInput): Promise<AuthTokens> {
+  async login(input: LoginInput, ctx: IssueContext = {}): Promise<AuthTokens> {
     const user = await this.prisma.user.findUnique({ where: { email: input.email } });
     if (!user) throw new UnauthorizedException('Invalid credentials');
+    if (user.status === 'DISABLED') throw new UnauthorizedException('Account disabled');
 
     const ok = await bcrypt.compare(input.password, user.passwordHash);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
 
-    return this.issueTokens(user.id, user.email);
+    return this.issueTokens(user.id, user.email, ctx);
   }
 
-  async refresh(refreshToken: string): Promise<AuthTokens> {
+  async refresh(refreshToken: string, ctx: IssueContext = {}): Promise<AuthTokens> {
     const tokenHash = this.hashToken(refreshToken);
     const stored = await this.prisma.refreshToken.findUnique({
       where: { tokenHash },
@@ -51,13 +67,16 @@ export class AuthService {
     if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
       throw new UnauthorizedException('Invalid refresh token');
     }
+    if (stored.user.status === 'DISABLED') {
+      throw new UnauthorizedException('Account disabled');
+    }
 
     await this.prisma.refreshToken.update({
       where: { id: stored.id },
       data: { revokedAt: new Date() },
     });
 
-    return this.issueTokens(stored.user.id, stored.user.email);
+    return this.issueTokens(stored.user.id, stored.user.email, ctx);
   }
 
   async logoutAll(userId: string): Promise<void> {
@@ -67,7 +86,11 @@ export class AuthService {
     });
   }
 
-  private async issueTokens(userId: string, email: string): Promise<AuthTokens> {
+  private async issueTokens(
+    userId: string,
+    email: string,
+    ctx: IssueContext,
+  ): Promise<AuthTokens> {
     const payload: JwtPayload = { sub: userId, email };
 
     const accessToken = await this.jwt.signAsync(payload);
@@ -82,6 +105,8 @@ export class AuthService {
       data: {
         userId,
         tokenHash: this.hashToken(refreshToken),
+        userAgent: ctx.userAgent ?? null,
+        ipAddress: ctx.ipAddress ?? null,
         expiresAt,
       },
     });

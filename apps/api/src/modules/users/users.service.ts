@@ -11,10 +11,26 @@ export class UsersService {
       select: {
         id: true,
         email: true,
-        name: true,
-        timezone: true,
+        displayName: true,
+        avatarUrl: true,
+        role: true,
+        status: true,
         createdAt: true,
         updatedAt: true,
+        profile: {
+          select: {
+            fullName: true,
+            age: true,
+            gender: true,
+            heightCm: true,
+            weightKg: true,
+            occupation: true,
+            mainGoal: true,
+            activityLevel: true,
+            dietaryPreference: true,
+            timezone: true,
+          },
+        },
       },
     });
     if (!user) throw new NotFoundException('User not found');
