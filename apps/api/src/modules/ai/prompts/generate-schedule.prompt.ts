@@ -1,5 +1,5 @@
 import type { AiPromptTemplateService } from '../services/ai-prompt-template.service';
-import { BASE_GUARDRAILS } from './system';
+import { BASE_GUARDRAILS, buildLanguageDirective, type Locale } from './system';
 
 export type GenerateScheduleContext = {
   date: string;
@@ -30,8 +30,10 @@ export type GenerateScheduleContext = {
   latestMood?: { mood: string; energyLevel: string; stressLevel: string; date: string } | null;
 };
 
-export function buildGenerateScheduleSystem(): string {
+export function buildGenerateScheduleSystem(locale: Locale = 'vi'): string {
   return `${BASE_GUARDRAILS}
+
+${buildLanguageDirective(locale)}
 
 [task:generate-schedule]
 You produce a single-day plan as JSON matching this exact shape:

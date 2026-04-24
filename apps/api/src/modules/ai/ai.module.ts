@@ -10,6 +10,10 @@ import { AiPlannerService } from './services/ai-planner.service';
 import { AiMealService } from './services/ai-meal.service';
 import { AiChatService } from './services/ai-chat.service';
 import { AiInsightService } from './services/ai-insight.service';
+import { AiDailyReviewService } from './services/ai-daily-review.service';
+import { AiFinanceService } from './services/ai-finance.service';
+import { AiHealthService } from './services/ai-health.service';
+import { AiGoalService } from './services/ai-goal.service';
 
 @Module({
   controllers: [AiController],
@@ -27,6 +31,10 @@ import { AiInsightService } from './services/ai-insight.service';
     AiMealService,
     AiChatService,
     AiInsightService,
+    AiDailyReviewService,
+    AiFinanceService,
+    AiHealthService,
+    AiGoalService,
   ],
   exports: [
     AI_PROVIDER_TOKEN,
@@ -37,6 +45,10 @@ import { AiInsightService } from './services/ai-insight.service';
     AiMealService,
     AiChatService,
     AiInsightService,
+    AiDailyReviewService,
+    AiFinanceService,
+    AiHealthService,
+    AiGoalService,
   ],
 })
 export class AiModule {}

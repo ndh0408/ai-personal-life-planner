@@ -1,5 +1,5 @@
 import type { AiPromptTemplateService } from '../services/ai-prompt-template.service';
-import { BASE_GUARDRAILS } from './system';
+import { BASE_GUARDRAILS, buildLanguageDirective, type Locale } from './system';
 
 export type MealContext = {
   date: string;
@@ -10,8 +10,10 @@ export type MealContext = {
   profile: { dietaryPreference?: string | null; mainGoal?: string | null; activityLevel?: string | null };
 };
 
-export function buildMealSystem(): string {
+export function buildMealSystem(locale: Locale = 'vi'): string {
   return `${BASE_GUARDRAILS}
+
+${buildLanguageDirective(locale)}
 
 [task:meal-suggestion]
 Output JSON:

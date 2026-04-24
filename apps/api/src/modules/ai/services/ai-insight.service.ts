@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { LocaleService } from '../../../common/i18n/locale.service';
 import { AiProviderService } from './ai-provider.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
@@ -15,11 +16,21 @@ export interface WeeklyInsightInput {
   weekStart: string; // YYYY-MM-DD (Mon)
 }
 
-const FALLBACK: WeeklyInsight = {
-  summary: 'Could not synthesize insights this week — please try again later.',
-  goodPoints: [],
-  improvementPoints: [],
-  nextWeekSuggestions: [],
+type RequestLike = { headers?: Record<string, string | string[] | undefined>; locale?: string };
+
+const FALLBACK_BY_LOCALE: Record<'vi' | 'en', WeeklyInsight> = {
+  en: {
+    summary: 'Could not synthesize insights this week — please try again later.',
+    goodPoints: [],
+    improvementPoints: [],
+    nextWeekSuggestions: [],
+  },
+  vi: {
+    summary: 'Chưa tổng hợp được insight tuần này — vui lòng thử lại sau.',
+    goodPoints: [],
+    improvementPoints: [],
+    nextWeekSuggestions: [],
+  },
 };
 
 @Injectable()
@@ -31,9 +42,11 @@ export class AiInsightService {
     private readonly provider: AiProviderService,
     private readonly tpl: AiPromptTemplateService,
     private readonly json: AiJsonValidationService,
+    private readonly locale: LocaleService,
   ) {}
 
-  async weekly(userId: string, input: WeeklyInsightInput) {
+  async weekly(userId: string, input: WeeklyInsightInput, req: RequestLike = {}) {
+    const localeTag = await this.locale.forUser(userId, req);
     const start = dateOnly(input.weekStart);
     const end = new Date(start.getTime() + 7 * 86_400_000);
     const weekEnd = end.toISOString().slice(0, 10);
@@ -94,7 +107,7 @@ export class AiInsightService {
       moodStats: { dominantMood, days: moods.length },
     };
 
-    const system = buildWeeklyInsightSystem();
+    const system = buildWeeklyInsightSystem(localeTag);
     const prompt = buildWeeklyInsightPrompt(this.tpl, ctx);
 
     let insight: WeeklyInsight;
@@ -109,9 +122,33 @@ export class AiInsightService {
       });
     } catch (e) {
       this.logger.warn(`weekly-insight fell back: ${e instanceof Error ? e.message : e}`);
-      insight = FALLBACK;
+      insight = FALLBACK_BY_LOCALE[localeTag];
       usedFallback = true;
     }
-    return { insight, stats: ctx, usedFallback };
+
+    // Persist as WeeklyReview row for the week.
+    const saved = await this.prisma.weeklyReview.upsert({
+      where: { userId_weekStart: { userId, weekStart: start } },
+      update: {
+        summary: insight.summary,
+        habitInsight: habitStats.map((h) => `${h.name}: ${h.logged}/${h.targetPerWeek}`).join('; '),
+        healthInsight: sleepAvg
+          ? `Avg sleep ${Math.round(sleepAvg / 60)}h across ${sleep.length} nights.`
+          : null,
+        suggestions: insight.nextWeekSuggestions,
+      },
+      create: {
+        userId,
+        weekStart: start,
+        summary: insight.summary,
+        habitInsight: habitStats.map((h) => `${h.name}: ${h.logged}/${h.targetPerWeek}`).join('; '),
+        healthInsight: sleepAvg
+          ? `Avg sleep ${Math.round(sleepAvg / 60)}h across ${sleep.length} nights.`
+          : null,
+        suggestions: insight.nextWeekSuggestions,
+      },
+    });
+
+    return { insight, stats: ctx, saved, locale: localeTag, usedFallback };
   }
 }

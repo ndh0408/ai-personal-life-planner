@@ -170,6 +170,58 @@ export class MockAiProvider implements AiProvider {
       });
     }
 
+    if (prompt.includes('[task:finance-analysis]')) {
+      return JSON.stringify({
+        totalIncome: 29500000,
+        totalExpense: 9505000,
+        remainingMoney: 19995000,
+        budgetWarnings: [
+          {
+            category: 'shopping',
+            usagePercent: 240,
+            message: 'Shopping spending is 2.4× the monthly cap.',
+          },
+        ],
+        spendingPatterns: [
+          'Weekday food spending dominated by eat-out lunches.',
+          'One impulse purchase in "shopping" drove most of the overrun.',
+        ],
+        savingSuggestions: [
+          'Move 10% of salary to a separate savings account on pay day.',
+          'Pause non-essential shopping for the rest of the month.',
+        ],
+        debtSuggestions: [
+          'Keep the 1m VND/month laptop-loan payment; you are on track.',
+        ],
+        salaryAllocationSuggestion: {
+          needPercent: 55,
+          wantPercent: 20,
+          savePercent: 25,
+          comment: 'Leaner wants, heavier savings while the emergency fund is below 3 months.',
+        },
+        usefulAdvice: [
+          'Log expenses daily — it usually trims 5-10% without changing lifestyle.',
+          'For any investment question, consult a licensed financial advisor.',
+        ],
+      });
+    }
+
+    if (prompt.includes('[task:daily-review]')) {
+      return JSON.stringify({
+        todaySummary:
+          'Productive morning, lighter afternoon. Sleep was a bit short but mood stayed positive.',
+        wins: ['Completed deep-work block', 'Logged 8/8 glasses of water'],
+        issues: ['Skipped the planned home-cooked dinner', 'Went to bed after midnight'],
+        suggestionsForTomorrow: [
+          'Prep dinner ingredients before 6 PM.',
+          'Phone down by 22:30 to hit the sleep target.',
+        ],
+        healthAdvice: 'Short sleep two nights in a row — try a 15-minute earlier bedtime tonight.',
+        financeAdvice: 'You are on track this week; log any remaining coffee-shop receipts before bed.',
+        productivityAdvice: 'Pick the single most important task for tomorrow and schedule it 9-10 AM.',
+      });
+    }
+
     if (prompt.includes('[task:chat]')) {
       return JSON.stringify({
         answer:

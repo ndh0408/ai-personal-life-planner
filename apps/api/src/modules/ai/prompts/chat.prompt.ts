@@ -1,5 +1,5 @@
 import type { AiPromptTemplateService } from '../services/ai-prompt-template.service';
-import { BASE_GUARDRAILS } from './system';
+import { BASE_GUARDRAILS, buildLanguageDirective, type Locale } from './system';
 
 export type ChatContext = {
   message: string;
@@ -8,8 +8,10 @@ export type ChatContext = {
   userSnapshot: { mainGoal?: string | null; activityLevel?: string | null; timezone?: string | null };
 };
 
-export function buildChatSystem(): string {
+export function buildChatSystem(locale: Locale = 'vi'): string {
   return `${BASE_GUARDRAILS}
+
+${buildLanguageDirective(locale)}
 
 [task:chat]
 You answer the user's message conversationally and may suggest 0-3 actions

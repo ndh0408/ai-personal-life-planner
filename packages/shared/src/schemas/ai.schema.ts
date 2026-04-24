@@ -62,6 +62,18 @@ export const WeeklyInsightRequestSchema = z.object({
 });
 export type WeeklyInsightRequest = z.infer<typeof WeeklyInsightRequestSchema>;
 
+// ---- daily review ----------------------------------------------------------
+export const DailyReviewRequestSchema = z.object({
+  date: DateOnly,
+});
+export type DailyReviewRequest = z.infer<typeof DailyReviewRequestSchema>;
+
+// ---- finance analysis ------------------------------------------------------
+export const AnalyzeFinanceRequestSchema = z.object({
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'YYYY-MM required'),
+});
+export type AnalyzeFinanceRequest = z.infer<typeof AnalyzeFinanceRequestSchema>;
+
 // ---- legacy day plan request (still exported for back-compat) -------------
 export const PlanDayRequestSchema = GenerateScheduleRequestSchema;
 export type PlanDayRequest = GenerateScheduleRequest;

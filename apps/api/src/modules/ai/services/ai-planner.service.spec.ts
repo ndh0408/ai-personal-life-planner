@@ -4,6 +4,17 @@ import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import { PreviewCacheService } from './preview-cache.service';
 import { MockAiProvider } from '../providers/mock.provider';
+import type { LocaleService } from '../../../common/i18n/locale.service';
+
+function mockLocaleService(locale: 'vi' | 'en' = 'vi'): LocaleService {
+  return {
+    forUser: jest.fn(() => Promise.resolve(locale)),
+    fromRequest: jest.fn(() => locale),
+    get default() {
+      return locale;
+    },
+  } as unknown as LocaleService;
+}
 
 function makePrisma() {
   let scheduleId: string | null = null;
@@ -74,6 +85,7 @@ describe('AiPlannerService.generate', () => {
       new AiPromptTemplateService(),
       new AiJsonValidationService(provider),
       new PreviewCacheService(),
+      mockLocaleService(),
     );
 
     const result = await service.generate('user-A', { date: '2026-04-24' });
@@ -95,6 +107,7 @@ describe('AiPlannerService.generate', () => {
       new AiPromptTemplateService(),
       new AiJsonValidationService(provider),
       new PreviewCacheService(),
+      mockLocaleService(),
     );
 
     const result = await service.generate('user-A', { date: '2026-04-24' });
@@ -113,6 +126,7 @@ describe('AiPlannerService.generate', () => {
       new AiPromptTemplateService(),
       new AiJsonValidationService(provider),
       new PreviewCacheService(),
+      mockLocaleService(),
     );
 
     const origComplete = provider.complete.bind(provider);

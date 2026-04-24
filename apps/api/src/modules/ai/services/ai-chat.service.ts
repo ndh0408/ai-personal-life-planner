@@ -1,5 +1,6 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { LocaleService } from '../../../common/i18n/locale.service';
 import { AiProviderService } from './ai-provider.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
@@ -12,9 +13,17 @@ export interface AiChatInput {
   contextType?: string;
 }
 
-const FALLBACK: ChatReply = {
-  answer: 'I had trouble responding just now. Please try rephrasing in a moment.',
-  suggestedActions: [],
+type RequestLike = { headers?: Record<string, string | string[] | undefined>; locale?: string };
+
+const FALLBACK_BY_LOCALE: Record<'vi' | 'en', ChatReply> = {
+  en: {
+    answer: 'I had trouble responding just now. Please try rephrasing in a moment.',
+    suggestedActions: [],
+  },
+  vi: {
+    answer: 'Mình đang gặp trục trặc khi trả lời. Bạn thử diễn đạt lại sau một lát nhé.',
+    suggestedActions: [],
+  },
 };
 
 @Injectable()
@@ -26,9 +35,11 @@ export class AiChatService {
     private readonly provider: AiProviderService,
     private readonly tpl: AiPromptTemplateService,
     private readonly json: AiJsonValidationService,
+    private readonly locale: LocaleService,
   ) {}
 
-  async chat(userId: string, input: AiChatInput) {
+  async chat(userId: string, input: AiChatInput, req: RequestLike = {}) {
+    const localeTag = await this.locale.forUser(userId, req);
     const profile = await this.prisma.userProfile.findUnique({ where: { userId } });
 
     let conversation = input.conversationId
@@ -65,7 +76,7 @@ export class AiChatService {
       },
     };
 
-    const system = buildChatSystem();
+    const system = buildChatSystem(localeTag);
     const prompt = buildChatPrompt(this.tpl, ctx);
 
     let reply: ChatReply;
@@ -80,7 +91,7 @@ export class AiChatService {
       });
     } catch (e) {
       this.logger.warn(`chat fell back: ${e instanceof Error ? e.message : e}`);
-      reply = FALLBACK;
+      reply = FALLBACK_BY_LOCALE[localeTag];
       usedFallback = true;
     }
 

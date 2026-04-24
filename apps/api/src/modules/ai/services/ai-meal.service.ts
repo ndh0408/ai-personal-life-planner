@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { LocaleService } from '../../../common/i18n/locale.service';
 import { AiProviderService } from './ai-provider.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
@@ -21,6 +22,8 @@ export interface SuggestMealsInput {
   save?: boolean;
 }
 
+type RequestLike = { headers?: Record<string, string | string[] | undefined>; locale?: string };
+
 const FALLBACK: MealSuggestionsOutput = {
   breakfast: { title: 'Oats + fruit', ingredients: ['oats', 'fruit'], reason: 'fallback' },
   lunch: { title: 'Rice + protein + veggies', ingredients: ['rice', 'protein', 'vegetables'], reason: 'fallback' },
@@ -38,9 +41,11 @@ export class AiMealService {
     private readonly provider: AiProviderService,
     private readonly tpl: AiPromptTemplateService,
     private readonly json: AiJsonValidationService,
+    private readonly locale: LocaleService,
   ) {}
 
-  async suggest(userId: string, input: SuggestMealsInput) {
+  async suggest(userId: string, input: SuggestMealsInput, req: RequestLike = {}) {
+    const localeTag = await this.locale.forUser(userId, req);
     const profile = await this.prisma.userProfile.findUnique({ where: { userId } });
     const ctx: MealContext = {
       date: input.date,
@@ -55,7 +60,7 @@ export class AiMealService {
       },
     };
 
-    const system = buildMealSystem();
+    const system = buildMealSystem(localeTag);
     const prompt = buildMealPrompt(this.tpl, ctx);
 
     let suggestions: MealSuggestionsOutput;

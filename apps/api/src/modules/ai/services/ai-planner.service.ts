@@ -1,5 +1,6 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { LocaleService } from '../../../common/i18n/locale.service';
 import { AiProviderService } from './ai-provider.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiInvalidJsonError, AiJsonValidationService } from './ai-json-validation.service';
@@ -38,6 +39,8 @@ export interface ApplyRescheduleInput {
   previewId: string;
 }
 
+type RequestLike = { headers?: Record<string, string | string[] | undefined>; locale?: string };
+
 const FALLBACK_PLAN: SchedulePlan = {
   wakeUpTime: '06:30',
   sleepTime: '23:00',
@@ -64,13 +67,15 @@ export class AiPlannerService {
     private readonly tpl: AiPromptTemplateService,
     private readonly json: AiJsonValidationService,
     private readonly previews: PreviewCacheService,
+    private readonly locale: LocaleService,
   ) {}
 
   // ---- 1) generate-schedule -------------------------------------------------
 
-  async generate(userId: string, input: GenerateScheduleInput) {
+  async generate(userId: string, input: GenerateScheduleInput, req: RequestLike = {}) {
+    const localeTag = await this.locale.forUser(userId, req);
     const ctx = await this.collectGenerateContext(userId, input);
-    const system = buildGenerateScheduleSystem();
+    const system = buildGenerateScheduleSystem(localeTag);
     const prompt = buildGenerateSchedulePrompt(this.tpl, ctx);
 
     let plan: SchedulePlan;
@@ -95,7 +100,8 @@ export class AiPlannerService {
 
   // ---- 2) reschedule (preview only) -----------------------------------------
 
-  async preview(userId: string, input: RescheduleInput) {
+  async preview(userId: string, input: RescheduleInput, req: RequestLike = {}) {
+    const localeTag = await this.locale.forUser(userId, req);
     const schedule = await this.prisma.dailySchedule.findUnique({
       where: { userId_date: { userId, date: dateOnly(input.date) } },
       include: { items: { orderBy: { sortOrder: 'asc' } } },
@@ -119,7 +125,7 @@ export class AiPlannerService {
       })),
     };
 
-    const system = buildRescheduleSystem();
+    const system = buildRescheduleSystem(localeTag);
     const prompt = buildReschedulePrompt(this.tpl, ctx);
 
     let preview: ReschedulePreview;
