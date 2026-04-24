@@ -1,11 +1,13 @@
 // =============================================================================
-// AI Personal Life Planner — Prisma schema (PostgreSQL)
+// LifeOS AI — Prisma schema (PostgreSQL)
 //
 // Conventions:
-//   - All time-of-day-only fields use @db.Time(0) (e.g. UserProfile.usualWakeTime).
-//   - All date-only fields use @db.Date (e.g. DailySchedule.date).
+//   - Time-of-day-only fields use @db.Time(0).
+//   - Date-only fields use @db.Date.
+//   - Money fields use @db.Decimal(18, 2) — cents-safe up to 9.99 × 10^15.
 //   - Cascade deletes flow from User down to every owned record.
 //   - Enums use SCREAMING_SNAKE_CASE per the product spec.
+//   - @@map uses snake_case table names.
 // =============================================================================
 
 generator client {
@@ -39,6 +41,8 @@ enum MainGoal {
   STUDY
   HEALTHY
   BALANCE
+  FINANCIAL_STABILITY
+  CAREER_GROWTH
 }
 
 enum ActivityLevel {
@@ -78,6 +82,9 @@ enum ScheduleItemType {
   REST
   TASK
   TRAVEL
+  FINANCE
+  HEALTH
+  PERSONAL
   CUSTOM
 }
 
@@ -128,10 +135,84 @@ enum StressLevel {
   HIGH
 }
 
+enum WalletType {
+  CASH
+  BANK
+  EWALLET
+  SAVINGS
+  OTHER
+}
+
+enum NeedLevel {
+  NEED
+  WANT
+  WASTE
+  INVESTMENT
+  SAVING
+}
+
+enum BudgetPeriod {
+  WEEKLY
+  MONTHLY
+}
+
+enum DebtType {
+  I_OWE
+  OWED_TO_ME
+}
+
+enum DebtStatus {
+  ACTIVE
+  PAID
+  CANCELLED
+}
+
+enum SavingGoalStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum GoalCategory {
+  HEALTH
+  FINANCE
+  CAREER
+  STUDY
+  RELATIONSHIP
+  PERSONAL
+  OTHER
+}
+
+enum PersonalGoalStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+  CANCELLED
+}
+
+enum MilestoneStatus {
+  TODO
+  COMPLETED
+  CANCELLED
+}
+
 enum AIMessageRole {
   USER
   ASSISTANT
   SYSTEM
+}
+
+enum AIRecommendationType {
+  SCHEDULE
+  TASK
+  HABIT
+  MEAL
+  SLEEP
+  HEALTH
+  FINANCE
+  BUDGET
+  GOAL
+  GENERAL
 }
 
 enum AIRecommendationStatus {
@@ -154,9 +235,9 @@ enum NotificationStatus {
   CANCELLED
 }
 
-// -----------------------------------------------------------------------------
-// Identity
-// -----------------------------------------------------------------------------
+// =============================================================================
+// A. Auth / User
+// =============================================================================
 
 model User {
   id           String     @id @default(uuid())
@@ -178,11 +259,24 @@ model User {
   habitLogs           HabitLog[]
   mealPlans           MealPlan[]
   mealSuggestions     MealSuggestion[]
+  mealLogs            MealLog[]
   sleepLogs           SleepLog[]
   moodLogs            MoodLog[]
+  healthMetrics       HealthMetric[]
+  wallets             Wallet[]
+  incomes             Income[]
+  expenses            Expense[]
+  budgets             Budget[]
+  debts               Debt[]
+  savingGoals         SavingGoal[]
+  financialSnapshots  FinancialSnapshot[]
+  personalGoals       PersonalGoal[]
+  goalMilestones      GoalMilestone[]
   aiConversations     AIConversation[]
   aiMessages          AIMessage[]
   aiRecommendations   AIRecommendation[]
+  dailyReviews        DailyReview[]
+  weeklyReviews       WeeklyReview[]
   notificationDevices NotificationDevice[]
   notificationSetting NotificationSetting?
   notificationLogs    NotificationLog[]
@@ -225,6 +319,9 @@ model UserProfile {
   activityLevel     ActivityLevel?
   dietaryPreference String?
   healthNotes       String?
+  monthlySalary     Decimal?       @db.Decimal(18, 2)
+  salaryDay         Int?
+  currency          String         @default("VND")
   timezone          String         @default("Asia/Ho_Chi_Minh")
   locale            String         @default("vi")
   createdAt         DateTime       @default(now())
@@ -235,9 +332,9 @@ model UserProfile {
   @@map("user_profiles")
 }
 
-// -----------------------------------------------------------------------------
-// Schedule
-// -----------------------------------------------------------------------------
+// =============================================================================
+// B. Planner / Schedule
+// =============================================================================
 
 model DailySchedule {
   id          String              @id @default(uuid())
@@ -288,9 +385,9 @@ model ScheduleItem {
   @@map("schedule_items")
 }
 
-// -----------------------------------------------------------------------------
-// Tasks & Habits
-// -----------------------------------------------------------------------------
+// =============================================================================
+// C. Tasks
+// =============================================================================
 
 model Task {
   id               String     @id @default(uuid())
@@ -311,8 +408,13 @@ model Task {
   @@index([userId, status])
   @@index([userId, dueDate])
   @@index([userId, priority])
+  @@index([userId, category])
   @@map("tasks")
 }
+
+// =============================================================================
+// D. Habits
+// =============================================================================
 
 model Habit {
   id          String         @id @default(uuid())
@@ -353,9 +455,9 @@ model HabitLog {
   @@map("habit_logs")
 }
 
-// -----------------------------------------------------------------------------
-// Meals
-// -----------------------------------------------------------------------------
+// =============================================================================
+// E. Meals / Nutrition
+// =============================================================================
 
 model MealPlan {
   id                   String   @id @default(uuid())
@@ -399,9 +501,28 @@ model MealSuggestion {
   @@map("meal_suggestions")
 }
 
-// -----------------------------------------------------------------------------
-// Wellbeing logs
-// -----------------------------------------------------------------------------
+model MealLog {
+  id                String   @id @default(uuid())
+  userId            String
+  date              DateTime @db.Date
+  mealType          MealType
+  title             String
+  note              String?
+  estimatedCalories Int?
+  cost              Decimal? @db.Decimal(18, 2)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([userId, mealType])
+  @@map("meal_logs")
+}
+
+// =============================================================================
+// F. Sleep / Mood / Health
+// =============================================================================
 
 model SleepLog {
   id              String       @id @default(uuid())
@@ -440,9 +561,226 @@ model MoodLog {
   @@map("mood_logs")
 }
 
-// -----------------------------------------------------------------------------
-// AI
-// -----------------------------------------------------------------------------
+model HealthMetric {
+  id               String   @id @default(uuid())
+  userId           String
+  date             DateTime @db.Date
+  weightKg         Float?
+  waterIntakeMl    Int?
+  steps            Int?
+  exerciseMinutes  Int?
+  note             String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@map("health_metrics")
+}
+
+// =============================================================================
+// G. Finance
+// =============================================================================
+
+model Wallet {
+  id        String     @id @default(uuid())
+  userId    String
+  name      String
+  type      WalletType
+  balance   Decimal    @default(0) @db.Decimal(18, 2)
+  currency  String     @default("VND")
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  incomes  Income[]
+  expenses Expense[]
+
+  @@index([userId, isActive])
+  @@index([userId, type])
+  @@map("wallets")
+}
+
+model Income {
+  id             String   @id @default(uuid())
+  userId         String
+  walletId       String?
+  title          String
+  amount         Decimal  @db.Decimal(18, 2)
+  category       String?
+  source         String?
+  incomeDate     DateTime @db.Date
+  isRecurring    Boolean  @default(false)
+  recurringRule  String?
+  note           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet Wallet? @relation(fields: [walletId], references: [id], onDelete: SetNull)
+
+  @@index([userId, incomeDate])
+  @@index([userId, category])
+  @@index([walletId])
+  @@map("incomes")
+}
+
+model Expense {
+  id            String     @id @default(uuid())
+  userId        String
+  walletId      String?
+  title         String
+  amount        Decimal    @db.Decimal(18, 2)
+  category      String
+  expenseDate   DateTime   @db.Date
+  paymentMethod String?
+  needLevel     NeedLevel?
+  note          String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet Wallet? @relation(fields: [walletId], references: [id], onDelete: SetNull)
+
+  @@index([userId, expenseDate])
+  @@index([userId, category])
+  @@index([userId, needLevel])
+  @@index([walletId])
+  @@map("expenses")
+}
+
+model Budget {
+  id                     String       @id @default(uuid())
+  userId                 String
+  category               String
+  amount                 Decimal      @db.Decimal(18, 2)
+  period                 BudgetPeriod @default(MONTHLY)
+  startDate              DateTime     @db.Date
+  endDate                DateTime     @db.Date
+  alertThresholdPercent  Int          @default(80)
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, category])
+  @@index([userId, startDate, endDate])
+  @@map("budgets")
+}
+
+model Debt {
+  id          String     @id @default(uuid())
+  userId      String
+  type        DebtType
+  personName  String?
+  title       String
+  totalAmount Decimal    @db.Decimal(18, 2)
+  paidAmount  Decimal    @default(0) @db.Decimal(18, 2)
+  dueDate     DateTime?  @db.Date
+  status      DebtStatus @default(ACTIVE)
+  note        String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([userId, type])
+  @@index([userId, dueDate])
+  @@map("debts")
+}
+
+model SavingGoal {
+  id            String           @id @default(uuid())
+  userId        String
+  title         String
+  targetAmount  Decimal          @db.Decimal(18, 2)
+  currentAmount Decimal          @default(0) @db.Decimal(18, 2)
+  targetDate    DateTime?        @db.Date
+  priority      Priority         @default(MEDIUM)
+  status        SavingGoalStatus @default(ACTIVE)
+  note          String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([userId, priority])
+  @@map("saving_goals")
+}
+
+model FinancialSnapshot {
+  id                  String   @id @default(uuid())
+  userId              String
+  month               String   // "YYYY-MM" — simpler filter than a date range
+  totalIncome         Decimal  @db.Decimal(18, 2)
+  totalExpense        Decimal  @db.Decimal(18, 2)
+  totalSaving         Decimal  @db.Decimal(18, 2)
+  debtRemaining       Decimal  @db.Decimal(18, 2)
+  budgetUsagePercent  Decimal? @db.Decimal(6, 2)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month])
+  @@index([month])
+  @@map("financial_snapshots")
+}
+
+// =============================================================================
+// H. Personal Goals
+// =============================================================================
+
+model PersonalGoal {
+  id           String             @id @default(uuid())
+  userId       String
+  title        String
+  description  String?
+  category     GoalCategory
+  targetValue  Float?
+  currentValue Float?
+  unit         String?
+  deadline     DateTime?          @db.Date
+  priority     Priority           @default(MEDIUM)
+  status       PersonalGoalStatus @default(ACTIVE)
+  createdAt    DateTime           @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  milestones GoalMilestone[]
+
+  @@index([userId, status])
+  @@index([userId, category])
+  @@index([userId, priority])
+  @@map("personal_goals")
+}
+
+model GoalMilestone {
+  id          String          @id @default(uuid())
+  goalId      String
+  userId      String
+  title       String
+  targetDate  DateTime?       @db.Date
+  completedAt DateTime?
+  status      MilestoneStatus @default(TODO)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  goal PersonalGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([goalId, status])
+  @@index([userId, status])
+  @@map("goal_milestones")
+}
+
+// =============================================================================
+// I. AI / Assistant
+// =============================================================================
 
 model AIConversation {
   id          String   @id @default(uuid())
@@ -479,7 +817,7 @@ model AIMessage {
 model AIRecommendation {
   id         String                 @id @default(uuid())
   userId     String
-  type       String
+  type       AIRecommendationType
   title      String
   content    String
   priority   Priority               @default(MEDIUM)
@@ -495,9 +833,50 @@ model AIRecommendation {
   @@map("ai_recommendations")
 }
 
-// -----------------------------------------------------------------------------
-// Notifications
-// -----------------------------------------------------------------------------
+model DailyReview {
+  id          String   @id @default(uuid())
+  userId      String
+  date        DateTime @db.Date
+  summary     String
+  wins        Json?
+  issues      Json?
+  suggestions Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([date])
+  @@map("daily_reviews")
+}
+
+model WeeklyReview {
+  id               String   @id @default(uuid())
+  userId           String
+  weekStart        DateTime @db.Date
+  summary          String
+  scheduleInsight  String?
+  taskInsight      String?
+  habitInsight     String?
+  healthInsight    String?
+  mealInsight      String?
+  financeInsight   String?
+  goalInsight      String?
+  suggestions      Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, weekStart])
+  @@index([weekStart])
+  @@map("weekly_reviews")
+}
+
+// =============================================================================
+// J. Notifications
+// =============================================================================
 
 model NotificationDevice {
   id         String               @id @default(uuid())
@@ -525,6 +904,10 @@ model NotificationSetting {
   taskReminder        Boolean   @default(true)
   habitReminder       Boolean   @default(true)
   moodCheckinReminder Boolean   @default(true)
+  financeReminder     Boolean   @default(true)
+  budgetAlert         Boolean   @default(true)
+  goalReminder        Boolean   @default(true)
+  assistantNudge      Boolean   @default(true)
   quietHoursStart     DateTime? @db.Time(0)
   quietHoursEnd       DateTime? @db.Time(0)
   createdAt           DateTime  @default(now())
