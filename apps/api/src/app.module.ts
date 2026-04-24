@@ -5,25 +5,45 @@ import { APP_GUARD } from '@nestjs/core';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { I18nModule } from './common/i18n/i18n.module';
+
+// Foundation
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
-import { AiModule } from './modules/ai/ai.module';
 import { ProfileModule } from './modules/profile/profile.module';
+
+// Daily planning
+import { PlannerModule } from './modules/planner/planner.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { SchedulesModule } from './modules/schedules/schedules.module';
 import { ScheduleItemsModule } from './modules/schedule-items/schedule-items.module';
 import { HabitsModule } from './modules/habits/habits.module';
+
+// Food + wellbeing
 import { MealsModule } from './modules/meals/meals.module';
+import { MealLogsModule } from './modules/meal-logs/meal-logs.module';
 import { SleepLogsModule } from './modules/sleep-logs/sleep-logs.module';
 import { MoodLogsModule } from './modules/mood-logs/mood-logs.module';
+import { HealthMetricsModule } from './modules/health-metrics/health-metrics.module';
+
+// Finance
+import { WalletsModule } from './modules/wallets/wallets.module';
+import { IncomesModule } from './modules/incomes/incomes.module';
+import { ExpensesModule } from './modules/expenses/expenses.module';
+import { BudgetsModule } from './modules/budgets/budgets.module';
+import { DebtsModule } from './modules/debts/debts.module';
+import { SavingGoalsModule } from './modules/saving-goals/saving-goals.module';
+
+// Goals
+import { GoalsModule } from './modules/goals/goals.module';
+
+// AI
+import { AiModule } from './modules/ai/ai.module';
+import { AssistantModule } from './modules/assistant/assistant.module';
+
+// Cross-cutting
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ReportsModule } from './modules/reports/reports.module';
-import { PlannerModule } from './modules/planner/planner.module';
-import { FinanceModule } from './modules/finance/finance.module';
-import { BudgetModule } from './modules/budget/budget.module';
-import { GoalsModule } from './modules/goals/goals.module';
-import { AssistantModule } from './modules/assistant/assistant.module';
 
 @Module({
   imports: [
@@ -56,17 +76,25 @@ import { AssistantModule } from './modules/assistant/assistant.module';
     ScheduleItemsModule,
     HabitsModule,
 
-    // Wellbeing
+    // Food + wellbeing
     MealsModule,
+    MealLogsModule,
     SleepLogsModule,
     MoodLogsModule,
+    HealthMetricsModule,
 
-    // Upcoming (foundation stubs — see docs/PRODUCT_SCOPE.md)
-    FinanceModule,
-    BudgetModule,
+    // Finance
+    WalletsModule,
+    IncomesModule,
+    ExpensesModule,
+    BudgetsModule,
+    DebtsModule,
+    SavingGoalsModule,
+
+    // Goals
     GoalsModule,
 
-    // AI — AiModule is reactive (user-initiated). AssistantModule is proactive (scheduled insights).
+    // AI — AiModule is reactive (user-initiated); AssistantModule is proactive (scheduled insights).
     AiModule,
     AssistantModule,
 

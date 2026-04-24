@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
   UseGuards,
@@ -14,50 +15,38 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { ok } from '../../common/interceptors/response.interceptor';
-import { GoalsService } from './goals.service';
+import { SavingGoalsService } from './saving-goals.service';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DateStr = z.string().regex(DATE_RE, 'Must be YYYY-MM-DD');
-const CategorySchema = z.enum([
-  'HEALTH',
-  'FINANCE',
-  'CAREER',
-  'STUDY',
-  'RELATIONSHIP',
-  'PERSONAL',
-  'OTHER',
-]);
 const PrioritySchema = z.enum(['LOW', 'MEDIUM', 'HIGH']);
-const StatusSchema = z.enum(['ACTIVE', 'COMPLETED', 'PAUSED', 'CANCELLED']);
+const StatusSchema = z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED']);
 
 const CreateSchema = z
   .object({
     title: z.string().min(1).max(200),
-    description: z.string().max(2000).optional(),
-    category: CategorySchema,
-    targetValue: z.number().finite().optional(),
-    currentValue: z.number().finite().optional(),
-    unit: z.string().max(30).optional(),
-    deadline: DateStr.optional(),
+    targetAmount: z.number().positive(),
+    currentAmount: z.number().nonnegative().optional(),
+    targetDate: DateStr.optional(),
     priority: PrioritySchema.optional(),
+    note: z.string().max(1000).optional(),
   })
   .strict();
 
-const UpdateSchema = CreateSchema.partial().extend({ status: StatusSchema.optional() });
+const UpdateSchema = CreateSchema.partial().extend({
+  status: StatusSchema.optional(),
+});
 
-@Controller('goals')
+const ContributeSchema = z.object({ amount: z.number().positive() }).strict();
+
+@Controller('saving-goals')
 @UseGuards(JwtAuthGuard)
-export class GoalsController {
-  constructor(private readonly svc: GoalsService) {}
+export class SavingGoalsController {
+  constructor(private readonly svc: SavingGoalsService) {}
 
   @Get()
   async list(@CurrentUser() user: AuthUser) {
-    return ok(await this.svc.list(user.id), 'Goals retrieved');
-  }
-
-  @Get(':id')
-  async getById(@CurrentUser() user: AuthUser, @Param('id', new ParseUUIDPipe()) id: string) {
-    return ok(await this.svc.getById(user.id, id), 'Goal retrieved');
+    return ok(await this.svc.list(user.id), 'Saving goals retrieved');
   }
 
   @Post()
@@ -65,7 +54,7 @@ export class GoalsController {
     @CurrentUser() user: AuthUser,
     @Body(new ZodValidationPipe(CreateSchema)) body: z.infer<typeof CreateSchema>,
   ) {
-    return ok(await this.svc.create(user.id, body), 'Goal created');
+    return ok(await this.svc.create(user.id, body), 'Saving goal created');
   }
 
   @Put(':id')
@@ -74,12 +63,21 @@ export class GoalsController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body(new ZodValidationPipe(UpdateSchema)) body: z.infer<typeof UpdateSchema>,
   ) {
-    return ok(await this.svc.update(user.id, id, body), 'Goal updated');
+    return ok(await this.svc.update(user.id, id, body), 'Saving goal updated');
+  }
+
+  @Patch(':id/contribute')
+  async contribute(
+    @CurrentUser() user: AuthUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body(new ZodValidationPipe(ContributeSchema)) body: z.infer<typeof ContributeSchema>,
+  ) {
+    return ok(await this.svc.contribute(user.id, id, body.amount), 'Contribution recorded');
   }
 
   @Delete(':id')
   async delete(@CurrentUser() user: AuthUser, @Param('id', new ParseUUIDPipe()) id: string) {
     await this.svc.delete(user.id, id);
-    return ok(null, 'Goal deleted');
+    return ok(null, 'Saving goal deleted');
   }
 }

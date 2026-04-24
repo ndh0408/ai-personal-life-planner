@@ -1,18 +1,12 @@
 import { Module } from '@nestjs/common';
 import { GoalsController } from './goals.controller';
 import { GoalsService } from './goals.service';
+import { GoalMilestonesController } from './goal-milestones.controller';
+import { GoalMilestonesService } from './goal-milestones.service';
 
-/**
- * Personal goals foundation module.
- *
- * Scope for this iteration is *foundation only* — routes are wired but return
- * placeholder payloads. Full functionality (goal creation, milestones,
- * progress tracking, AI-suggested daily actions, stalled-goal detection) will
- * land with a dedicated Prisma sub-schema in a follow-up iteration.
- */
 @Module({
-  controllers: [GoalsController],
-  providers: [GoalsService],
-  exports: [GoalsService],
+  controllers: [GoalsController, GoalMilestonesController],
+  providers: [GoalsService, GoalMilestonesService],
+  exports: [GoalsService, GoalMilestonesService],
 })
 export class GoalsModule {}

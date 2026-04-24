@@ -105,4 +105,15 @@ describe('ProfileService', () => {
     const r = await service.upsert('user-A', { fullName: 'Bob', workStartTime: '08:30' });
     expect(r.profile.workStartTime).toBe('08:30');
   });
+
+  it('upsert can change locale from "vi" default to "en"', async () => {
+    const initial = await service.upsert('user-A', { fullName: 'Alice' });
+    expect(initial.profile.locale).toBe('vi');
+    const switched = await service.upsert('user-A', { locale: 'en' });
+    expect(switched.created).toBe(false);
+    expect(switched.profile.locale).toBe('en');
+    // re-get via .get() returns the same
+    const { profile } = await service.get('user-A');
+    expect(profile?.locale).toBe('en');
+  });
 });
