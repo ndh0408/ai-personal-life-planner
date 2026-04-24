@@ -1,0 +1,81 @@
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  AiCompletionRequest,
+  AiCompletionResponse,
+  AiProvider,
+  AiTimeoutError,
+} from '../providers/ai-provider.interface';
+import { AI_PROVIDER_TOKEN } from '../providers/ai-provider.factory';
+
+export interface OrchestratorOptions {
+  /** Hard upper bound; cancels the call when exceeded. */
+  timeoutMs?: number;
+  /** Total tries including the first one. */
+  maxAttempts?: number;
+  /** Delay between retries in ms (linear). */
+  retryDelayMs?: number;
+}
+
+const DEFAULTS: Required<OrchestratorOptions> = {
+  timeoutMs: 25_000,
+  maxAttempts: 2,
+  retryDelayMs: 800,
+};
+
+/**
+ * Wraps a raw AiProvider with timeout, retry, and audit-friendly logging that
+ * NEVER includes user content or API keys.
+ */
+@Injectable()
+export class AiProviderService {
+  private readonly logger = new Logger(AiProviderService.name);
+
+  constructor(@Inject(AI_PROVIDER_TOKEN) private readonly provider: AiProvider) {}
+
+  get providerName(): string {
+    return this.provider.name;
+  }
+
+  async complete(
+    req: AiCompletionRequest,
+    opts: OrchestratorOptions = {},
+  ): Promise<AiCompletionResponse> {
+    const { timeoutMs, maxAttempts, retryDelayMs } = { ...DEFAULTS, ...opts };
+    let lastErr: unknown;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const started = Date.now();
+      try {
+        const result = await this.withTimeout(this.provider.complete(req), timeoutMs);
+        const elapsed = Date.now() - started;
+        this.logger.log(
+          `provider=${this.provider.name} attempt=${attempt} elapsedMs=${elapsed} in=${result.usage?.inputTokens ?? '?'} out=${result.usage?.outputTokens ?? '?'}`,
+        );
+        return result;
+      } catch (err) {
+        lastErr = err;
+        const elapsed = Date.now() - started;
+        const tag = err instanceof AiTimeoutError ? 'timeout' : 'error';
+        this.logger.warn(
+          `provider=${this.provider.name} attempt=${attempt} ${tag} elapsedMs=${elapsed}`,
+        );
+        if (attempt < maxAttempts) {
+          await new Promise((r) => setTimeout(r, retryDelayMs * attempt));
+        }
+      }
+    }
+    throw lastErr;
+  }
+
+  private async withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+    let timer: NodeJS.Timeout | undefined;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new AiTimeoutError(ms)), ms);
+    });
+    try {
+      return await Promise.race([p, timeoutPromise]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+}
