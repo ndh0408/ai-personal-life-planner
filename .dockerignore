@@ -1,0 +1,38 @@
+# Only what's needed for `docker build -f apps/api/Dockerfile .`
+**/node_modules
+**/.next
+**/dist
+**/coverage
+**/.turbo
+**/.vercel
+**/.expo
+**/*.tsbuildinfo
+
+# Secrets / local state
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+**/*.pem
+**/*.key
+
+# Git + editor noise
+.git
+.gitignore
+.github
+.vscode
+.idea
+.DS_Store
+
+# Mobile app isn't needed for API image
+apps/mobile
+apps/web
+
+# Docs / misc
+docs
+README.md
+*.md
+!apps/api/README.md
+
+# CI scripts intended for host, not image
+scripts

@@ -1,0 +1,102 @@
+# LifeOS AI — production stack (single VPS).
+#
+# Usage:
+#   cp .env.production.example .env.production
+#   # edit .env.production with real values
+#   docker compose -f docker-compose.production.yml --env-file .env.production up -d
+#
+# Services:
+#   - postgres: single-node Postgres 16
+#   - redis:    optional queue / cache (used by future job workers; safe to leave running)
+#   - api:      NestJS backend, listens on 3000 internally, mapped to 127.0.0.1:3000
+#               so Nginx / Cloudflare Tunnel proxies to it. Do NOT expose directly.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lifeos-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Bind to localhost only — API reaches it over the docker network.
+    ports:
+      - "127.0.0.1:5432:5432"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    container_name: lifeos-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "127.0.0.1:6379:6379"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: lifeos-api:${LIFEOS_API_TAG:-latest}
+    container_name: lifeos-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-30d}
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+      CORS_ORIGIN: ${CORS_ORIGINS}
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE:-vi}
+      SUPPORTED_LOCALES: ${SUPPORTED_LOCALES:-vi,en}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+    ports:
+      - "127.0.0.1:3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+volumes:
+  postgres_data:
+  redis_data:
