@@ -375,12 +375,82 @@
     "subtitle": "Watches your data and nudges at the right moment — without judgment.",
     "refresh": "Refresh",
     "recommendations": "Recommendations",
+    "summary": {
+      "title": "Today's check-in",
+      "activeRecs_one": "{{count}} active tip",
+      "activeRecs_other": "{{count}} active tips",
+      "activeRecs": "{{count}} active tips",
+      "highPriority_one": "{{count}} needs attention",
+      "highPriority_other": "{{count}} need attention",
+      "highPriority": "{{count}} need attention",
+      "overloaded_one": "{{count}} overloaded day",
+      "overloaded_other": "{{count}} overloaded days",
+      "overloaded": "{{count}} overloaded days",
+      "headlineOnTrack": "You're on track today — nothing urgent.",
+      "headlineHigh_one": "{{count}} thing is worth your attention today.",
+      "headlineHigh_other": "{{count}} things are worth your attention today.",
+      "headlineHigh": "{{count}} things are worth your attention today.",
+      "headlineMedium_one": "{{count}} gentle suggestion waiting — no rush.",
+      "headlineMedium_other": "{{count}} gentle suggestions waiting — no rush.",
+      "headlineMedium": "{{count}} gentle suggestions waiting — no rush.",
+      "headlineSomeAttention_one": "{{count}} suggestion worth a look.",
+      "headlineSomeAttention_other": "{{count}} suggestions worth a look.",
+      "headlineSomeAttention": "{{count}} suggestions worth a look.",
+      "headlineSpending": "{{category}} spending has crept up this week — worth a glance.",
+      "headlineOverload_one": "{{count}} overloaded day ahead — consider easing one item.",
+      "headlineOverload_other": "{{count}} overloaded days ahead — consider easing one item.",
+      "headlineOverload": "{{count}} overloaded days ahead — consider easing one item."
+    },
+    "actions": {
+      "title": "Assistant actions",
+      "body": "Run a fresh scan, or let me summarize the day.",
+      "runDaily": "Run daily monitoring",
+      "generateReview": "Generate daily review"
+    },
+    "filters": {
+      "type": "Area",
+      "priority": "Priority",
+      "all": "All"
+    },
+    "type": {
+      "SCHEDULE": "Schedule",
+      "TASK": "Tasks",
+      "HABIT": "Habits",
+      "MEAL": "Meals",
+      "HEALTH": "Health",
+      "FINANCE": "Finance",
+      "GOAL": "Goals"
+    },
+    "priority": {
+      "HIGH": "High",
+      "MEDIUM": "Medium",
+      "LOW": "Low"
+    },
+    "badge": {
+      "new": "New"
+    },
     "action": {
-      "apply": "Apply"
+      "apply": "Apply",
+      "dismiss": "Dismiss",
+      "view": "View",
+      "open": "Open",
+      "askAi": "Ask AI"
+    },
+    "confirmApply": {
+      "title": "Mark as applied?",
+      "body": "I won't change anything automatically — I'll just remember you've handled this one."
+    },
+    "ai": {
+      "askPrompt": "I have this recommendation:\n\n{{title}}\n{{content}}\n\nGive me a short, gentle explanation of why it's being suggested and 1-2 small ways to act on it today.",
+      "answerTitle": "Assistant says"
+    },
+    "review": {
+      "doneTitle": "Today's review",
+      "openFull": "Open full review"
     },
     "empty": {
-      "title": "Nothing to suggest yet",
-      "description": "Once more data is available, proactive tips will land here."
+      "title": "Nothing to suggest right now",
+      "description": "Once more data is available, proactive tips will land here — no pressure."
     },
     "patterns": {
       "title": "Behavior patterns",

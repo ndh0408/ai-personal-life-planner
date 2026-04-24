@@ -375,12 +375,82 @@
     "subtitle": "Theo dõi và nhắc bạn đúng thời điểm, không phán xét.",
     "refresh": "Làm mới",
     "recommendations": "Gợi ý",
+    "summary": {
+      "title": "Tổng quan hôm nay",
+      "activeRecs_one": "{{count}} gợi ý",
+      "activeRecs_other": "{{count}} gợi ý",
+      "activeRecs": "{{count}} gợi ý",
+      "highPriority_one": "{{count}} cần chú ý",
+      "highPriority_other": "{{count}} cần chú ý",
+      "highPriority": "{{count}} cần chú ý",
+      "overloaded_one": "{{count}} ngày quá tải",
+      "overloaded_other": "{{count}} ngày quá tải",
+      "overloaded": "{{count}} ngày quá tải",
+      "headlineOnTrack": "Hôm nay bạn đang đi đúng tiến độ.",
+      "headlineHigh_one": "Có {{count}} việc đáng để chú ý hôm nay.",
+      "headlineHigh_other": "Có {{count}} việc đáng để chú ý hôm nay.",
+      "headlineHigh": "Có {{count}} việc đáng để chú ý hôm nay.",
+      "headlineMedium_one": "Có {{count}} gợi ý nhẹ nhàng đang chờ — không gấp.",
+      "headlineMedium_other": "Có {{count}} gợi ý nhẹ nhàng đang chờ — không gấp.",
+      "headlineMedium": "Có {{count}} gợi ý nhẹ nhàng đang chờ — không gấp.",
+      "headlineSomeAttention_one": "Có {{count}} gợi ý đáng xem.",
+      "headlineSomeAttention_other": "Có {{count}} gợi ý đáng xem.",
+      "headlineSomeAttention": "Có {{count}} gợi ý đáng xem.",
+      "headlineSpending": "Chi tiêu {{category}} tuần này hơi cao — nên xem qua.",
+      "headlineOverload_one": "{{count}} ngày đang quá tải — thử giãn bớt một việc nhé.",
+      "headlineOverload_other": "{{count}} ngày đang quá tải — thử giãn bớt một việc nhé.",
+      "headlineOverload": "{{count}} ngày đang quá tải — thử giãn bớt một việc nhé."
+    },
+    "actions": {
+      "title": "Hành động trợ lý",
+      "body": "Chạy quét mới, hoặc để mình tóm tắt ngày hôm nay.",
+      "runDaily": "Chạy kiểm tra hôm nay",
+      "generateReview": "Tạo review cuối ngày"
+    },
+    "filters": {
+      "type": "Mảng",
+      "priority": "Mức độ",
+      "all": "Tất cả"
+    },
+    "type": {
+      "SCHEDULE": "Lịch trình",
+      "TASK": "Công việc",
+      "HABIT": "Thói quen",
+      "MEAL": "Bữa ăn",
+      "HEALTH": "Sức khoẻ",
+      "FINANCE": "Tài chính",
+      "GOAL": "Mục tiêu"
+    },
+    "priority": {
+      "HIGH": "Cao",
+      "MEDIUM": "Trung bình",
+      "LOW": "Thấp"
+    },
+    "badge": {
+      "new": "Mới"
+    },
     "action": {
-      "apply": "Áp dụng"
+      "apply": "Áp dụng",
+      "dismiss": "Bỏ qua",
+      "view": "Xem",
+      "open": "Mở",
+      "askAi": "Hỏi AI"
+    },
+    "confirmApply": {
+      "title": "Đánh dấu đã áp dụng?",
+      "body": "Mình không tự đổi gì hết — chỉ ghi nhớ rằng bạn đã xử lý gợi ý này."
+    },
+    "ai": {
+      "askPrompt": "Mình vừa nhận gợi ý này:\n\n{{title}}\n{{content}}\n\nHãy giải thích ngắn gọn, nhẹ nhàng vì sao nó được đề xuất và gợi 1-2 bước nhỏ có thể làm hôm nay.",
+      "answerTitle": "Trợ lý nói"
+    },
+    "review": {
+      "doneTitle": "Review hôm nay",
+      "openFull": "Mở review đầy đủ"
     },
     "empty": {
-      "title": "Chưa có gợi ý",
-      "description": "Khi dữ liệu đầy đủ hơn, mình sẽ chủ động gợi ý tại đây."
+      "title": "Hiện chưa có gợi ý nào",
+      "description": "Khi dữ liệu đầy đủ hơn, mình sẽ chủ động gợi ý — không áp lực."
     },
     "patterns": {
       "title": "Mẫu hành vi",
