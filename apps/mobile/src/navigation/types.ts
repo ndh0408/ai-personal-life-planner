@@ -37,7 +37,7 @@ export type RootStackParamList = {
   Main: undefined;
   // modals & detail screens
   CreateTask: { taskId?: string } | undefined;
-  CreateHabit: undefined;
+  CreateHabit: { habitId?: string } | undefined;
   ScheduleDetail: { date: string };
   SleepMoodCheckin: undefined;
   WeeklyReport: undefined;

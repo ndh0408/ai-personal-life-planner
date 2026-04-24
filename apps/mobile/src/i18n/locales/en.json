@@ -319,7 +319,56 @@
   "habits": {
     "title": "Habits",
     "streak": "{{count}}-day streak",
-    "completedToday": "Done today"
+    "completedToday": "Done today",
+    "addNew": "New habit",
+    "createTitle": "New habit",
+    "editTitle": "Edit habit",
+    "streak_one": "{{count}}-day streak",
+    "streak_other": "{{count}}-day streak",
+    "todayLabel": "today",
+    "plusOne": "+1",
+    "checkin": "Check-in",
+    "undo": "Undo",
+    "filter": {
+      "ALL": "All",
+      "TODAY": "Today",
+      "COMPLETED": "Completed"
+    },
+    "frequency": {
+      "DAILY": "Daily",
+      "WEEKLY": "Weekly",
+      "CUSTOM": "Custom"
+    },
+    "form": {
+      "name": "Habit name",
+      "namePlaceholder": "Drink 8 glasses of water",
+      "description": "Description",
+      "descriptionPlaceholder": "A small note about how you keep it up…",
+      "frequency": "Frequency",
+      "targetCount": "Target count per occurrence",
+      "color": "Color",
+      "icon": "Icon",
+      "isActive": "Tracking",
+      "isActiveHint": "Turn off to pause without losing history."
+    },
+    "empty": {
+      "ALL": {
+        "title": "No habits yet",
+        "description": "Add 1-2 small ones to start — water, sleep, or a few minutes of meditation."
+      },
+      "TODAY": {
+        "title": "All done for today!",
+        "description": "Nicely done — every habit is checked for today."
+      },
+      "COMPLETED": {
+        "title": "No check-ins yet today",
+        "description": "No habit has been marked completed today."
+      }
+    },
+    "confirmDelete": {
+      "title": "Delete habit?",
+      "body": "All check-in history will be lost. This cannot be undone."
+    }
   },
   "assistant": {
     "title": "Assistant",

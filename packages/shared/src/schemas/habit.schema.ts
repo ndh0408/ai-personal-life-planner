@@ -29,5 +29,7 @@ export type LogHabitInput = z.infer<typeof LogHabitSchema>;
 export const HabitLogsQuerySchema = z.object({
   date: DateOnly.optional(),
   habitId: z.string().uuid().optional(),
+  from: DateOnly.optional(),
+  to: DateOnly.optional(),
 });
 export type HabitLogsQuery = z.infer<typeof HabitLogsQuerySchema>;

@@ -77,7 +77,13 @@ export class HabitsService {
   listLogs(userId: string, query: HabitLogsQuery) {
     const where: Prisma.HabitLogWhereInput = { userId };
     if (query.habitId) where.habitId = query.habitId;
-    if (query.date) where.date = dateOnly(query.date);
+    if (query.date) {
+      where.date = dateOnly(query.date);
+    } else if (query.from || query.to) {
+      where.date = {};
+      if (query.from) (where.date as Prisma.DateTimeFilter).gte = dateOnly(query.from);
+      if (query.to) (where.date as Prisma.DateTimeFilter).lte = dateOnly(query.to);
+    }
 
     return this.prisma.habitLog.findMany({
       where,

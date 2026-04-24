@@ -319,7 +319,56 @@
   "habits": {
     "title": "Thói quen",
     "streak": "Chuỗi {{count}} ngày",
-    "completedToday": "Đã hoàn thành hôm nay"
+    "completedToday": "Đã hoàn thành hôm nay",
+    "addNew": "Thêm thói quen",
+    "createTitle": "Thói quen mới",
+    "editTitle": "Sửa thói quen",
+    "streak_one": "Chuỗi {{count}} ngày",
+    "streak_other": "Chuỗi {{count}} ngày",
+    "todayLabel": "hôm nay",
+    "plusOne": "+1",
+    "checkin": "Check-in",
+    "undo": "Bỏ check-in",
+    "filter": {
+      "ALL": "Tất cả",
+      "TODAY": "Hôm nay",
+      "COMPLETED": "Đã xong"
+    },
+    "frequency": {
+      "DAILY": "Hằng ngày",
+      "WEEKLY": "Hằng tuần",
+      "CUSTOM": "Tuỳ chỉnh"
+    },
+    "form": {
+      "name": "Tên thói quen",
+      "namePlaceholder": "Uống 8 cốc nước",
+      "description": "Mô tả",
+      "descriptionPlaceholder": "Ghi chú nhỏ về cách duy trì…",
+      "frequency": "Tần suất",
+      "targetCount": "Số lần mục tiêu/lần",
+      "color": "Màu",
+      "icon": "Biểu tượng",
+      "isActive": "Đang theo dõi",
+      "isActiveHint": "Tắt để tạm ngưng nhưng không xoá lịch sử."
+    },
+    "empty": {
+      "ALL": {
+        "title": "Chưa có thói quen",
+        "description": "Thêm 1-2 thói quen nhỏ để bắt đầu. Nước, ngủ, hoặc vài phút thiền."
+      },
+      "TODAY": {
+        "title": "Hôm nay xong hết rồi!",
+        "description": "Tuyệt vời — bạn đã hoàn thành mọi thói quen cho hôm nay."
+      },
+      "COMPLETED": {
+        "title": "Chưa check-in hôm nay",
+        "description": "Chưa có thói quen nào được đánh dấu hoàn thành hôm nay."
+      }
+    },
+    "confirmDelete": {
+      "title": "Xoá thói quen?",
+      "body": "Toàn bộ lịch sử check-in sẽ mất. Không thể hoàn tác."
+    }
   },
   "assistant": {
     "title": "Trợ lý",
