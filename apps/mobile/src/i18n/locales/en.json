@@ -203,9 +203,50 @@
   },
   "today": {
     "title": "Today",
-    "greeting": "Hi {{name}} 👋",
-    "nothingPlanned": "No plan for today yet",
-    "generatePlan": "Let AI plan your day"
+    "checkinCta": "Check-in",
+    "moodToday": "Mood",
+    "moodLogged": "You already logged today — tap to update if it changed.",
+    "moodPromptTitle": "How are you feeling today?",
+    "moodPromptBody": "10 seconds — helps the assistant time things better.",
+    "aiPlanner": {
+      "title": "AI Planner",
+      "body": "Let the assistant draft a day that fits your energy + open tasks.",
+      "generate": "Generate today",
+      "regenerate": "Regenerate",
+      "imLate": "I’m running late",
+      "pending": "Generating…",
+      "confirmOverwriteTitle": "Overwrite today’s plan?",
+      "confirmOverwriteBody": "The existing plan will be replaced by a new one. Continue?"
+    },
+    "reschedule": {
+      "pending": "Re-planning…",
+      "previewTitle": "Re-plan preview",
+      "shortened": "Shortened",
+      "removed": "Removed",
+      "apply": "Apply"
+    },
+    "wakeTime": "Wake by",
+    "sleepTime": "Sleep by",
+    "timeline": "Timeline",
+    "empty": {
+      "title": "No plan for today yet",
+      "description": "Tap \"Generate today\" to have AI draft one."
+    },
+    "tasksPreview": "Tasks",
+    "habitsPreview": "Habits",
+    "habitsLine": "{{completed}}/{{active}} habits checked today",
+    "habitsConsistency": "7-day consistency: {{pct}}%",
+    "mealsPreview": "Meals",
+    "mealsLine": "{{logged}}/{{planned}} meals logged",
+    "mealsNext": "Next",
+    "financeReminder": "Finance",
+    "remainingMonth": "Remaining this month",
+    "item": {
+      "complete": "Mark done",
+      "uncomplete": "Undo",
+      "skip": "Skip",
+      "delay": "Delay"
+    }
   },
   "tasks": {
     "title": "Tasks",
@@ -397,5 +438,9 @@
     "AUTH_ACCOUNT_DISABLED": "This account has been disabled.",
     "AUTH_EMAIL_TAKEN": "This email is already registered.",
     "AUTH_UNAUTHORIZED": "Please log in to continue."
+  },
+  "offline": {
+    "title": "You’re offline",
+    "description": "Some actions (AI, sync) are paused. Data will refresh once you’re back online."
   }
 }

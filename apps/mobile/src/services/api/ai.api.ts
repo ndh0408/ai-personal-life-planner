@@ -105,4 +105,25 @@ export const aiApi = {
     api.post<FinanceAnalysisResponse>('/ai/analyze-finance', body),
   dailyReview: (body: { date: string }) =>
     api.post<DailyReviewResponse>('/ai/daily-review', body),
+  reschedule: (body: {
+    date: string;
+    currentTime: string;
+    delayMinutes: number;
+    mustKeepItemIds?: string[];
+    priorityNote?: string;
+  }) =>
+    api.post<ReschedulePreviewResponse>('/ai/reschedule', body),
+  applyReschedule: (body: { date: string; previewId: string }) =>
+    api.post<{ id: string } | null>('/ai/apply-reschedule', body),
+};
+
+export type ReschedulePreviewResponse = {
+  previewId: string;
+  preview: {
+    summary: string;
+    kept: Array<{ id: string; reason: string }>;
+    shortened: Array<{ id: string; minutesRemoved: number; reason: string }>;
+    removed: Array<{ id: string; reason: string }>;
+    warnings: string[];
+  };
 };

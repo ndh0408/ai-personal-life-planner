@@ -203,9 +203,50 @@
   },
   "today": {
     "title": "Hôm nay",
-    "greeting": "Chào {{name}} 👋",
-    "nothingPlanned": "Chưa có lịch cho hôm nay",
-    "generatePlan": "Để AI tạo lịch giúp bạn"
+    "checkinCta": "Check-in",
+    "moodToday": "Tâm trạng",
+    "moodLogged": "Bạn đã ghi hôm nay rồi — có thể cập nhật nếu thay đổi.",
+    "moodPromptTitle": "Hôm nay bạn thấy thế nào?",
+    "moodPromptBody": "Chỉ mất 10 giây, giúp trợ lý hiểu nhịp ngày của bạn hơn.",
+    "aiPlanner": {
+      "title": "AI Planner",
+      "body": "Để trợ lý sắp một ngày vừa vặn với sức khoẻ và công việc của bạn.",
+      "generate": "Tạo lịch hôm nay",
+      "regenerate": "Tạo lại lịch",
+      "imLate": "Tôi bị trễ",
+      "pending": "Đang tạo…",
+      "confirmOverwriteTitle": "Ghi đè lịch hôm nay?",
+      "confirmOverwriteBody": "Lịch hiện có sẽ bị thay bằng bản mới. Tiếp tục?"
+    },
+    "reschedule": {
+      "pending": "Đang tính lại…",
+      "previewTitle": "Đề xuất sắp lại",
+      "shortened": "Rút gọn",
+      "removed": "Bỏ",
+      "apply": "Áp dụng"
+    },
+    "wakeTime": "Giờ nên dậy",
+    "sleepTime": "Giờ nên ngủ",
+    "timeline": "Dòng thời gian",
+    "empty": {
+      "title": "Chưa có lịch hôm nay",
+      "description": "Bấm \"Tạo lịch hôm nay\" để AI soạn giúp bạn."
+    },
+    "tasksPreview": "Công việc",
+    "habitsPreview": "Thói quen",
+    "habitsLine": "{{completed}}/{{active}} thói quen đã check hôm nay",
+    "habitsConsistency": "Nhất quán 7 ngày: {{pct}}%",
+    "mealsPreview": "Bữa ăn",
+    "mealsLine": "{{logged}}/{{planned}} bữa đã ghi",
+    "mealsNext": "Tiếp theo",
+    "financeReminder": "Tài chính",
+    "remainingMonth": "Còn lại tháng này",
+    "item": {
+      "complete": "Hoàn tất",
+      "uncomplete": "Bỏ đánh dấu",
+      "skip": "Bỏ qua",
+      "delay": "Hoãn"
+    }
   },
   "tasks": {
     "title": "Công việc",
@@ -397,5 +438,9 @@
     "AUTH_ACCOUNT_DISABLED": "Tài khoản đã bị vô hiệu hoá.",
     "AUTH_EMAIL_TAKEN": "Email đã được đăng ký.",
     "AUTH_UNAUTHORIZED": "Vui lòng đăng nhập để tiếp tục."
+  },
+  "offline": {
+    "title": "Không có mạng",
+    "description": "Một số thao tác (AI, đồng bộ) đang bị tạm dừng. Dữ liệu sẽ cập nhật khi online lại."
   }
 }
