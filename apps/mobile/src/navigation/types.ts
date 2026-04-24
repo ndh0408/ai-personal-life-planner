@@ -47,6 +47,7 @@ export type RootStackParamList = {
   Habits: undefined;
   Meals: undefined;
   Health: undefined;
+  HealthMetric: undefined;
   Wallets: undefined;
   Income: undefined;
   Expense: undefined;

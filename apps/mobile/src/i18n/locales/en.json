@@ -471,6 +471,64 @@
     "empty": {
       "title": "No health data yet",
       "description": "Log weight or steps to see your trend."
+    },
+    "checkinCta": "Sleep & mood check-in",
+    "logMetricCta": "Log metrics",
+    "sleepSummary": {
+      "title": "Sleep",
+      "slept": "Slept",
+      "woke": "Woke",
+      "duration": "Duration",
+      "dateLabel": "{{date}}",
+      "avg7d": "7-day average",
+      "nights_one": "{{count}} night logged",
+      "nights_other": "{{count}} nights logged",
+      "nights": "{{count}} nights logged",
+      "quality": {
+        "VERY_BAD": "Very bad",
+        "BAD": "Bad",
+        "NORMAL": "Normal",
+        "GOOD": "Good",
+        "VERY_GOOD": "Very good"
+      },
+      "empty": {
+        "title": "No sleep log yet",
+        "description": "Use the check-in to record last night."
+      }
+    },
+    "moodSummary": {
+      "title": "Mood & energy",
+      "mood": "Mood",
+      "energy": "Energy",
+      "stress": "Stress",
+      "energyTrend": "Energy trend",
+      "stressTrend": "Stress trend",
+      "trendSub": "last {{count}} days",
+      "empty": {
+        "title": "No check-in yet today",
+        "description": "10 seconds to log — helps the assistant advise better."
+      }
+    },
+    "metrics": {
+      "title": "Metrics",
+      "weight": "Weight",
+      "steps": "Steps",
+      "water": "Water",
+      "exercise7d": "Exercise (7d)",
+      "avg7d": "7-day average",
+      "weightShort": "Weight",
+      "stepsShort": "Steps",
+      "waterShort": "Water",
+      "exerciseShort": "Exercise"
+    },
+    "insight": {
+      "title": "Lifestyle insight",
+      "needData": "Log a few more days of sleep + mood so I can suggest something specific.",
+      "underslept": "Your 7-day average is under 6 hours. A 30-minute earlier phone-down tonight would be a small start.",
+      "stressRising": "Stress has been trending up. A 15-minute mid-afternoon break can help.",
+      "energyDown": "Energy is trending down. Consider pushing low-priority items so you can spend focus on what matters.",
+      "steady": "Things look steady. Keep the rhythm — and take real breaks.",
+      "disclaimer": "Lifestyle guidance only — not a substitute for medical advice. If symptoms persist, please consult a healthcare professional."
     }
   },
   "scores": {
@@ -584,6 +642,52 @@
       "ingredientsPlaceholder": "eggs, rice, veggies, chicken…",
       "cookMin": "Max cooking time (min)",
       "submit": "Suggest meals"
+    }
+  },
+  "checkin": {
+    "sleepTitle": "Last night’s sleep",
+    "moodTitle": "How are you feeling today?",
+    "sleepTime": "Slept at (HH:mm)",
+    "wakeTime": "Woke at (HH:mm)",
+    "quality": "Quality",
+    "mood": "Mood",
+    "energy": "Energy",
+    "stress": "Stress",
+    "note": "Note",
+    "notePlaceholder": "Anything affecting today?",
+    "hhmmHint": "Use HH:mm (24h).",
+    "invalidTimeTitle": "Invalid time",
+    "invalidTimeBody": "Check the sleep and wake times — wake must be after sleep.",
+    "durationHint": "Duration: {{hours}} hours",
+    "spansPrevDay": "spans the previous night",
+    "update": "Update",
+    "moods": {
+      "HAPPY": "Happy",
+      "NORMAL": "Neutral",
+      "STRESSED": "Stressed",
+      "TIRED": "Tired",
+      "SAD": "Sad",
+      "MOTIVATED": "Motivated"
+    },
+    "levels": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High"
+    }
+  },
+  "healthMetric": {
+    "title": "Log today’s metrics",
+    "subtitle": "What you measured today — weight, water, steps, exercise.",
+    "update": "Update",
+    "invalid": "{{field}} must be a positive number.",
+    "disclaimer": "These numbers help you see a trend — they are not a substitute for a medical check-up.",
+    "form": {
+      "weight": "Weight (kg)",
+      "water": "Water (ml)",
+      "steps": "Steps",
+      "exercise": "Exercise (min)",
+      "note": "Note",
+      "notePlaceholder": "How did it feel after the workout?"
     }
   }
 }

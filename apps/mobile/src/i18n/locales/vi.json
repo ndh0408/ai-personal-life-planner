@@ -471,6 +471,64 @@
     "empty": {
       "title": "Chưa có dữ liệu sức khoẻ",
       "description": "Ghi cân nặng hoặc bước chân để theo dõi xu hướng."
+    },
+    "checkinCta": "Check-in ngủ + tâm trạng",
+    "logMetricCta": "Ghi chỉ số sức khoẻ",
+    "sleepSummary": {
+      "title": "Giấc ngủ",
+      "slept": "Đi ngủ",
+      "woke": "Thức dậy",
+      "duration": "Thời lượng",
+      "dateLabel": "{{date}}",
+      "avg7d": "Trung bình 7 ngày",
+      "nights_one": "{{count}} đêm đã ghi",
+      "nights_other": "{{count}} đêm đã ghi",
+      "nights": "{{count}} đêm đã ghi",
+      "quality": {
+        "VERY_BAD": "Rất tệ",
+        "BAD": "Tệ",
+        "NORMAL": "Bình thường",
+        "GOOD": "Tốt",
+        "VERY_GOOD": "Rất tốt"
+      },
+      "empty": {
+        "title": "Chưa có log giấc ngủ",
+        "description": "Dùng Check-in để ghi giấc ngủ đêm qua."
+      }
+    },
+    "moodSummary": {
+      "title": "Tâm trạng & năng lượng",
+      "mood": "Tâm trạng",
+      "energy": "Năng lượng",
+      "stress": "Stress",
+      "energyTrend": "Xu hướng năng lượng",
+      "stressTrend": "Xu hướng stress",
+      "trendSub": "{{count}} ngày gần đây",
+      "empty": {
+        "title": "Chưa check-in hôm nay",
+        "description": "10 giây để ghi lại, giúp AI tư vấn sát hơn."
+      }
+    },
+    "metrics": {
+      "title": "Chỉ số sức khoẻ",
+      "weight": "Cân nặng",
+      "steps": "Số bước",
+      "water": "Nước uống",
+      "exercise7d": "Vận động 7 ngày",
+      "avg7d": "Trung bình 7 ngày",
+      "weightShort": "Cân",
+      "stepsShort": "Bước",
+      "waterShort": "Nước",
+      "exerciseShort": "Vận động"
+    },
+    "insight": {
+      "title": "Gợi ý lifestyle",
+      "needData": "Ghi thêm vài ngày ngủ + tâm trạng để mình có thể gợi ý cụ thể hơn.",
+      "underslept": "Giấc ngủ trung bình của bạn đang dưới 6 giờ. Thử tắt điện thoại 30 phút sớm hơn tối nay — chỉ là gợi ý nhỏ để bắt đầu.",
+      "stressRising": "Mức stress có xu hướng tăng vài ngày qua. Chèn một khoảng nghỉ 15 phút giữa chiều có thể giúp.",
+      "energyDown": "Năng lượng đang đi xuống. Xem có thể dời việc ít quan trọng sang ngày khác, để dành sức cho việc cần tập trung nhất.",
+      "steady": "Mọi thứ đang ổn định. Tiếp tục nhịp này và nhớ dành thời gian nghỉ ngơi.",
+      "disclaimer": "Đây là gợi ý lifestyle chung — không thay thế lời khuyên bác sĩ. Nếu có triệu chứng kéo dài, hãy tham vấn chuyên gia y tế."
     }
   },
   "scores": {
@@ -584,6 +642,52 @@
       "ingredientsPlaceholder": "trứng, gạo, rau, ức gà…",
       "cookMin": "Thời gian nấu tối đa (phút)",
       "submit": "Gợi ý bữa ăn"
+    }
+  },
+  "checkin": {
+    "sleepTitle": "Giấc ngủ đêm qua",
+    "moodTitle": "Hôm nay bạn thấy thế nào?",
+    "sleepTime": "Đi ngủ (HH:mm)",
+    "wakeTime": "Thức dậy (HH:mm)",
+    "quality": "Chất lượng",
+    "mood": "Tâm trạng",
+    "energy": "Năng lượng",
+    "stress": "Stress",
+    "note": "Ghi chú",
+    "notePlaceholder": "Điều gì ảnh hưởng tới ngày hôm nay?",
+    "hhmmHint": "Định dạng HH:mm (24h).",
+    "invalidTimeTitle": "Giờ không hợp lệ",
+    "invalidTimeBody": "Vui lòng kiểm tra lại giờ ngủ và giờ thức — giờ thức phải sau giờ ngủ.",
+    "durationHint": "Tổng thời gian: {{hours}} giờ",
+    "spansPrevDay": "tính từ đêm qua",
+    "update": "Cập nhật",
+    "moods": {
+      "HAPPY": "Vui",
+      "NORMAL": "Bình thường",
+      "STRESSED": "Căng thẳng",
+      "TIRED": "Mệt",
+      "SAD": "Buồn",
+      "MOTIVATED": "Hào hứng"
+    },
+    "levels": {
+      "LOW": "Thấp",
+      "MEDIUM": "Vừa",
+      "HIGH": "Cao"
+    }
+  },
+  "healthMetric": {
+    "title": "Ghi chỉ số hôm nay",
+    "subtitle": "Chỉ số bạn đo được hôm nay — cân nặng, nước, bước, vận động.",
+    "update": "Cập nhật",
+    "invalid": "{{field}} phải là số dương.",
+    "disclaimer": "Ghi chỉ số giúp bạn thấy xu hướng — không thay thế kiểm tra y tế chuyên sâu.",
+    "form": {
+      "weight": "Cân nặng (kg)",
+      "water": "Nước uống (ml)",
+      "steps": "Số bước",
+      "exercise": "Phút vận động",
+      "note": "Ghi chú",
+      "notePlaceholder": "Cảm thấy thế nào sau khi tập?"
     }
   }
 }

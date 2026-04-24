@@ -20,6 +20,7 @@ import { TasksScreen } from '../screens/tasks/TasksScreen';
 import { HabitsScreen } from '../screens/habits/HabitsScreen';
 import { MealsScreen } from '../screens/meals/MealsScreen';
 import { HealthScreen } from '../screens/health/HealthScreen';
+import { HealthMetricScreen } from '../screens/health/HealthMetricScreen';
 import { WalletsScreen } from '../screens/finance/WalletsScreen';
 import { IncomeScreen } from '../screens/finance/IncomeScreen';
 import { ExpenseScreen } from '../screens/finance/ExpenseScreen';
@@ -76,6 +77,7 @@ export function RootNavigator() {
               <Stack.Screen name="Habits" component={HabitsScreen} options={{ title: 'Habits' }} />
               <Stack.Screen name="Meals" component={MealsScreen} options={{ title: 'Meals' }} />
               <Stack.Screen name="Health" component={HealthScreen} options={{ title: 'Health' }} />
+              <Stack.Screen name="HealthMetric" component={HealthMetricScreen} options={{ title: 'Log metrics' }} />
               <Stack.Screen name="Wallets" component={WalletsScreen} options={{ title: 'Wallets' }} />
               <Stack.Screen name="Income" component={IncomeScreen} options={{ title: 'Income' }} />
               <Stack.Screen name="Expense" component={ExpenseScreen} options={{ title: 'Expenses' }} />
