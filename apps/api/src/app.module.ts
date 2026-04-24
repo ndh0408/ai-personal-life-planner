@@ -44,6 +44,7 @@ import { AssistantModule } from './modules/assistant/assistant.module';
 // Cross-cutting
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -101,6 +102,7 @@ import { ReportsModule } from './modules/reports/reports.module';
     // Cross-cutting
     NotificationsModule,
     ReportsModule,
+    DashboardModule,
   ],
   providers: [
     {

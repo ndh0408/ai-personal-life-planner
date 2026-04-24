@@ -18,7 +18,8 @@
     "search": "Search",
     "today": "Today",
     "inactive": "Inactive",
-    "uncategorized": "Uncategorized"
+    "uncategorized": "Uncategorized",
+    "viewMore": "View more"
   },
   "app": {
     "name": "LifeOS AI",
@@ -145,7 +146,60 @@
     "cashOnHand": "Cash on hand",
     "walletsCount": "{{count}} wallets",
     "whatMatters": "What matters today",
-    "nothingUrgent": "Nothing urgent — enjoy your day."
+    "nothingUrgent": "Nothing urgent — enjoy your day.",
+    "greeting": {
+      "morning": "Good morning, {{name}} ☀️",
+      "afternoon": "Good afternoon, {{name}} 👋",
+      "evening": "Good evening, {{name}} 🌙",
+      "subtitle": "{{tasksToday}} tasks today · {{habits}} active habits"
+    },
+    "assistantEmpty": {
+      "title": "No assistant tips yet",
+      "description": "Tap Refresh on the Assistant tab to scan your data now."
+    },
+    "todayPlan": {
+      "title": "Today’s plan",
+      "itemsLine": "{{completed}}/{{total}} items done",
+      "none": "No plan for today yet. Want AI to draft one?",
+      "generate": "Generate with AI",
+      "regenerate": "Regenerate",
+      "open": "Open plan"
+    },
+    "finance": {
+      "title": "This month",
+      "income": "Income",
+      "expense": "Expense",
+      "remaining": "Remaining",
+      "cashHint": "Cash on hand: {{amount}}"
+    },
+    "health": {
+      "title": "Wellbeing",
+      "sleep": "Last sleep",
+      "mood": "Mood",
+      "meals": "Meals",
+      "habits": "Habits"
+    },
+    "tasks": {
+      "title": "Tasks",
+      "today": "Today",
+      "overdue": "Overdue",
+      "highPriority": "High priority",
+      "empty": "Nothing urgent today."
+    },
+    "goals": {
+      "title": "Goals",
+      "active": "Active",
+      "behind": "Behind"
+    },
+    "quickActions": {
+      "title": "Quick actions",
+      "addExpense": "Add expense",
+      "addIncome": "Add income",
+      "addTask": "Add task",
+      "checkinMood": "Check-in mood",
+      "generateSchedule": "AI schedule",
+      "askAI": "Ask AI"
+    }
   },
   "today": {
     "title": "Today",

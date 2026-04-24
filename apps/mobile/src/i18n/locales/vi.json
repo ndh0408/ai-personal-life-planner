@@ -18,7 +18,8 @@
     "search": "Tìm kiếm",
     "today": "Hôm nay",
     "inactive": "Tạm dừng",
-    "uncategorized": "Chưa phân loại"
+    "uncategorized": "Chưa phân loại",
+    "viewMore": "Xem thêm"
   },
   "app": {
     "name": "LifeOS AI",
@@ -145,7 +146,60 @@
     "cashOnHand": "Tiền đang có",
     "walletsCount": "{{count}} ví",
     "whatMatters": "Điều đáng lưu ý",
-    "nothingUrgent": "Không có việc gấp — tận hưởng ngày của bạn."
+    "nothingUrgent": "Không có việc gấp — tận hưởng ngày của bạn.",
+    "greeting": {
+      "morning": "Chào buổi sáng, {{name}} ☀️",
+      "afternoon": "Chào buổi chiều, {{name}} 👋",
+      "evening": "Chào buổi tối, {{name}} 🌙",
+      "subtitle": "{{tasksToday}} việc hôm nay · {{habits}} thói quen đang theo dõi"
+    },
+    "assistantEmpty": {
+      "title": "Chưa có gợi ý từ trợ lý",
+      "description": "Nhấn Refresh ở tab Trợ lý để mình quét dữ liệu ngay."
+    },
+    "todayPlan": {
+      "title": "Kế hoạch hôm nay",
+      "itemsLine": "Đã xong {{completed}}/{{total}} mục trên lịch",
+      "none": "Chưa có lịch cho hôm nay. Để AI sắp xếp giúp bạn?",
+      "generate": "Tạo lịch bằng AI",
+      "regenerate": "AI lên lại",
+      "open": "Mở lịch"
+    },
+    "finance": {
+      "title": "Tài chính tháng này",
+      "income": "Thu",
+      "expense": "Chi",
+      "remaining": "Còn lại",
+      "cashHint": "Tiền trong ví: {{amount}}"
+    },
+    "health": {
+      "title": "Sức khoẻ & lối sống",
+      "sleep": "Ngủ gần nhất",
+      "mood": "Tâm trạng",
+      "meals": "Bữa ăn",
+      "habits": "Thói quen"
+    },
+    "tasks": {
+      "title": "Công việc",
+      "today": "Hôm nay",
+      "overdue": "Quá hạn",
+      "highPriority": "Ưu tiên cao",
+      "empty": "Không có task cần gấp hôm nay."
+    },
+    "goals": {
+      "title": "Mục tiêu",
+      "active": "Đang theo",
+      "behind": "Đang chậm"
+    },
+    "quickActions": {
+      "title": "Hành động nhanh",
+      "addExpense": "Thêm chi tiêu",
+      "addIncome": "Thêm thu nhập",
+      "addTask": "Thêm task",
+      "checkinMood": "Check-in mood",
+      "generateSchedule": "Lên lịch AI",
+      "askAI": "Hỏi AI"
+    }
   },
   "today": {
     "title": "Hôm nay",
