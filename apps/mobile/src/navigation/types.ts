@@ -12,13 +12,21 @@ export type OnboardingStackParamList = {
   Profile: undefined;
   Goal: undefined;
   Schedule: undefined;
+  Finance: undefined;
 };
 
+/**
+ * Main bottom-tab set. Per product spec this iteration:
+ *   Dashboard | Today | Finance | Assistant | Profile
+ *
+ * Tasks/Habits/Meals still exist as secondary screens reachable from
+ * Dashboard/Today cards (not as tabs).
+ */
 export type MainTabsParamList = {
+  Dashboard: undefined;
   Today: undefined;
-  Tasks: undefined;
-  Habits: undefined;
-  Meals: undefined;
+  Finance: undefined;
+  Assistant: undefined;
   Profile: undefined;
 };
 
@@ -33,6 +41,19 @@ export type RootStackParamList = {
   ScheduleDetail: { date: string };
   SleepMoodCheckin: undefined;
   WeeklyReport: undefined;
+  DailyReview: undefined;
+  MonthlyFinanceReport: undefined;
+  Tasks: undefined;
+  Habits: undefined;
+  Meals: undefined;
+  Health: undefined;
+  Wallets: undefined;
+  Income: undefined;
+  Expense: undefined;
+  Budget: undefined;
+  Debt: undefined;
+  SavingGoals: undefined;
+  PersonalGoals: undefined;
   Settings: undefined;
   LanguageSettings: undefined;
   AIChat: undefined;

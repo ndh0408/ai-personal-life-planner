@@ -7,11 +7,26 @@ import { SplashScreen } from '../screens/SplashScreen';
 import { AuthNavigator } from './AuthNavigator';
 import { OnboardingNavigator } from './OnboardingNavigator';
 import { MainTabsNavigator } from './MainTabsNavigator';
+
+// Secondary / modal screens
 import { CreateTaskScreen } from '../screens/tasks/CreateTaskScreen';
 import { CreateHabitScreen } from '../screens/habits/CreateHabitScreen';
 import { ScheduleDetailScreen } from '../screens/today/ScheduleDetailScreen';
 import { SleepMoodCheckinScreen } from '../screens/today/SleepMoodCheckinScreen';
 import { WeeklyReportScreen } from '../screens/reports/WeeklyReportScreen';
+import { DailyReviewScreen } from '../screens/reports/DailyReviewScreen';
+import { MonthlyFinanceReportScreen } from '../screens/reports/MonthlyFinanceReportScreen';
+import { TasksScreen } from '../screens/tasks/TasksScreen';
+import { HabitsScreen } from '../screens/habits/HabitsScreen';
+import { MealsScreen } from '../screens/meals/MealsScreen';
+import { HealthScreen } from '../screens/health/HealthScreen';
+import { WalletsScreen } from '../screens/finance/WalletsScreen';
+import { IncomeScreen } from '../screens/finance/IncomeScreen';
+import { ExpenseScreen } from '../screens/finance/ExpenseScreen';
+import { BudgetScreen } from '../screens/finance/BudgetScreen';
+import { DebtScreen } from '../screens/finance/DebtScreen';
+import { SavingGoalsScreen } from '../screens/finance/SavingGoalsScreen';
+import { PersonalGoalsScreen } from '../screens/goals/PersonalGoalsScreen';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
 import { LanguageSettingsScreen } from '../screens/settings/LanguageSettingsScreen';
 import { AIChatScreen } from '../screens/ai/AIChatScreen';
@@ -51,6 +66,25 @@ export function RootNavigator() {
           <>
             <Stack.Screen name="Main" component={MainTabsNavigator} />
             <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
+
+            {/* Push-style secondary screens */}
+            <Stack.Group screenOptions={{ headerShown: true }}>
+              <Stack.Screen name="Tasks" component={TasksScreen} options={{ title: 'Tasks' }} />
+              <Stack.Screen name="Habits" component={HabitsScreen} options={{ title: 'Habits' }} />
+              <Stack.Screen name="Meals" component={MealsScreen} options={{ title: 'Meals' }} />
+              <Stack.Screen name="Health" component={HealthScreen} options={{ title: 'Health' }} />
+              <Stack.Screen name="Wallets" component={WalletsScreen} options={{ title: 'Wallets' }} />
+              <Stack.Screen name="Income" component={IncomeScreen} options={{ title: 'Income' }} />
+              <Stack.Screen name="Expense" component={ExpenseScreen} options={{ title: 'Expenses' }} />
+              <Stack.Screen name="Budget" component={BudgetScreen} options={{ title: 'Budget' }} />
+              <Stack.Screen name="Debt" component={DebtScreen} options={{ title: 'Debt' }} />
+              <Stack.Screen name="SavingGoals" component={SavingGoalsScreen} options={{ title: 'Saving Goals' }} />
+              <Stack.Screen name="PersonalGoals" component={PersonalGoalsScreen} options={{ title: 'Goals' }} />
+              <Stack.Screen name="DailyReview" component={DailyReviewScreen} options={{ title: 'Daily review' }} />
+              <Stack.Screen name="MonthlyFinanceReport" component={MonthlyFinanceReportScreen} options={{ title: 'Monthly report' }} />
+            </Stack.Group>
+
+            {/* Modal-style */}
             <Stack.Group screenOptions={{ presentation: 'modal', headerShown: true }}>
               <Stack.Screen name="CreateTask" component={CreateTaskScreen} options={{ title: 'New task' }} />
               <Stack.Screen name="CreateHabit" component={CreateHabitScreen} options={{ title: 'New habit' }} />

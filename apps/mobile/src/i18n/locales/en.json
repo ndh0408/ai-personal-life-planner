@@ -16,18 +16,34 @@
     "confirm": "Confirm",
     "done": "Done",
     "search": "Search",
-    "today": "Today"
+    "today": "Today",
+    "inactive": "Inactive",
+    "uncategorized": "Uncategorized"
   },
   "app": {
     "name": "LifeOS AI",
     "tagline": "Your 24/7 personal life assistant"
   },
   "tabs": {
+    "dashboard": "Dashboard",
     "today": "Today",
+    "finance": "Finance",
+    "assistant": "Assistant",
     "tasks": "Tasks",
     "habits": "Habits",
     "reports": "Reports",
     "profile": "Profile"
+  },
+  "nav": {
+    "wallets": "Wallets",
+    "income": "Income",
+    "expense": "Expenses",
+    "budget": "Budget",
+    "debt": "Debt",
+    "savingGoals": "Saving Goals",
+    "personalGoals": "Personal Goals",
+    "health": "Health",
+    "meals": "Meals"
   },
   "auth": {
     "login": {
@@ -52,6 +68,14 @@
     "welcome": "Welcome to LifeOS AI",
     "description": "The operating system for your personal life.",
     "getStarted": "Get started"
+  },
+  "dashboard": {
+    "title": "Hi there",
+    "subtitle": "Your life at a glance today.",
+    "cashOnHand": "Cash on hand",
+    "walletsCount": "{{count}} wallets",
+    "whatMatters": "What matters today",
+    "nothingUrgent": "Nothing urgent — enjoy your day."
   },
   "today": {
     "title": "Today",
@@ -79,11 +103,142 @@
     "streak": "{{count}}-day streak",
     "completedToday": "Done today"
   },
+  "assistant": {
+    "title": "Assistant",
+    "subtitle": "Watches your data and nudges at the right moment — without judgment.",
+    "refresh": "Refresh",
+    "recommendations": "Recommendations",
+    "action": { "apply": "Apply" },
+    "empty": {
+      "title": "Nothing to suggest yet",
+      "description": "Once more data is available, proactive tips will land here."
+    },
+    "patterns": {
+      "title": "Behavior patterns",
+      "bestHour": "Most productive window",
+      "bestHabit": "Best habit",
+      "worstHabit": "Slipping habit",
+      "overloadedDays": "Overloaded days (14d)"
+    }
+  },
+  "finance": {
+    "title": "Finance",
+    "subtitle": "Income, expenses, budgets, and goals.",
+    "totalCash": "Total cash",
+    "iOwe": "I owe",
+    "walletsCount": "{{count}} wallets",
+    "budgetsCount": "{{count}} budgets",
+    "debtsCount": "{{count}} debts",
+    "savingsCount": "{{count}} goals",
+    "trackIncome": "Log income + salary",
+    "trackExpense": "Log daily expenses",
+    "seeMonthlyReport": "See monthly report",
+    "budgetStatus": "Budget status"
+  },
+  "wallets": {
+    "empty": {
+      "title": "No wallets yet",
+      "description": "Create a wallet to start tracking balances."
+    }
+  },
+  "incomes": {
+    "recurring": "Recurring",
+    "empty": {
+      "title": "No income yet",
+      "description": "Log salary or other income for accurate reports."
+    }
+  },
+  "expenses": {
+    "empty": {
+      "title": "No expenses yet",
+      "description": "Log daily spending to see trends."
+    }
+  },
+  "budgets": {
+    "period": "Period",
+    "threshold": "Alert threshold",
+    "empty": {
+      "title": "No budgets yet",
+      "description": "Set category budgets to stay on top of spending."
+    }
+  },
+  "debts": {
+    "iOwe": "I owe",
+    "owedToMe": "Owed to me",
+    "due": "Due",
+    "totalWord": "Total",
+    "empty": {
+      "title": "No debts",
+      "description": "Nothing outstanding right now."
+    }
+  },
+  "savings": {
+    "targetDate": "Target date",
+    "empty": {
+      "title": "No saving goals yet",
+      "description": "Emergency fund, a trip, a new laptop — pick one and start."
+    }
+  },
+  "goals": {
+    "title": "Personal goals",
+    "deadline": "Deadline",
+    "milestones": "Milestones",
+    "empty": {
+      "title": "No goals yet",
+      "description": "Create a long-term goal and break it into milestones."
+    }
+  },
+  "health": {
+    "title": "Health",
+    "subtitle": "Weight, water, steps, exercise.",
+    "avgWeight": "Avg weight",
+    "avgSteps": "Avg steps/day",
+    "exercise14d": "Exercise (14d)",
+    "minutesShort": "min",
+    "recent": "Recent",
+    "weightShort": "Weight",
+    "stepsShort": "Steps",
+    "waterShort": "Water",
+    "empty": {
+      "title": "No health data yet",
+      "description": "Log weight or steps to see your trend."
+    }
+  },
+  "scores": {
+    "schedule": "Schedule",
+    "habits": "Habits",
+    "sleep": "Sleep",
+    "energy": "Energy",
+    "stress": "Stress"
+  },
   "reports": {
     "title": "Reports",
-    "daily": "Daily report",
+    "daily": "Daily review",
     "weekly": "Weekly report",
-    "monthly": "Monthly report"
+    "monthly": "Monthly report",
+    "dailyDescription": "AI-summarized daily review — wins, issues, and tomorrow's nudges.",
+    "monthlyDescription": "Financial analysis for {{month}}.",
+    "generateDaily": "Generate today's review",
+    "generateMonthly": "Analyze this month",
+    "regenerate": "Regenerate",
+    "summary": "Summary",
+    "wins": "Wins",
+    "issues": "Watch-outs",
+    "tomorrow": "For tomorrow",
+    "healthAdvice": "Health",
+    "financeAdvice": "Finance",
+    "productivityAdvice": "Productivity",
+    "income": "Income",
+    "expense": "Expense",
+    "remaining": "Remaining",
+    "allocation": "Salary allocation",
+    "need": "Needs",
+    "want": "Wants",
+    "save": "Savings",
+    "patterns": "Spending patterns",
+    "savingSuggestions": "Saving suggestions",
+    "debtSuggestions": "Debt suggestions",
+    "advice": "Useful advice"
   },
   "profile": {
     "title": "Profile",

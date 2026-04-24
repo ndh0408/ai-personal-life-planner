@@ -16,18 +16,34 @@
     "confirm": "Xác nhận",
     "done": "Hoàn tất",
     "search": "Tìm kiếm",
-    "today": "Hôm nay"
+    "today": "Hôm nay",
+    "inactive": "Tạm dừng",
+    "uncategorized": "Chưa phân loại"
   },
   "app": {
     "name": "LifeOS AI",
     "tagline": "Trợ lý cuộc sống cá nhân 24/7"
   },
   "tabs": {
+    "dashboard": "Tổng quan",
     "today": "Hôm nay",
+    "finance": "Tài chính",
+    "assistant": "Trợ lý",
     "tasks": "Công việc",
     "habits": "Thói quen",
     "reports": "Báo cáo",
     "profile": "Cá nhân"
+  },
+  "nav": {
+    "wallets": "Ví tiền",
+    "income": "Thu nhập",
+    "expense": "Chi tiêu",
+    "budget": "Ngân sách",
+    "debt": "Nợ",
+    "savingGoals": "Mục tiêu tiết kiệm",
+    "personalGoals": "Mục tiêu cá nhân",
+    "health": "Sức khoẻ",
+    "meals": "Bữa ăn"
   },
   "auth": {
     "login": {
@@ -52,6 +68,14 @@
     "welcome": "Chào mừng đến với LifeOS AI",
     "description": "Hệ điều hành cho cuộc sống cá nhân của bạn.",
     "getStarted": "Bắt đầu"
+  },
+  "dashboard": {
+    "title": "Xin chào",
+    "subtitle": "Tổng quan cuộc sống cá nhân hôm nay.",
+    "cashOnHand": "Tiền đang có",
+    "walletsCount": "{{count}} ví",
+    "whatMatters": "Điều đáng lưu ý",
+    "nothingUrgent": "Không có việc gấp — tận hưởng ngày của bạn."
   },
   "today": {
     "title": "Hôm nay",
@@ -79,11 +103,142 @@
     "streak": "Chuỗi {{count}} ngày",
     "completedToday": "Đã hoàn thành hôm nay"
   },
+  "assistant": {
+    "title": "Trợ lý",
+    "subtitle": "Theo dõi và nhắc bạn đúng thời điểm, không phán xét.",
+    "refresh": "Làm mới",
+    "recommendations": "Gợi ý",
+    "action": { "apply": "Áp dụng" },
+    "empty": {
+      "title": "Chưa có gợi ý",
+      "description": "Khi dữ liệu đầy đủ hơn, mình sẽ chủ động gợi ý tại đây."
+    },
+    "patterns": {
+      "title": "Mẫu hành vi",
+      "bestHour": "Khung giờ hiệu quả",
+      "bestHabit": "Thói quen tốt nhất",
+      "worstHabit": "Thói quen đang trượt",
+      "overloadedDays": "Ngày quá tải gần đây"
+    }
+  },
+  "finance": {
+    "title": "Tài chính",
+    "subtitle": "Quản lý thu, chi, ngân sách và mục tiêu.",
+    "totalCash": "Tổng tiền",
+    "iOwe": "Đang nợ",
+    "walletsCount": "{{count}} ví",
+    "budgetsCount": "{{count}} ngân sách",
+    "debtsCount": "{{count}} khoản nợ",
+    "savingsCount": "{{count}} mục tiêu",
+    "trackIncome": "Ghi thu nhập + tiền lương",
+    "trackExpense": "Ghi chi tiêu hằng ngày",
+    "seeMonthlyReport": "Báo cáo tháng",
+    "budgetStatus": "Ngân sách tháng này"
+  },
+  "wallets": {
+    "empty": {
+      "title": "Chưa có ví",
+      "description": "Tạo ví tiền để bắt đầu theo dõi số dư."
+    }
+  },
+  "incomes": {
+    "recurring": "Định kỳ",
+    "empty": {
+      "title": "Chưa có thu nhập",
+      "description": "Ghi lương hoặc thu nhập để báo cáo chính xác hơn."
+    }
+  },
+  "expenses": {
+    "empty": {
+      "title": "Chưa có chi tiêu",
+      "description": "Ghi chi tiêu hằng ngày để thấy xu hướng."
+    }
+  },
+  "budgets": {
+    "period": "Chu kỳ",
+    "threshold": "Ngưỡng cảnh báo",
+    "empty": {
+      "title": "Chưa có ngân sách",
+      "description": "Đặt ngân sách theo hạng mục để kiểm soát chi tiêu."
+    }
+  },
+  "debts": {
+    "iOwe": "Đang nợ",
+    "owedToMe": "Cho vay",
+    "due": "Hạn",
+    "totalWord": "Tổng",
+    "empty": {
+      "title": "Chưa có khoản nợ",
+      "description": "Bạn không có khoản nợ nào đang theo dõi."
+    }
+  },
+  "savings": {
+    "targetDate": "Ngày đích",
+    "empty": {
+      "title": "Chưa có mục tiêu tiết kiệm",
+      "description": "Đặt mục tiêu như quỹ khẩn cấp, chuyến đi, laptop…"
+    }
+  },
+  "goals": {
+    "title": "Mục tiêu cá nhân",
+    "deadline": "Hạn",
+    "milestones": "Cột mốc",
+    "empty": {
+      "title": "Chưa có mục tiêu",
+      "description": "Tạo mục tiêu dài hạn và chia nhỏ thành cột mốc."
+    }
+  },
+  "health": {
+    "title": "Sức khoẻ",
+    "subtitle": "Cân nặng, nước uống, bước chân, vận động.",
+    "avgWeight": "Cân nặng TB",
+    "avgSteps": "Bước/ngày TB",
+    "exercise14d": "Tập 14 ngày qua",
+    "minutesShort": "phút",
+    "recent": "Gần đây",
+    "weightShort": "Cân",
+    "stepsShort": "Bước",
+    "waterShort": "Nước",
+    "empty": {
+      "title": "Chưa có dữ liệu sức khoẻ",
+      "description": "Ghi cân nặng hoặc bước chân để theo dõi xu hướng."
+    }
+  },
+  "scores": {
+    "schedule": "Lịch",
+    "habits": "Thói quen",
+    "sleep": "Ngủ",
+    "energy": "Năng lượng",
+    "stress": "Stress"
+  },
   "reports": {
     "title": "Báo cáo",
     "daily": "Báo cáo ngày",
     "weekly": "Báo cáo tuần",
-    "monthly": "Báo cáo tháng"
+    "monthly": "Báo cáo tháng",
+    "dailyDescription": "Tóm tắt ngày do AI tổng hợp — wins, issues, gợi ý cho ngày mai.",
+    "monthlyDescription": "Phân tích tài chính tháng {{month}}.",
+    "generateDaily": "Tạo báo cáo hôm nay",
+    "generateMonthly": "Phân tích tháng này",
+    "regenerate": "Tạo lại",
+    "summary": "Tóm tắt",
+    "wins": "Điểm sáng",
+    "issues": "Cần chú ý",
+    "tomorrow": "Gợi ý cho ngày mai",
+    "healthAdvice": "Sức khoẻ",
+    "financeAdvice": "Tài chính",
+    "productivityAdvice": "Hiệu suất",
+    "income": "Thu",
+    "expense": "Chi",
+    "remaining": "Còn lại",
+    "allocation": "Phân bổ thu nhập",
+    "need": "Thiết yếu",
+    "want": "Mong muốn",
+    "save": "Tiết kiệm",
+    "patterns": "Mẫu chi tiêu",
+    "savingSuggestions": "Gợi ý tiết kiệm",
+    "debtSuggestions": "Gợi ý xử lý nợ",
+    "advice": "Lời khuyên"
   },
   "profile": {
     "title": "Cá nhân",

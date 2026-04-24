@@ -42,6 +42,43 @@ export type WeeklyInsightResponse = {
   usedFallback: boolean;
 };
 
+export type FinanceAnalysisResponse = {
+  analysis: {
+    totalIncome: number;
+    totalExpense: number;
+    remainingMoney: number;
+    budgetWarnings: Array<{ category: string; usagePercent: number; message: string }>;
+    spendingPatterns: string[];
+    savingSuggestions: string[];
+    debtSuggestions: string[];
+    salaryAllocationSuggestion: {
+      needPercent: number;
+      wantPercent: number;
+      savePercent: number;
+      comment: string;
+    };
+    usefulAdvice: string[];
+  };
+  context: Record<string, unknown>;
+  locale: string;
+  usedFallback: boolean;
+};
+
+export type DailyReviewResponse = {
+  review: {
+    todaySummary: string;
+    wins: string[];
+    issues: string[];
+    suggestionsForTomorrow: string[];
+    healthAdvice: string;
+    financeAdvice: string;
+    productivityAdvice: string;
+  };
+  saved: { id: string } | null;
+  locale: string;
+  usedFallback: boolean;
+};
+
 export const aiApi = {
   generateSchedule: (body: {
     date: string;
@@ -64,4 +101,8 @@ export const aiApi = {
     '/ai/suggest-meals',
     body,
   ),
+  analyzeFinance: (body: { month: string }) =>
+    api.post<FinanceAnalysisResponse>('/ai/analyze-finance', body),
+  dailyReview: (body: { date: string }) =>
+    api.post<DailyReviewResponse>('/ai/daily-review', body),
 };
