@@ -544,5 +544,46 @@
   "offline": {
     "title": "You’re offline",
     "description": "Some actions (AI, sync) are paused. Data will refresh once you’re back online."
+  },
+  "meals": {
+    "title": "Meals",
+    "subtitle": "A day of meals tailored to your goal + budget.",
+    "backToToday": "Back to today",
+    "notes": "Notes",
+    "empty": {
+      "title": "No meal plan for this day",
+      "description": "Tap \"AI suggest meals\" to start."
+    },
+    "noneSuggested": "No suggestion for this meal.",
+    "type": {
+      "BREAKFAST": "Breakfast",
+      "LUNCH": "Lunch",
+      "DINNER": "Dinner",
+      "SNACK": "Snack"
+    },
+    "calories": "Calories (est.)",
+    "prepTime": "Prep",
+    "logAte": "I ate this",
+    "ate": "Eaten",
+    "disclaimer": "Calorie and cost figures are estimates, not medical advice. Consult a nutritionist for specific dietary needs.",
+    "ai": {
+      "ctaTitle": "AI suggest meals",
+      "ctaBody": "Based on your goal, budget, and what is in your fridge.",
+      "cta": "Suggest now",
+      "formTitle": "Info for the suggestion",
+      "goal": "Goal",
+      "goals": {
+        "healthy": "Healthy",
+        "high-protein": "High-protein",
+        "low-carb": "Low-carb",
+        "cheap": "Cheap",
+        "quick": "Quick"
+      },
+      "budget": "Budget",
+      "ingredients": "Available ingredients",
+      "ingredientsPlaceholder": "eggs, rice, veggies, chicken…",
+      "cookMin": "Max cooking time (min)",
+      "submit": "Suggest meals"
+    }
   }
 }

@@ -544,5 +544,46 @@
   "offline": {
     "title": "Không có mạng",
     "description": "Một số thao tác (AI, đồng bộ) đang bị tạm dừng. Dữ liệu sẽ cập nhật khi online lại."
+  },
+  "meals": {
+    "title": "Bữa ăn",
+    "subtitle": "Kế hoạch bữa ăn theo mục tiêu và ngân sách của bạn.",
+    "backToToday": "Về hôm nay",
+    "notes": "Ghi chú",
+    "empty": {
+      "title": "Chưa có kế hoạch bữa ăn",
+      "description": "Nhấn \"AI gợi ý món ăn\" để bắt đầu."
+    },
+    "noneSuggested": "Chưa có gợi ý cho bữa này.",
+    "type": {
+      "BREAKFAST": "Bữa sáng",
+      "LUNCH": "Bữa trưa",
+      "DINNER": "Bữa tối",
+      "SNACK": "Bữa phụ"
+    },
+    "calories": "Calo (ước tính)",
+    "prepTime": "Chuẩn bị",
+    "logAte": "Đã ăn món này",
+    "ate": "Đã ăn",
+    "disclaimer": "Calo và chi phí chỉ là ước tính. Không phải lời khuyên y tế — hỏi chuyên gia dinh dưỡng nếu bạn có nhu cầu đặc biệt.",
+    "ai": {
+      "ctaTitle": "AI gợi ý món ăn",
+      "ctaBody": "Dựa trên mục tiêu, ngân sách và nguyên liệu bạn có.",
+      "cta": "Gợi ý ngay",
+      "formTitle": "Thông tin để gợi ý",
+      "goal": "Mục tiêu",
+      "goals": {
+        "healthy": "Healthy",
+        "high-protein": "Nhiều đạm",
+        "low-carb": "Ít tinh bột",
+        "cheap": "Tiết kiệm",
+        "quick": "Nhanh"
+      },
+      "budget": "Ngân sách",
+      "ingredients": "Nguyên liệu đang có",
+      "ingredientsPlaceholder": "trứng, gạo, rau, ức gà…",
+      "cookMin": "Thời gian nấu tối đa (phút)",
+      "submit": "Gợi ý bữa ăn"
+    }
   }
 }
