@@ -1,20 +1,25 @@
 import React from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme';
-import { Screen, Card, Loading, ErrorView, MoneyCard, ProgressCard } from '../../components/ui';
 import {
-  walletsApi,
-  budgetsApi,
-  debtsApi,
-  savingGoalsApi,
-} from '../../services/api/finance.api';
+  Card,
+  Loading,
+  ErrorView,
+  MoneyCard,
+  ProgressCard,
+  Badge,
+  Button,
+} from '../../components/ui';
+import { walletsApi, budgetsApi, debtsApi, savingGoalsApi } from '../../services/api/finance.api';
+import { dashboardApi } from '../../services/api/dashboard.api';
 import { useErrorMessage } from '../../i18n/useErrorMessage';
-import type { RootStackParamList } from '../../navigation/types';
 import { formatMoneyByLocale } from '../../utils/format';
+import { toNumber } from '../../utils/money';
+import type { RootStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -24,27 +29,79 @@ export function FinanceScreen() {
   const translateError = useErrorMessage();
   const nav = useNavigation<Nav>();
 
-  const wallets = useQuery({ queryKey: ['wallets'], queryFn: () => walletsApi.list() });
-  const budgets = useQuery({ queryKey: ['budgets'], queryFn: () => budgetsApi.list() });
-  const debts = useQuery({ queryKey: ['debts'], queryFn: () => debtsApi.list() });
-  const savings = useQuery({ queryKey: ['saving-goals'], queryFn: () => savingGoalsApi.list() });
+  const dashQ = useQuery({
+    queryKey: ['dashboard', 'summary'],
+    queryFn: () => dashboardApi.summary(),
+  });
+  const walletsQ = useQuery({ queryKey: ['wallets'], queryFn: () => walletsApi.list() });
+  const budgetsQ = useQuery({ queryKey: ['budgets'], queryFn: () => budgetsApi.list() });
+  const debtsQ = useQuery({ queryKey: ['debts'], queryFn: () => debtsApi.list() });
+  const savingsQ = useQuery({ queryKey: ['saving-goals'], queryFn: () => savingGoalsApi.list() });
 
-  if (wallets.isLoading || budgets.isLoading || debts.isLoading || savings.isLoading) {
+  const refreshing =
+    dashQ.isRefetching ||
+    walletsQ.isRefetching ||
+    budgetsQ.isRefetching ||
+    debtsQ.isRefetching ||
+    savingsQ.isRefetching;
+
+  if (
+    (dashQ.isLoading || walletsQ.isLoading) &&
+    !dashQ.data &&
+    !walletsQ.data
+  ) {
     return <Loading />;
   }
-  const err = wallets.error || budgets.error || debts.error || savings.error;
-  if (err) {
-    return <ErrorView message={translateError(err)} onRetry={() => wallets.refetch()} />;
+  const err = dashQ.error || walletsQ.error || budgetsQ.error || debtsQ.error || savingsQ.error;
+  if (err && !dashQ.data) {
+    return <ErrorView message={translateError(err)} onRetry={() => dashQ.refetch()} />;
   }
 
-  const totalCash = (wallets.data ?? []).reduce((s, w) => s + Number(w.balance), 0);
-  const currency = wallets.data?.[0]?.currency ?? 'VND';
-  const iOwe = (debts.data ?? [])
+  const dash = dashQ.data;
+  const wallets = walletsQ.data ?? [];
+  const budgets = budgetsQ.data ?? [];
+  const debts = debtsQ.data ?? [];
+  const savings = savingsQ.data ?? [];
+
+  const currency = dash?.finance.currency ?? wallets[0]?.currency ?? 'VND';
+  const totalCash = wallets.reduce((s, w) => s + toNumber(w.balance), 0);
+  const totalIncome = dash?.finance.totalIncome ?? 0;
+  const totalExpense = dash?.finance.totalExpense ?? 0;
+  const remaining = dash?.finance.remaining ?? 0;
+  const savingsRate = totalIncome > 0 ? Math.max(0, Math.round((remaining / totalIncome) * 100)) : 0;
+  const iOwe = debts
     .filter((d) => d.type === 'I_OWE' && d.status === 'ACTIVE')
-    .reduce((s, d) => s + (Number(d.totalAmount) - Number(d.paidAmount)), 0);
+    .reduce((s, d) => s + (toNumber(d.totalAmount) - toNumber(d.paidAmount)), 0);
+  const owedToMe = debts
+    .filter((d) => d.type === 'OWED_TO_ME' && d.status === 'ACTIVE')
+    .reduce((s, d) => s + (toNumber(d.totalAmount) - toNumber(d.paidAmount)), 0);
+  const savingAvgPercent = savings.length
+    ? Math.round(
+        savings.reduce((s, g) => {
+          const tgt = toNumber(g.targetAmount);
+          const cur = toNumber(g.currentAmount);
+          return s + (tgt > 0 ? (cur / tgt) * 100 : 0);
+        }, 0) / savings.length,
+      )
+    : 0;
 
   return (
-    <Screen scroll>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.bg }}
+      contentContainerStyle={{ padding: spacing.xl, paddingBottom: spacing.xxl }}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            dashQ.refetch();
+            walletsQ.refetch();
+            budgetsQ.refetch();
+            debtsQ.refetch();
+            savingsQ.refetch();
+          }}
+        />
+      }
+    >
       <Text style={[typography.display, { color: colors.text, marginBottom: spacing.xs }]}>
         {t('finance.title')}
       </Text>
@@ -52,66 +109,222 @@ export function FinanceScreen() {
         {t('finance.subtitle')}
       </Text>
 
+      {/* 1. MONTH OVERVIEW */}
+      <SectionHeader title={t('finance.overview.title')} />
       <View style={{ flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md }}>
         <View style={{ flex: 1 }}>
-          <MoneyCard label={t('finance.totalCash')} amount={totalCash} currency={currency} tone="positive" />
+          <MoneyCard label={t('finance.overview.income')} amount={totalIncome} currency={currency} tone="positive" />
         </View>
         <View style={{ flex: 1 }}>
-          <MoneyCard label={t('finance.iOwe')} amount={iOwe} currency={currency} tone={iOwe > 0 ? 'warning' : 'default'} />
+          <MoneyCard label={t('finance.overview.expense')} amount={totalExpense} currency={currency} tone="warning" />
         </View>
       </View>
+      <View style={{ flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md }}>
+        <View style={{ flex: 1 }}>
+          <MoneyCard
+            label={t('finance.overview.remaining')}
+            amount={remaining}
+            currency={currency}
+            tone={remaining >= 0 ? 'positive' : 'danger'}
+            hint={t('finance.overview.savingsRate', { pct: savingsRate })}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <MoneyCard
+            label={t('finance.overview.cash')}
+            amount={totalCash}
+            currency={currency}
+            hint={t('finance.walletsCount', { count: wallets.length })}
+          />
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md }}>
+        <View style={{ flex: 1 }}>
+          <MoneyCard
+            label={t('finance.overview.iOwe')}
+            amount={iOwe}
+            currency={currency}
+            tone={iOwe > 0 ? 'warning' : 'default'}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <MoneyCard
+            label={t('finance.overview.owedToMe')}
+            amount={owedToMe}
+            currency={currency}
+            tone={owedToMe > 0 ? 'positive' : 'default'}
+          />
+        </View>
+      </View>
+      <Button
+        title={t('finance.overview.analyzeMonth')}
+        onPress={() => nav.navigate('MonthlyFinanceReport')}
+      />
 
-      {/* Navigation cards */}
-      <View style={{ gap: spacing.md, marginBottom: spacing.xl }}>
-        <NavRow label={t('nav.wallets')} sub={t('finance.walletsCount', { count: wallets.data?.length ?? 0 })} onPress={() => nav.navigate('Wallets')} />
-        <NavRow label={t('nav.income')} sub={t('finance.trackIncome')} onPress={() => nav.navigate('Income')} />
-        <NavRow label={t('nav.expense')} sub={t('finance.trackExpense')} onPress={() => nav.navigate('Expense')} />
-        <NavRow label={t('nav.budget')} sub={t('finance.budgetsCount', { count: budgets.data?.length ?? 0 })} onPress={() => nav.navigate('Budget')} />
-        <NavRow label={t('nav.debt')} sub={t('finance.debtsCount', { count: debts.data?.length ?? 0 })} onPress={() => nav.navigate('Debt')} />
-        <NavRow label={t('nav.savingGoals')} sub={t('finance.savingsCount', { count: savings.data?.length ?? 0 })} onPress={() => nav.navigate('SavingGoals')} />
-        <NavRow label={t('reports.monthly')} sub={t('finance.seeMonthlyReport')} onPress={() => nav.navigate('MonthlyFinanceReport')} />
+      {/* Budget warnings inline */}
+      {dash?.finance.budgetWarnings.length ? (
+        <>
+          <SectionHeader title={t('finance.budgetStatus')} onViewMore={() => nav.navigate('Budget')} />
+          <View style={{ gap: spacing.sm }}>
+            {dash.finance.budgetWarnings.map((b) => (
+              <Card key={b.category}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing.sm,
+                    marginBottom: spacing.xs,
+                  }}
+                >
+                  <Badge tone={b.usedPercent >= 100 ? 'danger' : 'warning'}>
+                    {`${b.usedPercent}%`}
+                  </Badge>
+                  <Text style={[typography.bodyStrong, { color: colors.text }]}>{b.category}</Text>
+                </View>
+                <Text style={[typography.caption, { color: colors.textMuted }]}>
+                  {formatMoneyByLocale(b.spent, currency)} / {formatMoneyByLocale(b.amount, currency)}
+                </Text>
+              </Card>
+            ))}
+          </View>
+        </>
+      ) : null}
+
+      {/* 2. WALLETS preview */}
+      <SectionHeader title={t('finance.wallets.title')} onViewMore={() => nav.navigate('Wallets')} />
+      {wallets.length === 0 ? (
+        <EmptyRow
+          text={t('wallets.empty.title')}
+          cta={t('finance.addWallet')}
+          onPress={() => nav.navigate('AddWallet' as never)}
+        />
+      ) : (
+        <View style={{ gap: spacing.sm }}>
+          {wallets.slice(0, 3).map((w) => (
+            <Card key={w.id}>
+              <View
+                style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <View>
+                  <Text style={[typography.bodyStrong, { color: colors.text }]}>{w.name}</Text>
+                  <Text style={[typography.caption, { color: colors.textMuted, marginTop: 2 }]}>
+                    {w.type}
+                  </Text>
+                </View>
+                <Text style={[typography.h2, { color: colors.text }]}>
+                  {formatMoneyByLocale(w.balance, w.currency)}
+                </Text>
+              </View>
+            </Card>
+          ))}
+        </View>
+      )}
+
+      {/* Quick-nav grid */}
+      <SectionHeader title={t('finance.manage')} />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+        <NavTile icon="💸" label={t('nav.expense')} onPress={() => nav.navigate('Expense')} />
+        <NavTile icon="💰" label={t('nav.income')} onPress={() => nav.navigate('Income')} />
+        <NavTile icon="📊" label={t('nav.budget')} onPress={() => nav.navigate('Budget')} />
+        <NavTile icon="🧾" label={t('nav.debt')} onPress={() => nav.navigate('Debt')} />
+        <NavTile icon="🎯" label={t('nav.savingGoals')} onPress={() => nav.navigate('SavingGoals')} />
+        <NavTile icon="📅" label={t('reports.monthly')} onPress={() => nav.navigate('MonthlyFinanceReport')} />
       </View>
 
-      {/* Budget usage preview */}
-      {(budgets.data ?? []).length > 0 && (
+      {/* Saving goals preview */}
+      {savings.length > 0 ? (
         <>
-          <Text style={[typography.h2, { color: colors.text, marginBottom: spacing.md }]}>
-            {t('finance.budgetStatus')}
+          <SectionHeader
+            title={t('finance.savingTop')}
+            onViewMore={() => nav.navigate('SavingGoals')}
+          />
+          <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }]}>
+            {t('finance.savingAvg', { pct: savingAvgPercent })}
           </Text>
-          <View style={{ gap: spacing.md, marginBottom: spacing.xl }}>
-            {(budgets.data ?? []).slice(0, 3).map((b) => (
+          <View style={{ gap: spacing.md }}>
+            {savings.slice(0, 2).map((g) => (
               <ProgressCard
-                key={b.id}
-                title={b.category}
-                current={b.usage.spent}
-                target={Number(b.amount)}
-                currentLabel={`${formatMoneyByLocale(b.usage.spent, currency)} (${b.usage.usedPercent}%)`}
-                subtitle={formatMoneyByLocale(b.amount, currency)}
-                tone={b.usage.overThreshold ? (b.usage.usedPercent >= 100 ? 'danger' : 'warning') : 'default'}
+                key={g.id}
+                title={g.title}
+                current={toNumber(g.currentAmount)}
+                target={toNumber(g.targetAmount)}
+                currentLabel={`${formatMoneyByLocale(g.currentAmount, currency)} / ${formatMoneyByLocale(g.targetAmount, currency)}`}
               />
             ))}
           </View>
         </>
-      )}
-    </Screen>
+      ) : null}
+    </ScrollView>
   );
 }
 
-function NavRow({ label, sub, onPress }: { label: string; sub: string; onPress: () => void }) {
+function SectionHeader({ title, onViewMore }: { title: string; onViewMore?: () => void }) {
+  const { t } = useTranslation();
+  const { colors, spacing, typography } = useTheme();
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: spacing.xl,
+        marginBottom: spacing.md,
+      }}
+    >
+      <Text style={[typography.h2, { color: colors.text }]}>{title}</Text>
+      {onViewMore ? (
+        <TouchableOpacity onPress={onViewMore}>
+          <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('common.viewMore')}</Text>
+        </TouchableOpacity>
+      ) : null}
+    </View>
+  );
+}
+
+function NavTile({ icon, label, onPress }: { icon: string; label: string; onPress: () => void }) {
   const { colors, spacing, radius, typography } = useTheme();
   return (
-    <TouchableOpacity onPress={onPress}>
-      <Card>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ flex: 1 }}>
-            <Text style={[typography.bodyStrong, { color: colors.text }]}>{label}</Text>
-            <Text style={[typography.caption, { color: colors.textMuted, marginTop: spacing.xs }]}>
-              {sub}
-            </Text>
-          </View>
-          <Text style={{ color: colors.textMuted, fontSize: 20 }}>›</Text>
-        </View>
-      </Card>
+    <TouchableOpacity
+      onPress={onPress}
+      style={{
+        width: '30%',
+        padding: spacing.md,
+        borderRadius: radius.md,
+        borderWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        alignItems: 'center',
+      }}
+    >
+      <Text style={{ fontSize: 24 }}>{icon}</Text>
+      <Text
+        style={[typography.small, { color: colors.text, marginTop: spacing.xs, textAlign: 'center' }]}
+        numberOfLines={2}
+      >
+        {label}
+      </Text>
     </TouchableOpacity>
+  );
+}
+
+function EmptyRow({ text, cta, onPress }: { text: string; cta: string; onPress: () => void }) {
+  const { colors, spacing, radius, typography } = useTheme();
+  return (
+    <Card>
+      <Text style={{ color: colors.textMuted }}>{text}</Text>
+      <TouchableOpacity
+        onPress={onPress}
+        style={{
+          marginTop: spacing.sm,
+          alignSelf: 'flex-start',
+          paddingHorizontal: spacing.md,
+          paddingVertical: spacing.sm,
+          borderRadius: radius.md,
+          backgroundColor: colors.primary,
+        }}
+      >
+        <Text style={[typography.bodyStrong, { color: colors.textInverse }]}>{cta}</Text>
+      </TouchableOpacity>
+    </Card>
   );
 }

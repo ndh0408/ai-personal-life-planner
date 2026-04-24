@@ -1,9 +1,12 @@
 import React from 'react';
 import { View, Text } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../navigation/types';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme';
-import { Screen, ProgressCard, Loading, ErrorView, EmptyState } from '../../components/ui';
+import { Screen, ProgressCard, Loading, ErrorView, EmptyState , Button } from '../../components/ui';
 import { budgetsApi } from '../../services/api/finance.api';
 import { useErrorMessage } from '../../i18n/useErrorMessage';
 import { formatMoneyByLocale } from '../../utils/format';
@@ -11,6 +14,7 @@ import { formatMoneyByLocale } from '../../utils/format';
 export function BudgetScreen() {
   const { t } = useTranslation();
   const { colors, spacing, typography } = useTheme();
+  const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const translateError = useErrorMessage();
   const q = useQuery({ queryKey: ['budgets'], queryFn: () => budgetsApi.list() });
 

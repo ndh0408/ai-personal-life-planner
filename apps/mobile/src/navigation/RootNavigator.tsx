@@ -22,11 +22,17 @@ import { MealsScreen } from '../screens/meals/MealsScreen';
 import { HealthScreen } from '../screens/health/HealthScreen';
 import { HealthMetricScreen } from '../screens/health/HealthMetricScreen';
 import { WalletsScreen } from '../screens/finance/WalletsScreen';
+import { AddWalletScreen } from '../screens/finance/AddWalletScreen';
 import { IncomeScreen } from '../screens/finance/IncomeScreen';
+import { AddIncomeScreen } from '../screens/finance/AddIncomeScreen';
 import { ExpenseScreen } from '../screens/finance/ExpenseScreen';
+import { AddExpenseScreen } from '../screens/finance/AddExpenseScreen';
 import { BudgetScreen } from '../screens/finance/BudgetScreen';
+import { AddBudgetScreen } from '../screens/finance/AddBudgetScreen';
 import { DebtScreen } from '../screens/finance/DebtScreen';
+import { AddDebtScreen } from '../screens/finance/AddDebtScreen';
 import { SavingGoalsScreen } from '../screens/finance/SavingGoalsScreen';
+import { AddSavingGoalScreen } from '../screens/finance/AddSavingGoalScreen';
 import { PersonalGoalsScreen } from '../screens/goals/PersonalGoalsScreen';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
 import { LanguageSettingsScreen } from '../screens/settings/LanguageSettingsScreen';
@@ -84,6 +90,12 @@ export function RootNavigator() {
               <Stack.Screen name="Budget" component={BudgetScreen} options={{ title: 'Budget' }} />
               <Stack.Screen name="Debt" component={DebtScreen} options={{ title: 'Debt' }} />
               <Stack.Screen name="SavingGoals" component={SavingGoalsScreen} options={{ title: 'Saving Goals' }} />
+              <Stack.Screen name="AddWallet" component={AddWalletScreen} options={{ title: 'New wallet', presentation: 'modal' }} />
+              <Stack.Screen name="AddIncome" component={AddIncomeScreen} options={{ title: 'New income', presentation: 'modal' }} />
+              <Stack.Screen name="AddExpense" component={AddExpenseScreen} options={{ title: 'New expense', presentation: 'modal' }} />
+              <Stack.Screen name="AddBudget" component={AddBudgetScreen} options={{ title: 'New budget', presentation: 'modal' }} />
+              <Stack.Screen name="AddDebt" component={AddDebtScreen} options={{ title: 'New debt', presentation: 'modal' }} />
+              <Stack.Screen name="AddSavingGoal" component={AddSavingGoalScreen} options={{ title: 'New saving goal', presentation: 'modal' }} />
               <Stack.Screen name="PersonalGoals" component={PersonalGoalsScreen} options={{ title: 'Goals' }} />
               <Stack.Screen name="DailyReview" component={DailyReviewScreen} options={{ title: 'Daily review' }} />
               <Stack.Screen name="MonthlyFinanceReport" component={MonthlyFinanceReportScreen} options={{ title: 'Monthly report' }} />

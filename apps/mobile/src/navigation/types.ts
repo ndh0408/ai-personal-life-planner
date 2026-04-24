@@ -49,11 +49,17 @@ export type RootStackParamList = {
   Health: undefined;
   HealthMetric: undefined;
   Wallets: undefined;
+  AddWallet: undefined;
   Income: undefined;
+  AddIncome: undefined;
   Expense: undefined;
+  AddExpense: undefined;
   Budget: undefined;
+  AddBudget: undefined;
   Debt: undefined;
+  AddDebt: undefined;
   SavingGoals: undefined;
+  AddSavingGoal: undefined;
   PersonalGoals: undefined;
   Settings: undefined;
   LanguageSettings: undefined;

@@ -402,12 +402,52 @@
     "trackIncome": "Ghi thu nhập + tiền lương",
     "trackExpense": "Ghi chi tiêu hằng ngày",
     "seeMonthlyReport": "Báo cáo tháng",
-    "budgetStatus": "Ngân sách tháng này"
+    "budgetStatus": "Ngân sách tháng này",
+    "overview": {
+      "title": "Tổng quan tháng",
+      "income": "Thu nhập",
+      "expense": "Chi tiêu",
+      "remaining": "Còn lại",
+      "savingsRate": "Tỷ lệ tiết kiệm {{pct}}%",
+      "cash": "Tiền đang có",
+      "iOwe": "Đang nợ",
+      "owedToMe": "Cho vay",
+      "analyzeMonth": "AI phân tích tháng này"
+    },
+    "wallets": {
+      "title": "Ví & tài khoản"
+    },
+    "manage": "Quản lý",
+    "addWallet": "Ví",
+    "addIncome": "Thu nhập",
+    "addExpense": "Chi tiêu",
+    "addBudget": "Ngân sách",
+    "addDebt": "Nợ",
+    "addSavingGoal": "Mục tiêu",
+    "savingAvg": "Trung bình {{pct}}% đã đạt mục tiêu",
+    "savingTop": "Mục tiêu tiết kiệm nổi bật"
   },
   "wallets": {
     "empty": {
       "title": "Chưa có ví",
       "description": "Tạo ví tiền để bắt đầu theo dõi số dư."
+    },
+    "createTitle": "Ví mới",
+    "types": {
+      "CASH": "Tiền mặt",
+      "BANK": "Ngân hàng",
+      "EWALLET": "E-wallet",
+      "SAVINGS": "Tiết kiệm",
+      "OTHER": "Khác"
+    },
+    "invalidNameTitle": "Thiếu tên",
+    "invalidNameBody": "Vui lòng nhập tên ví.",
+    "form": {
+      "name": "Tên ví",
+      "namePlaceholder": "Vietcombank, Ví Momo…",
+      "type": "Loại",
+      "balance": "Số dư ban đầu",
+      "currency": "Tiền tệ"
     }
   },
   "incomes": {
@@ -415,12 +455,74 @@
     "empty": {
       "title": "Chưa có thu nhập",
       "description": "Ghi lương hoặc thu nhập để báo cáo chính xác hơn."
+    },
+    "createTitle": "Thu nhập mới",
+    "invalid": {
+      "title": "Kiểm tra lại",
+      "body": "Nhập tiêu đề và số tiền > 0."
+    },
+    "categories": {
+      "salary": "Lương",
+      "freelance": "Freelance",
+      "bonus": "Thưởng",
+      "gift": "Quà",
+      "other": "Khác"
+    },
+    "form": {
+      "amount": "Số tiền",
+      "title": "Tiêu đề",
+      "titlePlaceholder": "Lương tháng, Freelance…",
+      "category": "Hạng mục",
+      "source": "Nguồn",
+      "sourcePlaceholder": "Công ty ABC, Client X…",
+      "wallet": "Ví nhận tiền",
+      "date": "Ngày",
+      "recurring": "Thu nhập định kỳ",
+      "recurringHint": "Bật nếu nhận đều đặn (lương hàng tháng).",
+      "recurringRule": "Chu kỳ (tuỳ chọn)"
     }
   },
   "expenses": {
     "empty": {
       "title": "Chưa có chi tiêu",
       "description": "Ghi chi tiêu hằng ngày để thấy xu hướng."
+    },
+    "createTitle": "Chi tiêu mới",
+    "invalid": {
+      "title": "Kiểm tra lại",
+      "body": "Nhập tiêu đề và số tiền > 0."
+    },
+    "noWallet": "Tiền mặt ngoài ví",
+    "walletWillAdjust": "Số dư ví sẽ tự cập nhật.",
+    "categories": {
+      "food": "Ăn uống",
+      "transport": "Di chuyển",
+      "housing": "Nhà ở",
+      "utilities": "Hoá đơn",
+      "shopping": "Mua sắm",
+      "entertainment": "Giải trí",
+      "health": "Sức khoẻ",
+      "education": "Học tập"
+    },
+    "needLevels": {
+      "NEED": "Thiết yếu",
+      "WANT": "Mong muốn",
+      "WASTE": "Lãng phí",
+      "INVESTMENT": "Đầu tư bản thân",
+      "SAVING": "Tiết kiệm"
+    },
+    "form": {
+      "amount": "Số tiền",
+      "title": "Nội dung",
+      "titlePlaceholder": "Cafe, grab, siêu thị…",
+      "category": "Hạng mục",
+      "customCategory": "Hạng mục (tuỳ chỉnh)",
+      "customCategoryPlaceholder": "ví dụ: pet",
+      "needLevel": "Mức độ cần thiết",
+      "wallet": "Ví chi",
+      "date": "Ngày",
+      "note": "Ghi chú",
+      "notePlaceholder": "Thêm ngữ cảnh…"
     }
   },
   "budgets": {
@@ -429,6 +531,22 @@
     "empty": {
       "title": "Chưa có ngân sách",
       "description": "Đặt ngân sách theo hạng mục để kiểm soát chi tiêu."
+    },
+    "createTitle": "Ngân sách mới",
+    "invalid": {
+      "title": "Kiểm tra lại",
+      "body": "Nhập hạng mục và số tiền > 0."
+    },
+    "periods": {
+      "MONTHLY": "Hằng tháng",
+      "WEEKLY": "Hằng tuần"
+    },
+    "thresholdHint": "Mình sẽ cảnh báo khi chi tiêu vượt ngưỡng này.",
+    "form": {
+      "category": "Hạng mục",
+      "amount": "Ngân sách",
+      "period": "Chu kỳ",
+      "threshold": "Ngưỡng cảnh báo (%)"
     }
   },
   "debts": {
@@ -439,6 +557,23 @@
     "empty": {
       "title": "Chưa có khoản nợ",
       "description": "Bạn không có khoản nợ nào đang theo dõi."
+    },
+    "createTitle": "Khoản nợ mới",
+    "invalid": {
+      "title": "Kiểm tra lại",
+      "body": "Nhập tiêu đề, tổng > 0, và đã trả ≤ tổng."
+    },
+    "form": {
+      "type": "Loại",
+      "title": "Tiêu đề",
+      "titlePlaceholder": "Vay laptop, cho bạn mượn…",
+      "person": "Người liên quan",
+      "personPlaceholder": "Anh/Chị/Bạn…",
+      "totalAmount": "Tổng nợ",
+      "paidAmount": "Đã trả",
+      "dueDate": "Hạn (YYYY-MM-DD)",
+      "note": "Ghi chú",
+      "notePlaceholder": "Thêm ngữ cảnh…"
     }
   },
   "savings": {
@@ -446,6 +581,21 @@
     "empty": {
       "title": "Chưa có mục tiêu tiết kiệm",
       "description": "Đặt mục tiêu như quỹ khẩn cấp, chuyến đi, laptop…"
+    },
+    "createTitle": "Mục tiêu tiết kiệm mới",
+    "invalid": {
+      "title": "Kiểm tra lại",
+      "body": "Nhập tiêu đề và mục tiêu > 0."
+    },
+    "form": {
+      "title": "Tên mục tiêu",
+      "titlePlaceholder": "Quỹ khẩn cấp, Chuyến đi Nhật…",
+      "targetAmount": "Số tiền mục tiêu",
+      "currentAmount": "Đã có",
+      "targetDate": "Ngày mục tiêu (tuỳ chọn)",
+      "priority": "Ưu tiên",
+      "note": "Ghi chú",
+      "notePlaceholder": "Thêm ngữ cảnh…"
     }
   },
   "goals": {

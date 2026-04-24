@@ -402,12 +402,52 @@
     "trackIncome": "Log income + salary",
     "trackExpense": "Log daily expenses",
     "seeMonthlyReport": "See monthly report",
-    "budgetStatus": "Budget status"
+    "budgetStatus": "Budget status",
+    "overview": {
+      "title": "This month",
+      "income": "Income",
+      "expense": "Expense",
+      "remaining": "Remaining",
+      "savingsRate": "Savings rate {{pct}}%",
+      "cash": "Cash on hand",
+      "iOwe": "I owe",
+      "owedToMe": "Owed to me",
+      "analyzeMonth": "AI analyze this month"
+    },
+    "wallets": {
+      "title": "Wallets"
+    },
+    "manage": "Manage",
+    "addWallet": "Wallet",
+    "addIncome": "Income",
+    "addExpense": "Expense",
+    "addBudget": "Budget",
+    "addDebt": "Debt",
+    "addSavingGoal": "Goal",
+    "savingAvg": "Average progress {{pct}}%",
+    "savingTop": "Top saving goals"
   },
   "wallets": {
     "empty": {
       "title": "No wallets yet",
       "description": "Create a wallet to start tracking balances."
+    },
+    "createTitle": "New wallet",
+    "types": {
+      "CASH": "Cash",
+      "BANK": "Bank",
+      "EWALLET": "E-wallet",
+      "SAVINGS": "Savings",
+      "OTHER": "Other"
+    },
+    "invalidNameTitle": "Name required",
+    "invalidNameBody": "Please enter a wallet name.",
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Vietcombank, Momo…",
+      "type": "Type",
+      "balance": "Starting balance",
+      "currency": "Currency"
     }
   },
   "incomes": {
@@ -415,12 +455,74 @@
     "empty": {
       "title": "No income yet",
       "description": "Log salary or other income for accurate reports."
+    },
+    "createTitle": "New income",
+    "invalid": {
+      "title": "Check your input",
+      "body": "Please enter a title and positive amount."
+    },
+    "categories": {
+      "salary": "Salary",
+      "freelance": "Freelance",
+      "bonus": "Bonus",
+      "gift": "Gift",
+      "other": "Other"
+    },
+    "form": {
+      "amount": "Amount",
+      "title": "Title",
+      "titlePlaceholder": "Monthly salary, Freelance…",
+      "category": "Category",
+      "source": "Source",
+      "sourcePlaceholder": "Company ABC, Client X…",
+      "wallet": "Destination wallet",
+      "date": "Date",
+      "recurring": "Recurring income",
+      "recurringHint": "Turn on if this arrives regularly (monthly salary).",
+      "recurringRule": "Cycle (optional)"
     }
   },
   "expenses": {
     "empty": {
       "title": "No expenses yet",
       "description": "Log daily spending to see trends."
+    },
+    "createTitle": "New expense",
+    "invalid": {
+      "title": "Check your input",
+      "body": "Please enter a title and positive amount."
+    },
+    "noWallet": "Not tied to a wallet",
+    "walletWillAdjust": "Wallet balance will adjust automatically.",
+    "categories": {
+      "food": "Food",
+      "transport": "Transport",
+      "housing": "Housing",
+      "utilities": "Utilities",
+      "shopping": "Shopping",
+      "entertainment": "Entertainment",
+      "health": "Health",
+      "education": "Education"
+    },
+    "needLevels": {
+      "NEED": "Need",
+      "WANT": "Want",
+      "WASTE": "Waste",
+      "INVESTMENT": "Investment",
+      "SAVING": "Saving"
+    },
+    "form": {
+      "amount": "Amount",
+      "title": "Title",
+      "titlePlaceholder": "Coffee, Grab, groceries…",
+      "category": "Category",
+      "customCategory": "Category (custom)",
+      "customCategoryPlaceholder": "e.g. pet",
+      "needLevel": "Need level",
+      "wallet": "Source wallet",
+      "date": "Date",
+      "note": "Note",
+      "notePlaceholder": "Extra context…"
     }
   },
   "budgets": {
@@ -429,6 +531,22 @@
     "empty": {
       "title": "No budgets yet",
       "description": "Set category budgets to stay on top of spending."
+    },
+    "createTitle": "New budget",
+    "invalid": {
+      "title": "Check your input",
+      "body": "Enter a category and positive amount."
+    },
+    "periods": {
+      "MONTHLY": "Monthly",
+      "WEEKLY": "Weekly"
+    },
+    "thresholdHint": "I will nudge you when spending crosses this threshold.",
+    "form": {
+      "category": "Category",
+      "amount": "Budget amount",
+      "period": "Period",
+      "threshold": "Alert threshold (%)"
     }
   },
   "debts": {
@@ -439,6 +557,23 @@
     "empty": {
       "title": "No debts",
       "description": "Nothing outstanding right now."
+    },
+    "createTitle": "New debt",
+    "invalid": {
+      "title": "Check your input",
+      "body": "Enter a title, total > 0, and paid ≤ total."
+    },
+    "form": {
+      "type": "Type",
+      "title": "Title",
+      "titlePlaceholder": "Laptop loan, friend borrowed…",
+      "person": "Person",
+      "personPlaceholder": "Name…",
+      "totalAmount": "Total amount",
+      "paidAmount": "Paid so far",
+      "dueDate": "Due (YYYY-MM-DD)",
+      "note": "Note",
+      "notePlaceholder": "Extra context…"
     }
   },
   "savings": {
@@ -446,6 +581,21 @@
     "empty": {
       "title": "No saving goals yet",
       "description": "Emergency fund, a trip, a new laptop — pick one and start."
+    },
+    "createTitle": "New saving goal",
+    "invalid": {
+      "title": "Check your input",
+      "body": "Enter a title and target > 0."
+    },
+    "form": {
+      "title": "Goal title",
+      "titlePlaceholder": "Emergency fund, Japan trip…",
+      "targetAmount": "Target amount",
+      "currentAmount": "Already saved",
+      "targetDate": "Target date (optional)",
+      "priority": "Priority",
+      "note": "Note",
+      "notePlaceholder": "Extra context…"
     }
   },
   "goals": {
