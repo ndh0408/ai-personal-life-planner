@@ -8,6 +8,8 @@ export const MainGoalSchema = z.enum([
   'STUDY',
   'HEALTHY',
   'BALANCE',
+  'FINANCIAL_STABILITY',
+  'CAREER_GROWTH',
 ]);
 
 export const ActivityLevelSchema = z.enum(['LOW', 'MEDIUM', 'HIGH']);
@@ -34,6 +36,10 @@ const baseProfileFields = {
   healthNotes: z.string().max(2000).optional(),
   timezone: z.string().min(1).max(64).optional(),
   locale: z.string().min(2).max(10).optional(),
+  // Finance fields surfaced by onboarding step 5. Optional on updates.
+  monthlySalary: z.number().nonnegative().max(1_000_000_000_000).optional(),
+  salaryDay: z.number().int().min(1).max(31).optional(),
+  currency: z.string().min(1).max(10).optional(),
 };
 
 export const CreateProfileSchema = z.object(baseProfileFields);

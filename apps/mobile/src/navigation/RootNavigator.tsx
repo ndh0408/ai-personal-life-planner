@@ -37,6 +37,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export function RootNavigator() {
   const { isDark, colors } = useTheme();
   const status = useAuthStore((s) => s.status);
+  const needsOnboarding = useAuthStore((s) => s.needsOnboarding);
   const hydrate = useAuthStore((s) => s.hydrate);
 
   useEffect(() => {
@@ -62,6 +63,8 @@ export function RootNavigator() {
           <Stack.Screen name="Splash" component={SplashScreen} />
         ) : status === 'unauthenticated' ? (
           <Stack.Screen name="Auth" component={AuthNavigator} />
+        ) : needsOnboarding ? (
+          <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
         ) : (
           <>
             <Stack.Screen name="Main" component={MainTabsNavigator} />

@@ -31,6 +31,9 @@ function serialize(profile: UserProfile) {
     healthNotes: profile.healthNotes,
     timezone: profile.timezone,
     locale: profile.locale,
+    monthlySalary: profile.monthlySalary !== null ? Number(profile.monthlySalary) : null,
+    salaryDay: profile.salaryDay,
+    currency: profile.currency,
     createdAt: profile.createdAt,
     updatedAt: profile.updatedAt,
   };

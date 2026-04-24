@@ -1,99 +1,102 @@
-import React, { useState } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import React from 'react';
+import { Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme';
-import { Screen, Input, Button } from '../../components/ui';
-import { profileApi } from '../../services/api/profile.api';
+import { Screen, Button, Input, Chip, StepProgress } from '../../components/ui';
 import type { OnboardingScreenProps } from '../../navigation/types';
+import { useOnboardingStore } from '../../store/onboarding.store';
 
-const Schema = z.object({
-  fullName: z.string().min(1).max(60),
-  age: z
-    .string()
-    .optional()
-    .transform((v) => (v ? Number(v) : undefined))
-    .refine((v) => v === undefined || (v >= 1 && v <= 120), 'Enter a realistic age'),
-  occupation: z.string().max(60).optional(),
-});
-type Form = z.input<typeof Schema>;
+const GENDERS = ['male', 'female', 'other'] as const;
 
 export function OnboardingProfileScreen({ navigation }: OnboardingScreenProps<'Profile'>) {
-  const { colors, spacing } = useTheme();
-  const [saving, setSaving] = useState(false);
-  const { control, handleSubmit, formState: { errors } } = useForm<Form>({
-    resolver: zodResolver(Schema),
-    defaultValues: { fullName: '', age: undefined, occupation: '' },
-  });
+  const { colors, spacing, typography } = useTheme();
+  const { t } = useTranslation();
+  const draft = useOnboardingStore((s) => s.draft);
+  const patch = useOnboardingStore((s) => s.patch);
 
-  const onSubmit = handleSubmit(async (raw) => {
-    setSaving(true);
-    try {
-      const parsed = Schema.parse(raw);
-      await profileApi.update(parsed as never);
-      navigation.navigate('Goal');
-    } catch (e) {
-      Alert.alert('Could not save', e instanceof Error ? e.message : 'Try again');
-    } finally {
-      setSaving(false);
-    }
-  });
+  const canNext =
+    draft.fullName.trim().length > 0 &&
+    draft.age.trim().length > 0 &&
+    Number(draft.age) > 0 &&
+    Number(draft.age) <= 120;
 
   return (
-    <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-        <Text style={{ fontSize: 28, fontWeight: '700', color: colors.text, marginBottom: spacing.xs }}>
-          About you
-        </Text>
-        <Text style={{ color: colors.textMuted, marginBottom: spacing.xl }}>
-          Just the basics. You can update anything later.
-        </Text>
+    <Screen scroll>
+      <StepProgress total={5} current={2} />
+      <Text style={[typography.h1, { color: colors.text, marginBottom: spacing.xs }]}>
+        {t('onboarding.profile.title')}
+      </Text>
+      <Text style={[typography.body, { color: colors.textMuted, marginBottom: spacing.lg }]}>
+        {t('onboarding.profile.subtitle')}
+      </Text>
 
-        <View style={{ gap: spacing.md }}>
-          <Controller
-            control={control}
-            name="fullName"
-            render={({ field: { value, onChange, onBlur } }) => (
-              <Input
-                label="Your name"
-                value={value as string}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                error={errors.fullName?.message}
+      <View style={{ gap: spacing.md }}>
+        <Input
+          label={t('onboarding.profile.fullName')}
+          placeholder={t('onboarding.profile.fullNamePlaceholder')}
+          value={draft.fullName}
+          onChangeText={(fullName) => patch({ fullName })}
+          autoCapitalize="words"
+        />
+        <Input
+          label={t('onboarding.profile.age')}
+          placeholder="28"
+          value={draft.age}
+          onChangeText={(age) => patch({ age: age.replace(/[^\d]/g, '') })}
+          keyboardType="number-pad"
+        />
+        <View>
+          <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.xs }]}>
+            {t('onboarding.profile.gender')}
+          </Text>
+          <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' }}>
+            {GENDERS.map((g) => (
+              <Chip
+                key={g}
+                label={t(`onboarding.profile.genders.${g}`)}
+                selected={draft.gender === g}
+                onPress={() => patch({ gender: draft.gender === g ? '' : g })}
               />
-            )}
-          />
-          <Controller
-            control={control}
-            name="age"
-            render={({ field: { value, onChange, onBlur } }) => (
-              <Input
-                label="Age (optional)"
-                value={value !== undefined ? String(value) : ''}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                keyboardType="number-pad"
-                error={errors.age?.message}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="occupation"
-            render={({ field: { value, onChange, onBlur } }) => (
-              <Input
-                label="What do you do? (optional)"
-                value={(value as string) ?? ''}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                error={errors.occupation?.message}
-              />
-            )}
-          />
+            ))}
+          </View>
         </View>
-      </ScrollView>
-      <Button title="Continue" size="lg" fullWidth loading={saving} onPress={onSubmit} />
+        <View style={{ flexDirection: 'row', gap: spacing.md }}>
+          <View style={{ flex: 1 }}>
+            <Input
+              label={t('onboarding.profile.heightCm')}
+              placeholder="172"
+              value={draft.heightCm}
+              onChangeText={(heightCm) => patch({ heightCm: heightCm.replace(/[^\d.]/g, '') })}
+              keyboardType="decimal-pad"
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Input
+              label={t('onboarding.profile.weightKg')}
+              placeholder="68"
+              value={draft.weightKg}
+              onChangeText={(weightKg) => patch({ weightKg: weightKg.replace(/[^\d.]/g, '') })}
+              keyboardType="decimal-pad"
+            />
+          </View>
+        </View>
+        <Input
+          label={t('onboarding.profile.occupation')}
+          placeholder={t('onboarding.profile.occupationPlaceholder')}
+          value={draft.occupation}
+          onChangeText={(occupation) => patch({ occupation })}
+        />
+      </View>
+
+      <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xl }}>
+        <Button title={t('common.back')} variant="secondary" onPress={() => navigation.goBack()} style={{ flex: 1 }} />
+        <Button
+          title={t('common.next')}
+          onPress={() => navigation.navigate('Goal')}
+          disabled={!canNext}
+          style={{ flex: 2 }}
+        />
+      </View>
     </Screen>
   );
 }

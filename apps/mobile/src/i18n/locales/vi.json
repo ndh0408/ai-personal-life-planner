@@ -65,9 +65,79 @@
     "logout": "Đăng xuất"
   },
   "onboarding": {
-    "welcome": "Chào mừng đến với LifeOS AI",
-    "description": "Hệ điều hành cho cuộc sống cá nhân của bạn.",
-    "getStarted": "Bắt đầu"
+    "welcome": {
+      "headline1": "Trợ lý cuộc sống",
+      "headline2": "hiểu nhịp sống của bạn.",
+      "body": "Mình cần vài phút để hỏi bạn vài câu, để AI có thể lên lịch vừa vặn với giấc ngủ, năng lượng, bữa ăn và mục tiêu của bạn.",
+      "pickLanguage": "Chọn ngôn ngữ",
+      "cta": "Bắt đầu"
+    },
+    "profile": {
+      "title": "Hồ sơ cá nhân",
+      "subtitle": "Dùng để cá nhân hoá lịch và bữa ăn — bạn có thể sửa sau.",
+      "fullName": "Họ và tên",
+      "fullNamePlaceholder": "Ví dụ: Nguyễn Văn A",
+      "age": "Tuổi",
+      "gender": "Giới tính",
+      "heightCm": "Chiều cao (cm)",
+      "weightKg": "Cân nặng (kg)",
+      "occupation": "Nghề nghiệp",
+      "occupationPlaceholder": "Kỹ sư phần mềm",
+      "genders": {
+        "male": "Nam",
+        "female": "Nữ",
+        "other": "Khác"
+      }
+    },
+    "goal": {
+      "title": "Mục tiêu cuộc sống",
+      "subtitle": "Bạn đang tập trung vào điều gì?",
+      "mainGoal": "Mục tiêu chính",
+      "activityLevel": "Mức vận động",
+      "dietaryPreference": "Chế độ ăn",
+      "dietaryPreferencePlaceholder": "Ví dụ: high-protein, vegetarian…",
+      "healthNotes": "Ghi chú sức khoẻ (không bắt buộc)",
+      "healthNotesPlaceholder": "Đau lưng nhẹ, cần đứng nhiều…",
+      "mainGoals": {
+        "LOSE_WEIGHT": "Giảm cân",
+        "GAIN_WEIGHT": "Tăng cân",
+        "SLEEP_EARLY": "Ngủ sớm",
+        "PRODUCTIVE": "Năng suất",
+        "STUDY": "Học tập",
+        "HEALTHY": "Khoẻ mạnh",
+        "BALANCE": "Cân bằng",
+        "FINANCIAL_STABILITY": "Ổn định tài chính",
+        "CAREER_GROWTH": "Phát triển sự nghiệp"
+      },
+      "activities": {
+        "LOW": "Thấp",
+        "MEDIUM": "Vừa",
+        "HIGH": "Cao"
+      }
+    },
+    "schedule": {
+      "title": "Nhịp sinh hoạt",
+      "subtitle": "AI sẽ đặt deep-work vào khung bạn tỉnh táo nhất.",
+      "workStart": "Bắt đầu làm",
+      "workEnd": "Kết thúc làm",
+      "wakeTime": "Thường dậy",
+      "sleepTime": "Thường ngủ",
+      "timezone": "Múi giờ",
+      "hint": "Định dạng HH:mm (24h). Bạn có thể chỉnh sau trong Cài đặt."
+    },
+    "finance": {
+      "title": "Thiết lập tài chính",
+      "subtitle": "Không bắt buộc, nhưng giúp trợ lý gợi ý ngân sách sát hơn.",
+      "monthlySalary": "Lương tháng",
+      "salaryDay": "Ngày nhận lương",
+      "currency": "Tiền tệ",
+      "defaultWallets": "Ví mặc định",
+      "cashWallet": "Tạo ví Tiền mặt",
+      "bankWallet": "Tạo ví Ngân hàng",
+      "wantsMonthlyBudget": "Muốn tạo ngân sách tháng?",
+      "wantsMonthlyBudgetHint": "Trợ lý có thể đề xuất hạn mức theo hạng mục.",
+      "finish": "Hoàn tất"
+    }
   },
   "dashboard": {
     "title": "Xin chào",
@@ -108,7 +178,9 @@
     "subtitle": "Theo dõi và nhắc bạn đúng thời điểm, không phán xét.",
     "refresh": "Làm mới",
     "recommendations": "Gợi ý",
-    "action": { "apply": "Áp dụng" },
+    "action": {
+      "apply": "Áp dụng"
+    },
     "empty": {
       "title": "Chưa có gợi ý",
       "description": "Khi dữ liệu đầy đủ hơn, mình sẽ chủ động gợi ý tại đây."

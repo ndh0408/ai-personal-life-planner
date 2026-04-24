@@ -65,9 +65,79 @@
     "logout": "Log out"
   },
   "onboarding": {
-    "welcome": "Welcome to LifeOS AI",
-    "description": "The operating system for your personal life.",
-    "getStarted": "Get started"
+    "welcome": {
+      "headline1": "A life OS",
+      "headline2": "that flows with your day.",
+      "body": "Spend a minute or two answering a few questions so the AI can plan days that actually fit your sleep, energy, meals, and goals.",
+      "pickLanguage": "Choose a language",
+      "cta": "Let’s go"
+    },
+    "profile": {
+      "title": "About you",
+      "subtitle": "Used to personalize plans and meals — you can edit later.",
+      "fullName": "Full name",
+      "fullNamePlaceholder": "e.g. Alex Nguyen",
+      "age": "Age",
+      "gender": "Gender",
+      "heightCm": "Height (cm)",
+      "weightKg": "Weight (kg)",
+      "occupation": "Occupation",
+      "occupationPlaceholder": "Software engineer",
+      "genders": {
+        "male": "Male",
+        "female": "Female",
+        "other": "Other"
+      }
+    },
+    "goal": {
+      "title": "Life goals",
+      "subtitle": "What are you focusing on right now?",
+      "mainGoal": "Main goal",
+      "activityLevel": "Activity level",
+      "dietaryPreference": "Dietary preference",
+      "dietaryPreferencePlaceholder": "e.g. high-protein, vegetarian…",
+      "healthNotes": "Health notes (optional)",
+      "healthNotesPlaceholder": "Mild back pain, standing desk after lunch…",
+      "mainGoals": {
+        "LOSE_WEIGHT": "Lose weight",
+        "GAIN_WEIGHT": "Gain weight",
+        "SLEEP_EARLY": "Sleep earlier",
+        "PRODUCTIVE": "More productive",
+        "STUDY": "Studying",
+        "HEALTHY": "Healthier",
+        "BALANCE": "Balance",
+        "FINANCIAL_STABILITY": "Financial stability",
+        "CAREER_GROWTH": "Career growth"
+      },
+      "activities": {
+        "LOW": "Low",
+        "MEDIUM": "Medium",
+        "HIGH": "High"
+      }
+    },
+    "schedule": {
+      "title": "Daily rhythm",
+      "subtitle": "Deep-work blocks will land in your most alert window.",
+      "workStart": "Work starts",
+      "workEnd": "Work ends",
+      "wakeTime": "Usual wake",
+      "sleepTime": "Usual sleep",
+      "timezone": "Timezone",
+      "hint": "HH:mm, 24-hour. You can change this in Settings later."
+    },
+    "finance": {
+      "title": "Finance setup",
+      "subtitle": "Optional — helps the assistant suggest tighter budgets.",
+      "monthlySalary": "Monthly salary",
+      "salaryDay": "Payday",
+      "currency": "Currency",
+      "defaultWallets": "Default wallets",
+      "cashWallet": "Create Cash wallet",
+      "bankWallet": "Create Bank wallet",
+      "wantsMonthlyBudget": "Want a monthly budget?",
+      "wantsMonthlyBudgetHint": "The assistant can suggest category caps.",
+      "finish": "Finish"
+    }
   },
   "dashboard": {
     "title": "Hi there",
@@ -108,7 +178,9 @@
     "subtitle": "Watches your data and nudges at the right moment — without judgment.",
     "refresh": "Refresh",
     "recommendations": "Recommendations",
-    "action": { "apply": "Apply" },
+    "action": {
+      "apply": "Apply"
+    },
     "empty": {
       "title": "Nothing to suggest yet",
       "description": "Once more data is available, proactive tips will land here."

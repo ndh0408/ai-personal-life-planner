@@ -4,6 +4,7 @@ import { OnboardingWelcomeScreen } from '../screens/onboarding/OnboardingWelcome
 import { OnboardingProfileScreen } from '../screens/onboarding/OnboardingProfileScreen';
 import { OnboardingGoalScreen } from '../screens/onboarding/OnboardingGoalScreen';
 import { OnboardingScheduleScreen } from '../screens/onboarding/OnboardingScheduleScreen';
+import { OnboardingFinanceScreen } from '../screens/onboarding/OnboardingFinanceScreen';
 import type { OnboardingStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
@@ -15,6 +16,7 @@ export function OnboardingNavigator() {
       <Stack.Screen name="Profile" component={OnboardingProfileScreen} />
       <Stack.Screen name="Goal" component={OnboardingGoalScreen} />
       <Stack.Screen name="Schedule" component={OnboardingScheduleScreen} />
+      <Stack.Screen name="Finance" component={OnboardingFinanceScreen} />
     </Stack.Navigator>
   );
 }

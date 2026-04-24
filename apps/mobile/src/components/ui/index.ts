@@ -12,3 +12,4 @@ export { MoneyCard } from './MoneyCard';
 export { ProgressCard } from './ProgressCard';
 export { InsightCard } from './InsightCard';
 export { RecommendationCard } from './RecommendationCard';
+export { StepProgress } from './StepProgress';
