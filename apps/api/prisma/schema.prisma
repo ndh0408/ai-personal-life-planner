@@ -1,0 +1,137 @@
+// Prisma schema — AI Personal Life Planner
+// Foundational entities only. Business modules (tasks/habits/schedule/AI) will
+// be filled in subsequent iterations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  timezone     String   @default("UTC")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+  tasks         Task[]
+  habits        Habit[]
+  scheduleBlocks ScheduleBlock[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  userId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+enum TaskPriority {
+  low
+  medium
+  high
+}
+
+enum TaskStatus {
+  pending
+  in_progress
+  done
+  skipped
+}
+
+model Task {
+  id               String       @id @default(uuid())
+  userId           String
+  title            String
+  description      String?
+  priority         TaskPriority @default(medium)
+  status           TaskStatus   @default(pending)
+  dueAt            DateTime?
+  scheduledFor     DateTime?
+  estimatedMinutes Int?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scheduleBlocks ScheduleBlock[]
+
+  @@index([userId, status])
+  @@index([userId, scheduledFor])
+  @@map("tasks")
+}
+
+enum HabitFrequency {
+  daily
+  weekly
+  custom
+}
+
+model Habit {
+  id            String         @id @default(uuid())
+  userId        String
+  name          String
+  frequency     HabitFrequency @default(daily)
+  targetPerWeek Int            @default(7)
+  createdAt     DateTime       @default(now())
+
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs HabitLog[]
+
+  @@index([userId])
+  @@map("habits")
+}
+
+model HabitLog {
+  id          String   @id @default(uuid())
+  habitId     String
+  completedAt DateTime @default(now())
+  note        String?
+
+  habit Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@index([habitId, completedAt])
+  @@map("habit_logs")
+}
+
+enum ScheduleBlockKind {
+  task
+  meal
+  sleep
+  exercise
+  focus
+  break
+  custom
+}
+
+model ScheduleBlock {
+  id      String            @id @default(uuid())
+  userId  String
+  kind    ScheduleBlockKind
+  title   String
+  startAt DateTime
+  endAt   DateTime
+  taskId  String?
+  notes   String?
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task Task? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([userId, startAt])
+  @@map("schedule_blocks")
+}
