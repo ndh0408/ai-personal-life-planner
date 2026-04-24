@@ -120,6 +120,12 @@ fi
 log "npm install (workspaces)"
 npm install
 
+# @planner/shared ships compiled dist/; it's dev-only infrastructure and is
+# gitignored, so a fresh checkout must build it before workspaces that depend
+# on it can typecheck.
+log "build:shared"
+npm run --workspace packages/shared build
+
 log "prisma generate"
 npx --workspace apps/api prisma generate
 
