@@ -2,3 +2,8 @@ export * from './auth.schema';
 export * from './task.schema';
 export * from './habit.schema';
 export * from './ai.schema';
+export * from './profile.schema';
+export * from './schedule.schema';
+export * from './meal.schema';
+export * from './sleep.schema';
+export * from './mood.schema';

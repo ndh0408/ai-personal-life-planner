@@ -8,6 +8,14 @@ import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { AiModule } from './modules/ai/ai.module';
+import { ProfileModule } from './modules/profile/profile.module';
+import { TasksModule } from './modules/tasks/tasks.module';
+import { SchedulesModule } from './modules/schedules/schedules.module';
+import { ScheduleItemsModule } from './modules/schedule-items/schedule-items.module';
+import { HabitsModule } from './modules/habits/habits.module';
+import { MealsModule } from './modules/meals/meals.module';
+import { SleepLogsModule } from './modules/sleep-logs/sleep-logs.module';
+import { MoodLogsModule } from './modules/mood-logs/mood-logs.module';
 
 @Module({
   imports: [
@@ -28,6 +36,14 @@ import { AiModule } from './modules/ai/ai.module';
     HealthModule,
     AuthModule,
     UsersModule,
+    ProfileModule,
+    TasksModule,
+    SchedulesModule,
+    ScheduleItemsModule,
+    HabitsModule,
+    MealsModule,
+    SleepLogsModule,
+    MoodLogsModule,
     AiModule,
   ],
   providers: [
