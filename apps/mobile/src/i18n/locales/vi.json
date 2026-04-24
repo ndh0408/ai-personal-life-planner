@@ -1,0 +1,120 @@
+{
+  "common": {
+    "ok": "OK",
+    "cancel": "Huỷ",
+    "save": "Lưu",
+    "delete": "Xoá",
+    "edit": "Sửa",
+    "back": "Quay lại",
+    "next": "Tiếp tục",
+    "skip": "Bỏ qua",
+    "retry": "Thử lại",
+    "loading": "Đang tải…",
+    "empty": "Chưa có dữ liệu",
+    "yes": "Có",
+    "no": "Không",
+    "confirm": "Xác nhận",
+    "done": "Hoàn tất",
+    "search": "Tìm kiếm",
+    "today": "Hôm nay"
+  },
+  "app": {
+    "name": "LifeOS AI",
+    "tagline": "Trợ lý cuộc sống cá nhân 24/7"
+  },
+  "tabs": {
+    "today": "Hôm nay",
+    "tasks": "Công việc",
+    "habits": "Thói quen",
+    "reports": "Báo cáo",
+    "profile": "Cá nhân"
+  },
+  "auth": {
+    "login": {
+      "title": "Đăng nhập",
+      "subtitle": "Chào mừng quay lại",
+      "email": "Email",
+      "password": "Mật khẩu",
+      "submit": "Đăng nhập",
+      "forgotPassword": "Quên mật khẩu?",
+      "switchToRegister": "Chưa có tài khoản? Đăng ký"
+    },
+    "register": {
+      "title": "Tạo tài khoản",
+      "subtitle": "Bắt đầu hành trình của bạn",
+      "displayName": "Tên hiển thị",
+      "submit": "Đăng ký",
+      "switchToLogin": "Đã có tài khoản? Đăng nhập"
+    },
+    "logout": "Đăng xuất"
+  },
+  "onboarding": {
+    "welcome": "Chào mừng đến với LifeOS AI",
+    "description": "Hệ điều hành cho cuộc sống cá nhân của bạn.",
+    "getStarted": "Bắt đầu"
+  },
+  "today": {
+    "title": "Hôm nay",
+    "greeting": "Chào {{name}} 👋",
+    "nothingPlanned": "Chưa có lịch cho hôm nay",
+    "generatePlan": "Để AI tạo lịch giúp bạn"
+  },
+  "tasks": {
+    "title": "Công việc",
+    "addNew": "Thêm công việc",
+    "status": {
+      "TODO": "Cần làm",
+      "IN_PROGRESS": "Đang làm",
+      "COMPLETED": "Hoàn thành",
+      "CANCELLED": "Đã huỷ"
+    },
+    "priority": {
+      "LOW": "Thấp",
+      "MEDIUM": "Trung bình",
+      "HIGH": "Cao"
+    }
+  },
+  "habits": {
+    "title": "Thói quen",
+    "streak": "Chuỗi {{count}} ngày",
+    "completedToday": "Đã hoàn thành hôm nay"
+  },
+  "reports": {
+    "title": "Báo cáo",
+    "daily": "Báo cáo ngày",
+    "weekly": "Báo cáo tuần",
+    "monthly": "Báo cáo tháng"
+  },
+  "profile": {
+    "title": "Cá nhân",
+    "settings": "Cài đặt",
+    "language": "Ngôn ngữ",
+    "notifications": "Thông báo"
+  },
+  "settings": {
+    "language": {
+      "title": "Ngôn ngữ",
+      "description": "Chọn ngôn ngữ hiển thị và ngôn ngữ AI sẽ dùng để trả lời.",
+      "vi": "Tiếng Việt",
+      "en": "English",
+      "system": "Theo hệ thống"
+    }
+  },
+  "errors": {
+    "UNKNOWN_ERROR": "Có lỗi xảy ra. Vui lòng thử lại.",
+    "NETWORK": "Không có kết nối mạng. Vui lòng kiểm tra lại.",
+    "VALIDATION_FAILED": "Dữ liệu nhập chưa hợp lệ.",
+    "BAD_REQUEST": "Yêu cầu không hợp lệ.",
+    "FORBIDDEN": "Bạn không có quyền truy cập tài nguyên này.",
+    "NOT_FOUND": "Không tìm thấy tài nguyên.",
+    "CONFLICT": "Dữ liệu bị xung đột.",
+    "UNPROCESSABLE": "Yêu cầu không thể xử lý.",
+    "RATE_LIMIT_EXCEEDED": "Bạn thao tác quá nhanh. Vui lòng chờ một lát.",
+    "INTERNAL_SERVER_ERROR": "Máy chủ đang gặp sự cố. Vui lòng thử lại sau.",
+    "AUTH_INVALID_CREDENTIALS": "Email hoặc mật khẩu không đúng.",
+    "AUTH_INVALID_REFRESH_TOKEN": "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.",
+    "AUTH_ACCOUNT_DISABLED": "Tài khoản đã bị vô hiệu hoá.",
+    "AUTH_EMAIL_TAKEN": "Email đã được đăng ký.",
+    "AUTH_UNAUTHORIZED": "Vui lòng đăng nhập để tiếp tục."
+  }
+}

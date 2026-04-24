@@ -29,6 +29,7 @@ export class UsersService {
             activityLevel: true,
             dietaryPreference: true,
             timezone: true,
+            locale: true,
           },
         },
       },

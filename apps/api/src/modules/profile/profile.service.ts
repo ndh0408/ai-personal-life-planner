@@ -30,6 +30,7 @@ function serialize(profile: UserProfile) {
     dietaryPreference: profile.dietaryPreference,
     healthNotes: profile.healthNotes,
     timezone: profile.timezone,
+    locale: profile.locale,
     createdAt: profile.createdAt,
     updatedAt: profile.updatedAt,
   };

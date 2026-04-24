@@ -1,8 +1,8 @@
 {
-  "name": "@planner/api",
+  "name": "@lifeos/api",
   "version": "0.1.0",
   "private": true,
-  "description": "AI Personal Life Planner — backend API (NestJS + Prisma + PostgreSQL)",
+  "description": "LifeOS AI — backend API (NestJS + Prisma + PostgreSQL)",
   "main": "dist/main.js",
   "scripts": {
     "prebuild": "rimraf dist tsconfig.tsbuildinfo tsconfig.build.tsbuildinfo",

@@ -1,0 +1,120 @@
+{
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "skip": "Skip",
+    "retry": "Retry",
+    "loading": "Loading…",
+    "empty": "Nothing here yet",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "done": "Done",
+    "search": "Search",
+    "today": "Today"
+  },
+  "app": {
+    "name": "LifeOS AI",
+    "tagline": "Your 24/7 personal life assistant"
+  },
+  "tabs": {
+    "today": "Today",
+    "tasks": "Tasks",
+    "habits": "Habits",
+    "reports": "Reports",
+    "profile": "Profile"
+  },
+  "auth": {
+    "login": {
+      "title": "Log in",
+      "subtitle": "Welcome back",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Log in",
+      "forgotPassword": "Forgot password?",
+      "switchToRegister": "No account? Sign up"
+    },
+    "register": {
+      "title": "Create account",
+      "subtitle": "Start your journey",
+      "displayName": "Display name",
+      "submit": "Sign up",
+      "switchToLogin": "Already have an account? Log in"
+    },
+    "logout": "Log out"
+  },
+  "onboarding": {
+    "welcome": "Welcome to LifeOS AI",
+    "description": "The operating system for your personal life.",
+    "getStarted": "Get started"
+  },
+  "today": {
+    "title": "Today",
+    "greeting": "Hi {{name}} 👋",
+    "nothingPlanned": "No plan for today yet",
+    "generatePlan": "Let AI plan your day"
+  },
+  "tasks": {
+    "title": "Tasks",
+    "addNew": "Add task",
+    "status": {
+      "TODO": "To do",
+      "IN_PROGRESS": "In progress",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
+    },
+    "priority": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High"
+    }
+  },
+  "habits": {
+    "title": "Habits",
+    "streak": "{{count}}-day streak",
+    "completedToday": "Done today"
+  },
+  "reports": {
+    "title": "Reports",
+    "daily": "Daily report",
+    "weekly": "Weekly report",
+    "monthly": "Monthly report"
+  },
+  "profile": {
+    "title": "Profile",
+    "settings": "Settings",
+    "language": "Language",
+    "notifications": "Notifications"
+  },
+  "settings": {
+    "language": {
+      "title": "Language",
+      "description": "Pick the display language — AI answers will use the same language.",
+      "vi": "Tiếng Việt",
+      "en": "English",
+      "system": "System default"
+    }
+  },
+  "errors": {
+    "UNKNOWN_ERROR": "Something went wrong. Please try again.",
+    "NETWORK": "No internet connection. Please check and try again.",
+    "VALIDATION_FAILED": "Some fields are invalid.",
+    "BAD_REQUEST": "Invalid request.",
+    "FORBIDDEN": "You don't have permission to access this resource.",
+    "NOT_FOUND": "Resource not found.",
+    "CONFLICT": "Data conflict.",
+    "UNPROCESSABLE": "Unable to process this request.",
+    "RATE_LIMIT_EXCEEDED": "Too many requests. Please slow down.",
+    "INTERNAL_SERVER_ERROR": "The server had an issue. Please try again later.",
+    "AUTH_INVALID_CREDENTIALS": "Invalid email or password.",
+    "AUTH_INVALID_REFRESH_TOKEN": "Session expired. Please log in again.",
+    "AUTH_ACCOUNT_DISABLED": "This account has been disabled.",
+    "AUTH_EMAIL_TAKEN": "This email is already registered.",
+    "AUTH_UNAUTHORIZED": "Please log in to continue."
+  }
+}

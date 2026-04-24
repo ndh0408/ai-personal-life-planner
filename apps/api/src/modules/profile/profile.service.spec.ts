@@ -18,6 +18,7 @@ type MockProfile = {
   dietaryPreference: string | null;
   healthNotes: string | null;
   timezone: string;
+  locale: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -50,6 +51,7 @@ function makePrisma() {
           dietaryPreference: (data.dietaryPreference as string | null) ?? null,
           healthNotes: (data.healthNotes as string | null) ?? null,
           timezone: (data.timezone as string) ?? 'Asia/Ho_Chi_Minh',
+          locale: (data.locale as string) ?? 'vi',
           createdAt: new Date(),
           updatedAt: new Date(),
         };

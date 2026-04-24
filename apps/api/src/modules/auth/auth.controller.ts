@@ -1,5 +1,6 @@
 import { Body, Controller, HttpCode, Post, Req, UseGuards, UsePipes } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import {
   LoginSchema,
@@ -20,11 +21,19 @@ function ctxFromRequest(req: Request): IssueContext {
   };
 }
 
+/**
+ * Auth endpoints are rate-limited more aggressively than the global throttler
+ * to slow down brute-force / token-farming. Values are per IP, per minute.
+ */
+const AUTH_THROTTLE = { default: { limit: 10, ttl: 60_000 } };
+
 @Controller('auth')
+@Throttle(AUTH_THROTTLE)
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @UsePipes(new ZodValidationPipe(RegisterSchema))
   register(@Body() body: RegisterInput, @Req() req: Request) {
     return this.auth.register(body, ctxFromRequest(req));
@@ -32,6 +41,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @UsePipes(new ZodValidationPipe(LoginSchema))
   login(@Body() body: LoginInput, @Req() req: Request) {
     return this.auth.login(body, ctxFromRequest(req));
@@ -39,6 +49,7 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(200)
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @UsePipes(new ZodValidationPipe(RefreshTokenSchema))
   refresh(@Body() body: RefreshTokenInput, @Req() req: Request) {
     return this.auth.refresh(body.refreshToken, ctxFromRequest(req));

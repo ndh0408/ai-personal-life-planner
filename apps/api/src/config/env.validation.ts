@@ -17,6 +17,8 @@ const EnvSchema = z.object({
   THROTTLE_TTL: z.coerce.number().int().positive().default(60),
   THROTTLE_LIMIT: z.coerce.number().int().positive().default(120),
 
+  DEFAULT_LOCALE: z.enum(['vi', 'en']).default('vi'),
+
   AI_PROVIDER: z.enum(['anthropic', 'openai', 'mock']).default('mock'),
   AI_API_KEY: z.string().optional(),
   AI_MODEL: z.string().default('claude-sonnet-4-6'),

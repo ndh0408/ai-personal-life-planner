@@ -33,6 +33,7 @@ const baseProfileFields = {
   dietaryPreference: z.string().max(120).optional(),
   healthNotes: z.string().max(2000).optional(),
   timezone: z.string().min(1).max(64).optional(),
+  locale: z.string().min(2).max(10).optional(),
 };
 
 export const CreateProfileSchema = z.object(baseProfileFields);

@@ -1,10 +1,10 @@
-# AI Personal Life Planner
+# LifeOS AI
 
-Mobile app + AI backend that helps people plan their day: what to do, when to wake/sleep, when to eat, when to focus, and what to adjust when life slips off-plan.
+**LifeOS AI** is a personal life operating system — a 24/7 assistant that helps a single user run their day-to-day life across **schedule, work, health, food, finances, goals, and habits**. The AI watches signals (sleep, overdue tasks, skipped meals, budget burn-rate) and surfaces insights without waiting to be asked.
 
 This repository is a **monorepo** containing the mobile app, the API, and a shared package for cross-cutting types and validation.
 
-> **Status:** foundation only. The structure, auth, database, and AI proxy boundary are wired up. Business modules (tasks, habits, schedule, daily planning, reports, push) are scaffolded as empty modules and will land in subsequent iterations.
+> **Status:** production-grade foundation. Auth, data layer, i18n (vi/en), AI proxy boundary, and 13 NestJS modules are wired up. Finance and Goals modules are scaffolded at the route level; their deep schemas land in the next iteration (see [docs/PRODUCT_SCOPE.md](docs/PRODUCT_SCOPE.md)).
 
 ---
 
@@ -14,15 +14,17 @@ This repository is a **monorepo** containing the mobile app, the API, and a shar
 .
 ├── apps/
 │   ├── api/         # NestJS + Prisma + PostgreSQL backend
-│   └── mobile/      # React Native + Expo app
+│   └── mobile/      # React Native + Expo app (i18next + vi/en)
 ├── packages/
-│   └── shared/      # Shared TypeScript types + Zod schemas
-├── docker/          # docker-compose for local Postgres
-├── docs/            # Architecture and design notes
-├── scripts/         # One-shot helper scripts (setup, check)
+│   └── shared/      # Shared TypeScript types + Zod schemas (@planner/shared)
+├── docker/          # docker-compose for local Postgres (+ pgadmin profile)
+├── docs/            # Architecture, product scope, i18n, auth, API reference
+├── scripts/         # One-shot helper scripts
 ├── .env.example     # Root env example
 └── package.json     # npm workspaces
 ```
+
+> **Note on package names.** The npm workspaces are `@lifeos/api`, `@lifeos/mobile`, and `@planner/shared`. The `@planner/shared` name is kept as an internal identifier to avoid churning ~40 import paths; user-facing branding everywhere is "LifeOS AI".
 
 ---
 
@@ -30,14 +32,17 @@ This repository is a **monorepo** containing the mobile app, the API, and a shar
 
 | Layer    | Tech |
 | -------- | ---- |
-| Mobile   | React Native + Expo + TypeScript |
-| Backend  | NestJS + TypeScript |
+| Mobile   | React Native + Expo + TypeScript, i18next + react-i18next, React Query, Zustand, React Navigation |
+| Backend  | NestJS + TypeScript, Passport JWT, `@nestjs/throttler`, Helmet |
 | Database | PostgreSQL 16 |
 | ORM      | Prisma |
-| Auth     | JWT access + refresh tokens (refresh tokens stored hashed) |
-| Validation | Zod (shared between mobile & API) |
+| Auth     | JWT access + refresh tokens (refresh stored as sha256 hash, rotated on refresh) |
+| Validation | Zod (shared between mobile & API via `@planner/shared`) |
 | AI       | Server-side only — mobile never holds the provider key |
-| Container| Docker (Postgres locally; Dockerfile provided for the API) |
+| Container| Docker (Postgres locally; `apps/api/Dockerfile` for the API) |
+| i18n     | Vietnamese (default) + English on both mobile and API |
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full picture.
 
 ---
 
@@ -45,7 +50,7 @@ This repository is a **monorepo** containing the mobile app, the API, and a shar
 
 - **Node.js 20+** (see `.nvmrc`)
 - **npm 10+** (workspaces)
-- **Docker Desktop** (for local Postgres) — or a local Postgres if you prefer
+- **Docker Desktop** (for local Postgres) — or a local Postgres on port 5440
 - **Expo Go** app on your phone, or Android Studio / Xcode for emulators
 
 ---
@@ -53,37 +58,26 @@ This repository is a **monorepo** containing the mobile app, the API, and a shar
 ## First-time setup
 
 ```bash
-# 1. Copy env templates (or run the helper script below)
+# 1. Copy env templates
 cp .env.example .env
 cp apps/api/.env.example apps/api/.env
 cp apps/mobile/.env.example apps/mobile/.env
-cp docker/.env.example docker/.env
 
 # 2. Install dependencies (npm workspaces installs everything)
 npm install
 
-# 3. Start Postgres
+# 3. Start Postgres (docker-compose)
 npm run dev:db
 
-# 4. Generate Prisma client and run the first migration
-npm run --workspace @planner/api db:generate
-npm run --workspace @planner/api db:migrate -- --name init
+# 4. Generate Prisma client + run migrations
+npx --workspace apps/api prisma generate
+npm run --workspace apps/api db:migrate:deploy
 
-# 5. (Optional) seed a demo user
+# 5. (Optional) seed demo data
 npm run db:seed
 ```
 
-Or, on a Unix shell:
-```bash
-bash scripts/setup.sh
-```
-
-On Windows PowerShell:
-```powershell
-pwsh scripts/setup.ps1
-```
-
-> **Important:** edit `apps/api/.env` and replace `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` with strong random values (`openssl rand -hex 64`). The API refuses to boot with the placeholder values because they are shorter than 32 chars only by mistake.
+> **Important:** edit `apps/api/.env` and replace `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` with strong random values — `openssl rand -hex 64`. The API refuses to boot with the placeholder values.
 
 ---
 
@@ -101,11 +95,11 @@ npm run dev:mobile
 # → press `a` for Android emulator, `i` for iOS simulator, or scan QR with Expo Go
 ```
 
-> If your phone can't reach `localhost`, set `EXPO_PUBLIC_API_BASE_URL=http://<your-LAN-ip>:3000/api` in `apps/mobile/.env`.
+If your phone can't reach `localhost`, set `EXPO_PUBLIC_API_BASE_URL=http://<your-LAN-ip>:3000/api` in `apps/mobile/.env`.
 
 ---
 
-## Available root scripts
+## Root scripts
 
 | Command | What it does |
 | --- | --- |
@@ -113,21 +107,67 @@ npm run dev:mobile
 | `npm run dev:mobile` | Start the Expo dev server |
 | `npm run dev:db` | Start Postgres via docker compose |
 | `npm run dev:db:down` | Stop Postgres |
-| `npm run db:migrate` | Run Prisma migrations |
+| `npm run db:migrate` | Run Prisma migrations (dev) |
 | `npm run db:seed` | Seed demo data |
-| `npm run db:studio` | Open Prisma Studio in the browser |
+| `npm run db:studio` | Open Prisma Studio |
 | `npm run build` | Build shared package + API |
 | `npm run lint` | Lint every workspace that defines a `lint` script |
-| `npm run typecheck` | TypeScript noEmit check across every workspace |
+| `npm run typecheck` | TypeScript `noEmit` across every workspace |
 | `npm test` | Run tests across every workspace |
-| `npm run format` | Prettier format the whole repo |
+| `npm run format` | Prettier-format the repo |
 
 ---
 
-## Building production bundles for mobile
+## Testing the auth flow
 
 ```bash
-# Install EAS CLI once
+curl -sX POST http://localhost:3000/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"alice@example.com","password":"changeMe123!","name":"Alice"}'
+
+curl -sX POST http://localhost:3000/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"alice@example.com","password":"changeMe123!"}'
+# → { accessToken, refreshToken, expiresIn }
+
+curl -s http://localhost:3000/api/me \
+  -H "Authorization: Bearer $ACCESS"
+```
+
+Full flow + error-code catalog: [docs/AUTH_FLOW.md](docs/AUTH_FLOW.md).
+
+---
+
+## Internationalization
+
+- Default locale: **`vi`** (Tiếng Việt).
+- Supported: `vi`, `en`.
+- Mobile: `apps/mobile/src/i18n/` (i18next + AsyncStorage persistence + device detection).
+- Backend: reads locale from `UserProfile.locale` → `Accept-Language` → `vi`.
+- Errors: backend returns stable `errorCode`; mobile translates via i18n keys.
+
+Full guide: [docs/I18N.md](docs/I18N.md).
+
+---
+
+## Security defaults
+
+- Passwords hashed with bcrypt (cost 10). Server never logs password, hash, or tokens.
+- Refresh tokens stored as SHA-256 hashes; `/auth/refresh` rotates and revokes the previous one.
+- Helmet enabled, CORS configurable per env.
+- Global throttler (120 req / 60s) **plus** per-endpoint limits on `/auth/*`:
+  - `register`: 5 / min / IP
+  - `login`: 10 / min / IP
+  - `refresh`: 30 / min / IP
+- Env vars validated with Zod at boot — the API refuses to start with weak/missing JWT secrets.
+- `.env*` gitignored; only `.env.example` is checked in.
+- Production mode (`NODE_ENV=production`) hides raw 5xx internals from responses.
+
+---
+
+## Building production mobile bundles
+
+```bash
 npm i -g eas-cli
 eas login
 
@@ -137,7 +177,7 @@ eas build --platform android --profile production  # AAB for Play Store
 eas build --platform ios     --profile production  # IPA for App Store
 ```
 
-`apps/mobile/eas.json` defines the build profiles. For local-only Android APKs, run `expo prebuild` then build through Android Studio.
+`apps/mobile/eas.json` defines the build profiles.
 
 ---
 
@@ -149,24 +189,16 @@ The mobile app **never** holds an AI provider key. All AI traffic flows through 
 - enforces auth, throttling, and audit logging
 - can later add caching, prompt versioning, and provider failover without re-shipping the app
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full picture.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
 
-## Security defaults
+## Ports
 
-- Passwords hashed with bcrypt (cost 10).
-- Refresh tokens stored as SHA-256 hashes; `/auth/refresh` rotates and revokes the previous one.
-- Helmet enabled, CORS configurable per env, global rate limiter via `@nestjs/throttler`.
-- Env vars validated with Zod at boot — the API refuses to start with weak/missing JWT secrets.
-- No secrets in source. `.env*` files are gitignored; only `.env.example` is checked in.
+- API: **3000** (override via `PORT`)
+- Postgres: **5440** (override via `POSTGRES_PORT` in `docker/.env`) — 5440 to avoid collision with any local Postgres on 5432
 
 ---
-
-## Database port
-
-Postgres is exposed on **5440** (not the usual 5432) so it doesn't collide with any
-locally-installed PostgreSQL service. Override via `POSTGRES_PORT` in `docker/.env`.
 
 ## Demo account
 
@@ -177,10 +209,18 @@ email:    demo@planner.local
 password: demo1234
 ```
 
-The demo user is fully populated — profile, today's schedule, tasks, habits with 7 days of logs,
-meal plan, sleep/mood logs, AI conversation, recommendations, notification log. See
-[docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) for the full data model.
+The demo user is fully populated — profile, today's schedule, tasks, habits with 7 days of logs, meal plan, sleep/mood logs, AI conversation, recommendations, notification log. See [docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md).
 
-## What's next
+---
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the planned feature modules.
+## Docs index
+
+- [docs/PRODUCT_SCOPE.md](docs/PRODUCT_SCOPE.md) — what LifeOS AI is and is not
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — monorepo + runtime topology
+- [docs/API_SETUP.md](docs/API_SETUP.md) — run the backend locally
+- [docs/API_REFERENCE.md](docs/API_REFERENCE.md) — endpoints, payloads, status codes
+- [docs/AUTH_FLOW.md](docs/AUTH_FLOW.md) — register/login/refresh/logout + error codes
+- [docs/I18N.md](docs/I18N.md) — vi/en on mobile and API
+- [docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) — Prisma data model
+- [docs/MOBILE_SETUP.md](docs/MOBILE_SETUP.md) — run the mobile app locally
+- [docs/AI_ENGINE.md](docs/AI_ENGINE.md) — provider abstraction + prompt pipeline

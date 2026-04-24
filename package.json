@@ -1,8 +1,8 @@
 {
-  "name": "ai-personal-life-planner",
+  "name": "lifeos-ai",
   "private": true,
   "version": "0.1.0",
-  "description": "AI-powered personal life planner — monorepo (mobile + api + shared)",
+  "description": "LifeOS AI — personal life operating system (mobile + api + shared)",
   "workspaces": [
     "apps/*",
     "packages/*"

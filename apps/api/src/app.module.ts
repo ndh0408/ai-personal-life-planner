@@ -4,6 +4,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
+import { I18nModule } from './common/i18n/i18n.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -16,6 +17,13 @@ import { HabitsModule } from './modules/habits/habits.module';
 import { MealsModule } from './modules/meals/meals.module';
 import { SleepLogsModule } from './modules/sleep-logs/sleep-logs.module';
 import { MoodLogsModule } from './modules/mood-logs/mood-logs.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { PlannerModule } from './modules/planner/planner.module';
+import { FinanceModule } from './modules/finance/finance.module';
+import { BudgetModule } from './modules/budget/budget.module';
+import { GoalsModule } from './modules/goals/goals.module';
+import { AssistantModule } from './modules/assistant/assistant.module';
 
 @Module({
   imports: [
@@ -33,18 +41,38 @@ import { MoodLogsModule } from './modules/mood-logs/mood-logs.module';
       ],
     }),
     PrismaModule,
+    I18nModule,
+
+    // Foundation
     HealthModule,
     AuthModule,
     UsersModule,
     ProfileModule,
+
+    // Daily planning
+    PlannerModule,
     TasksModule,
     SchedulesModule,
     ScheduleItemsModule,
     HabitsModule,
+
+    // Wellbeing
     MealsModule,
     SleepLogsModule,
     MoodLogsModule,
+
+    // Upcoming (foundation stubs — see docs/PRODUCT_SCOPE.md)
+    FinanceModule,
+    BudgetModule,
+    GoalsModule,
+
+    // AI — AiModule is reactive (user-initiated). AssistantModule is proactive (scheduled insights).
     AiModule,
+    AssistantModule,
+
+    // Cross-cutting
+    NotificationsModule,
+    ReportsModule,
   ],
   providers: [
     {

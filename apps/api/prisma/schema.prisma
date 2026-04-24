@@ -226,6 +226,7 @@ model UserProfile {
   dietaryPreference String?
   healthNotes       String?
   timezone          String         @default("Asia/Ho_Chi_Minh")
+  locale            String         @default("vi")
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 
