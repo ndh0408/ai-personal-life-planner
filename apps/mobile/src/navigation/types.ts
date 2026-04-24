@@ -61,6 +61,8 @@ export type RootStackParamList = {
   SavingGoals: undefined;
   AddSavingGoal: undefined;
   PersonalGoals: undefined;
+  CreateGoal: { goalId?: string } | undefined;
+  GoalDetail: { goalId: string };
   Settings: undefined;
   LanguageSettings: undefined;
   AIChat: undefined;

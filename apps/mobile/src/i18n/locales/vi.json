@@ -600,11 +600,114 @@
   },
   "goals": {
     "title": "Mục tiêu cá nhân",
+    "addNew": "Mục tiêu mới",
     "deadline": "Hạn",
     "milestones": "Cột mốc",
+    "milestonesProgress": "Tiến độ cột mốc",
+    "progress": "Tiến độ",
+    "notFound": "Không tìm thấy mục tiêu",
+    "edit": "Chỉnh sửa mục tiêu",
+    "createTitle": "Mục tiêu mới",
+    "editTitle": "Chỉnh sửa mục tiêu",
+    "statusActions": "Cập nhật trạng thái",
     "empty": {
       "title": "Chưa có mục tiêu",
-      "description": "Tạo mục tiêu dài hạn và chia nhỏ thành cột mốc."
+      "description": "Tạo mục tiêu dài hạn và chia nhỏ thành cột mốc.",
+      "filteredTitle": "Không có mục tiêu trong nhóm này",
+      "filteredDescription": "Thử chọn nhóm khác, hoặc tạo mục tiêu mới."
+    },
+    "filter": {
+      "ALL": "Tất cả"
+    },
+    "category": {
+      "HEALTH": "Sức khoẻ",
+      "FINANCE": "Tài chính",
+      "CAREER": "Sự nghiệp",
+      "STUDY": "Học tập",
+      "RELATIONSHIP": "Mối quan hệ",
+      "PERSONAL": "Cá nhân",
+      "OTHER": "Khác"
+    },
+    "status": {
+      "ACTIVE": "Đang theo",
+      "COMPLETED": "Đã hoàn thành",
+      "PAUSED": "Tạm dừng",
+      "CANCELLED": "Đã huỷ"
+    },
+    "markAs": {
+      "ACTIVE": "Kích hoạt lại",
+      "COMPLETED": "Đánh dấu hoàn thành",
+      "PAUSED": "Tạm dừng",
+      "CANCELLED": "Huỷ mục tiêu"
+    },
+    "confirmComplete": {
+      "title": "Đánh dấu mục tiêu đã hoàn thành?",
+      "body": "Bạn có thể kích hoạt lại bất kỳ lúc nào."
+    },
+    "confirmPause": {
+      "title": "Tạm dừng mục tiêu này?",
+      "body": "Sẽ ẩn khỏi danh sách đang theo cho đến khi bạn kích hoạt lại."
+    },
+    "confirmCancel": {
+      "title": "Huỷ mục tiêu này?",
+      "body": "Tiến độ vẫn được giữ, nhưng chuyển sang trạng thái đã huỷ."
+    },
+    "confirmDelete": {
+      "title": "Xoá mục tiêu này?",
+      "body": "Mọi cột mốc sẽ bị xoá. Không thể hoàn tác."
+    },
+    "form": {
+      "title": "Tên mục tiêu",
+      "titlePlaceholder": "VD: Tiết kiệm 50 triệu quỹ khẩn cấp",
+      "description": "Mô tả",
+      "descriptionPlaceholder": "Vì sao mục tiêu quan trọng, ràng buộc, ghi chú…",
+      "category": "Nhóm",
+      "priority": "Mức độ ưu tiên",
+      "targetValue": "Giá trị mục tiêu",
+      "currentValue": "Giá trị hiện tại",
+      "unit": "Đơn vị",
+      "unitPlaceholder": "kg, km, giờ…",
+      "deadline": "Hạn (YYYY-MM-DD)",
+      "numericHint": "Bỏ trống nếu mục tiêu chỉ theo dõi qua cột mốc."
+    },
+    "invalid": {
+      "title": "Kiểm tra lại thông tin",
+      "titleBody": "Hãy nhập tên mục tiêu.",
+      "deadlineBody": "Hạn phải theo định dạng YYYY-MM-DD.",
+      "progressBody": "Giá trị hiện tại không được vượt quá giá trị mục tiêu."
+    },
+    "milestone": {
+      "addTitle": "Thêm cột mốc",
+      "add": "Thêm",
+      "target": "Ngày mục tiêu",
+      "empty": "Chưa có cột mốc — thêm vài cái để dễ theo dõi tiến độ.",
+      "complete": "Hoàn thành",
+      "reopen": "Mở lại",
+      "titlePlaceholder": "VD: Tiết kiệm 10 triệu trong tháng đầu",
+      "invalidTitle": "Kiểm tra lại thông tin",
+      "invalidTitleBody": "Hãy nhập tên cột mốc.",
+      "invalidDateBody": "Ngày mục tiêu phải theo định dạng YYYY-MM-DD.",
+      "confirmDeleteTitle": "Xoá cột mốc này?",
+      "confirmDeleteBody": "Không thể hoàn tác.",
+      "status": {
+        "TODO": "Đang làm",
+        "COMPLETED": "Đã xong",
+        "CANCELLED": "Đã huỷ"
+      }
+    },
+    "ai": {
+      "sectionTitle": "Gợi ý từ AI",
+      "sectionBody": "Chỉ là gợi ý — bạn quyết định có áp dụng hay không.",
+      "milestoneCta": "Chia mục tiêu thành cột mốc",
+      "todayCta": "Một hành động nhỏ cho hôm nay",
+      "checkCta": "Kiểm tra tiến độ nhẹ nhàng",
+      "milestoneTitle": "Cột mốc gợi ý",
+      "todayTitle": "Một bước nhỏ cho hôm nay",
+      "checkTitle": "Check-in tiến độ",
+      "milestonePrompt": "Chia mục tiêu cá nhân này thành 3-5 cột mốc thực tế kèm ngày mục tiêu ước lượng. Cụ thể, nhẹ nhàng, không áp lực. Bối cảnh: {{context}}",
+      "todayPrompt": "Gợi ý một hành động nhỏ (dưới 30 phút) hôm nay để tiến gần hơn tới mục tiêu. Giữ giọng nhẹ nhàng, không tạo áp lực. Bối cảnh: {{context}}",
+      "checkPrompt": "Check-in nhẹ nhàng về tiến độ mục tiêu. Nếu đang chậm, nhắc khéo léo, không phán xét. Đưa một cách nhìn lại tích cực. Bối cảnh: {{context}}",
+      "disclaimer": "Đây chỉ là gợi ý — bạn hiểu cuộc sống mình rõ hơn ai hết."
     }
   },
   "health": {

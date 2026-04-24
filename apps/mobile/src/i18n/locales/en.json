@@ -600,11 +600,114 @@
   },
   "goals": {
     "title": "Personal goals",
+    "addNew": "New goal",
     "deadline": "Deadline",
     "milestones": "Milestones",
+    "milestonesProgress": "Milestone progress",
+    "progress": "Progress",
+    "notFound": "Goal not found",
+    "edit": "Edit goal",
+    "createTitle": "New goal",
+    "editTitle": "Edit goal",
+    "statusActions": "Update status",
     "empty": {
       "title": "No goals yet",
-      "description": "Create a long-term goal and break it into milestones."
+      "description": "Create a long-term goal and break it into milestones.",
+      "filteredTitle": "No goals in this category",
+      "filteredDescription": "Try another filter, or add a new goal."
+    },
+    "filter": {
+      "ALL": "All"
+    },
+    "category": {
+      "HEALTH": "Health",
+      "FINANCE": "Finance",
+      "CAREER": "Career",
+      "STUDY": "Study",
+      "RELATIONSHIP": "Relationships",
+      "PERSONAL": "Personal",
+      "OTHER": "Other"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "COMPLETED": "Completed",
+      "PAUSED": "Paused",
+      "CANCELLED": "Cancelled"
+    },
+    "markAs": {
+      "ACTIVE": "Re-activate",
+      "COMPLETED": "Mark completed",
+      "PAUSED": "Pause",
+      "CANCELLED": "Cancel goal"
+    },
+    "confirmComplete": {
+      "title": "Mark this goal as completed?",
+      "body": "You can re-activate it anytime."
+    },
+    "confirmPause": {
+      "title": "Pause this goal?",
+      "body": "It will be hidden from the active list until you re-activate it."
+    },
+    "confirmCancel": {
+      "title": "Cancel this goal?",
+      "body": "Progress stays, but it will move to cancelled."
+    },
+    "confirmDelete": {
+      "title": "Delete this goal?",
+      "body": "All milestones will be removed. This cannot be undone."
+    },
+    "form": {
+      "title": "Title",
+      "titlePlaceholder": "e.g. Save 50M for emergencies",
+      "description": "Description",
+      "descriptionPlaceholder": "Why this goal matters, constraints, notes…",
+      "category": "Category",
+      "priority": "Priority",
+      "targetValue": "Target value",
+      "currentValue": "Current value",
+      "unit": "Unit",
+      "unitPlaceholder": "kg, km, hours…",
+      "deadline": "Deadline (YYYY-MM-DD)",
+      "numericHint": "Leave target + current empty for milestone-only goals."
+    },
+    "invalid": {
+      "title": "Check your input",
+      "titleBody": "Please enter a goal title.",
+      "deadlineBody": "Deadline must be YYYY-MM-DD.",
+      "progressBody": "Current value cannot exceed target."
+    },
+    "milestone": {
+      "addTitle": "Add milestone",
+      "add": "Add",
+      "target": "Target date",
+      "empty": "No milestones yet — add a few so progress is easier to track.",
+      "complete": "Complete",
+      "reopen": "Re-open",
+      "titlePlaceholder": "e.g. Save 10M in month 1",
+      "invalidTitle": "Check your input",
+      "invalidTitleBody": "Please enter a milestone title.",
+      "invalidDateBody": "Target date must be YYYY-MM-DD.",
+      "confirmDeleteTitle": "Delete this milestone?",
+      "confirmDeleteBody": "This cannot be undone.",
+      "status": {
+        "TODO": "In progress",
+        "COMPLETED": "Done",
+        "CANCELLED": "Cancelled"
+      }
+    },
+    "ai": {
+      "sectionTitle": "AI helpers",
+      "sectionBody": "Suggestions only — you decide whether to use them.",
+      "milestoneCta": "Break goal into milestones",
+      "todayCta": "One small action for today",
+      "checkCta": "Gentle progress check",
+      "milestoneTitle": "Suggested milestones",
+      "todayTitle": "A small step today",
+      "checkTitle": "Progress check-in",
+      "milestonePrompt": "Break this personal goal into 3-5 realistic milestones with rough target dates. Be practical, kind, and specific. Context: {{context}}",
+      "todayPrompt": "Suggest one small, doable action today (under 30 minutes) that moves this goal forward. Keep it gentle and non-pressuring. Context: {{context}}",
+      "checkPrompt": "Give a gentle, encouraging check-in on this goal's progress. If it looks slightly behind, nudge softly without pressure. Offer one reframing idea. Context: {{context}}",
+      "disclaimer": "Advice is general guidance — you know your life best."
     }
   },
   "health": {
