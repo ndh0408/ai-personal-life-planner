@@ -261,6 +261,59 @@
       "LOW": "Thấp",
       "MEDIUM": "Trung bình",
       "HIGH": "Cao"
+    },
+    "filter": {
+      "ALL": "Tất cả",
+      "TODAY": "Hôm nay",
+      "UPCOMING": "Sắp tới",
+      "OVERDUE": "Quá hạn",
+      "COMPLETED": "Đã xong"
+    },
+    "sortBy": "Sắp xếp:",
+    "sort": {
+      "dueDate": "Hạn",
+      "priority": "Ưu tiên",
+      "createdAt": "Mới tạo"
+    },
+    "empty": {
+      "title": "Chưa có task",
+      "ALL": "Thêm task đầu tiên để AI có thể lên lịch giúp bạn.",
+      "TODAY": "Không có task đến hạn hôm nay.",
+      "UPCOMING": "Không có task sắp tới.",
+      "OVERDUE": "Tuyệt vời — không có task quá hạn.",
+      "COMPLETED": "Chưa hoàn thành task nào."
+    },
+    "overdue": "Quá hạn",
+    "min": "phút",
+    "createTitle": "Task mới",
+    "editTitle": "Sửa task",
+    "form": {
+      "title": "Tiêu đề",
+      "titlePlaceholder": "Ví dụ: Review PR #142",
+      "description": "Mô tả",
+      "descriptionPlaceholder": "Thêm ghi chú, checklist…",
+      "dueDate": "Hạn (YYYY-MM-DD HH:mm)",
+      "estimatedMinutes": "Ước tính (phút)",
+      "category": "Hạng mục",
+      "categoryPlaceholder": "work, personal, finance…",
+      "priority": "Ưu tiên"
+    },
+    "ai": {
+      "sectionTitle": "Gợi ý từ AI",
+      "split": "AI chia nhỏ task",
+      "timing": "Gợi ý thời gian làm",
+      "disclaimer": "Gợi ý chỉ hiện dưới dạng văn bản — bạn quyết định có dùng hay không.",
+      "needTitleTitle": "Thêm tiêu đề trước",
+      "needTitleBody": "AI cần biết task của bạn về gì (ít nhất 3 ký tự).",
+      "splitPrompt": "Hãy chia nhỏ task sau thành 3-5 bước thực hiện (khoảng {{minutes}} phút tổng): {{title}}",
+      "timingPrompt": "Gợi ý khung giờ phù hợp trong ngày để làm task \"{{title}}\" (khoảng {{minutes}} phút). Đưa lý do ngắn.",
+      "splitTitle": "Các bước đề xuất",
+      "timingTitle": "Khung giờ đề xuất",
+      "copyToDescription": "Ghi vào mô tả"
+    },
+    "confirmDelete": {
+      "title": "Xoá task?",
+      "body": "Thao tác này không thể hoàn tác."
     }
   },
   "habits": {

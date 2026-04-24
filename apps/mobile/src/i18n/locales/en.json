@@ -261,6 +261,59 @@
       "LOW": "Low",
       "MEDIUM": "Medium",
       "HIGH": "High"
+    },
+    "filter": {
+      "ALL": "All",
+      "TODAY": "Today",
+      "UPCOMING": "Upcoming",
+      "OVERDUE": "Overdue",
+      "COMPLETED": "Completed"
+    },
+    "sortBy": "Sort:",
+    "sort": {
+      "dueDate": "Due date",
+      "priority": "Priority",
+      "createdAt": "Created"
+    },
+    "empty": {
+      "title": "No tasks yet",
+      "ALL": "Add your first task so the AI can plan around it.",
+      "TODAY": "Nothing due today.",
+      "UPCOMING": "No upcoming tasks.",
+      "OVERDUE": "All caught up — no overdue tasks.",
+      "COMPLETED": "No completed tasks yet."
+    },
+    "overdue": "Overdue",
+    "min": "min",
+    "createTitle": "New task",
+    "editTitle": "Edit task",
+    "form": {
+      "title": "Title",
+      "titlePlaceholder": "e.g. Review PR #142",
+      "description": "Description",
+      "descriptionPlaceholder": "Notes, checklist, links…",
+      "dueDate": "Due (YYYY-MM-DD HH:mm)",
+      "estimatedMinutes": "Estimate (min)",
+      "category": "Category",
+      "categoryPlaceholder": "work, personal, finance…",
+      "priority": "Priority"
+    },
+    "ai": {
+      "sectionTitle": "AI helpers",
+      "split": "Break this down",
+      "timing": "Suggest a time",
+      "disclaimer": "Suggestions are shown as text only — you decide whether to use them.",
+      "needTitleTitle": "Add a title first",
+      "needTitleBody": "The AI needs to know what the task is (at least 3 characters).",
+      "splitPrompt": "Break this task into 3-5 practical steps (~{{minutes}} min total): {{title}}",
+      "timingPrompt": "Suggest a good window today to do \"{{title}}\" (~{{minutes}} min). Brief reasoning.",
+      "splitTitle": "Suggested steps",
+      "timingTitle": "Suggested window",
+      "copyToDescription": "Copy to description"
+    },
+    "confirmDelete": {
+      "title": "Delete task?",
+      "body": "This cannot be undone."
     }
   },
   "habits": {
