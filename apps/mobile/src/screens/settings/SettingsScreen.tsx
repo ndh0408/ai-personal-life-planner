@@ -133,6 +133,20 @@ export function SettingsScreen() {
         />
       </Card>
 
+      <Card style={{ marginBottom: spacing.md }}>
+        <Text style={{ color: colors.text, fontWeight: '600', marginBottom: spacing.sm }}>
+          {t('settings.widgets.title')}
+        </Text>
+        <Text style={{ color: colors.textMuted, marginBottom: spacing.md }}>
+          {t('settings.widgets.subtitle')}
+        </Text>
+        <Button
+          title={t('settings.widgets.menu')}
+          variant="secondary"
+          onPress={() => nav.navigate('WidgetSettings')}
+        />
+      </Card>
+
       <Button title={t('auth.logout')} variant="danger" onPress={logout} />
     </Screen>
   );

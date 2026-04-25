@@ -1367,6 +1367,49 @@
         "remindAt": "Remind me at (ISO date-time)",
         "save": "Save reminder"
       },
+      "widgets": {
+        "menu": "Home-screen widgets",
+        "title": "Widgets",
+        "subtitle": "Quick glances + Quick Actions on your home screen. We never display sensitive data unless you opt in.",
+        "promise": "Lock-screen safe by default. No background tracking. Snapshot is wiped on logout.",
+        "section": {
+          "main": "What to show",
+          "finance": "Finance",
+          "privacy": "Privacy mode"
+        },
+        "toggles": {
+          "enabled": { "label": "Enable widgets", "hint": "Master switch. When OFF, the cached snapshot is wiped and widgets stop refreshing." },
+          "showTasks": { "label": "Show tasks", "hint": "Next task + pending count on the Today widget." },
+          "showRecommendations": { "label": "Show AI nudge", "hint": "Top recommendation card on the AI Nudge widget." },
+          "showHealthData": { "label": "Show health", "hint": "Sleep duration + mood / energy on the Health widget." },
+          "showFinance": { "label": "Show finance widget", "hint": "Adds the Finance widget option." },
+          "showFinanceAmounts": { "label": "Show exact amounts", "hint": "Off by default — when off, finance widget shows percent and dashes only." }
+        },
+        "privacyMode": {
+          "label": "Privacy mode",
+          "FULL": "Full",
+          "HIDE_SENSITIVE": "Hide sensitive",
+          "MINIMAL": "Minimal",
+          "FULL_hint": "All widgets render exact values per your other toggles.",
+          "HIDE_SENSITIVE_hint": "Hides finance amounts (percent only). Health collapses to mood. Recommended for shared / lock-screen use.",
+          "MINIMAL_hint": "Counts + next-task title only. Hides finance, health, AI nudge body."
+        },
+        "preview": {
+          "title": "Preview",
+          "subtitle": "What your widgets show right now, given your settings.",
+          "todayCard": "Today",
+          "nudgeCard": "AI nudge",
+          "financeCard": "Finance",
+          "healthCard": "Health",
+          "noFinance": "Finance widget hidden by your settings.",
+          "noHealth": "Health widget hidden by your settings.",
+          "noNudge": "No nudges right now.",
+          "amountsHidden": "Amounts hidden",
+          "lastUpdated": "Last updated",
+          "refresh": "Refresh now"
+        },
+        "deepLinkNote": "Tapping a widget action opens this app via lifeos:// — see docs/DEEP_LINKS.md."
+      },
       "context": {
         "title": "Smart context",
         "subtitle": "Light nudges based on your data + permissions. Each one is a question, not a verdict.",

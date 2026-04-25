@@ -66,6 +66,7 @@ import { MoodQuickLogScreen } from '../screens/voice/MoodQuickLogScreen';
 import { SmartCheckinSettingsScreen } from '../screens/voice/SmartCheckinSettingsScreen';
 import { HealthIntegrationSettingsScreen } from '../screens/voice/HealthIntegrationSettingsScreen';
 import { ContextInferencesScreen } from '../screens/context/ContextInferencesScreen';
+import { WidgetSettingsScreen } from '../screens/widgets/WidgetSettingsScreen';
 import { AIChatScreen } from '../screens/ai/AIChatScreen';
 import type { RootStackParamList } from './types';
 
@@ -93,8 +94,31 @@ export function RootNavigator() {
     },
   };
 
+  // Native React Navigation linking config — converts incoming
+  // lifeos:// URLs into Stack.Screen navigations. Mirrors the
+  // KNOWN_DEEP_LINKS list in services/widgets/deep-link.ts.
+  const linking = {
+    prefixes: ['lifeos://'],
+    config: {
+      screens: {
+        Auth: 'auth',
+        Main: 'today',
+        AIChat: 'ai-chat',
+        CreateTask: 'tasks/add',
+        AddExpense: 'finance/add-expense',
+        AddIncome: 'finance/add-income',
+        MealQuickLog: 'meals/quick-log',
+        MoodQuickLog: 'health/mood',
+        SleepQuickLog: 'health/sleep',
+        SleepMoodCheckin: 'health/check-in',
+        ContextInferences: 'recommendation/:id?',
+        WidgetSettings: 'widget-settings',
+      },
+    },
+  } as const;
+
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer theme={navTheme} linking={linking as never}>
       <View style={{ flex: 1 }}>
         <OfflineBanner />
       <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -270,6 +294,11 @@ export function RootNavigator() {
                 name="ContextInferences"
                 component={ContextInferencesScreen}
                 options={{ title: 'Smart context' }}
+              />
+              <Stack.Screen
+                name="WidgetSettings"
+                component={WidgetSettingsScreen}
+                options={{ title: 'Widgets' }}
               />
             </Stack.Group>
           </>

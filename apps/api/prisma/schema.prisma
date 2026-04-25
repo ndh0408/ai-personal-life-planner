@@ -304,6 +304,7 @@ model User {
   contextSignals          ContextSignal[]
   contextInferences       ContextInference[]
   userPatterns            UserPattern[]
+  widgetPreferences       WidgetPreferences?
 
   @@index([status])
   @@map("users")
@@ -1671,4 +1672,40 @@ model UserPattern {
   @@unique([userId, patternType])
   @@index([userId])
   @@map("user_patterns")
+}
+
+// =============================================================================
+// P. Home-screen widgets — preferences + on-demand snapshot (no separate
+//    cache table; mobile keeps the snapshot in MMKV/AsyncStorage and the
+//    backend always answers GET /api/widgets/summary fresh from Prisma).
+// =============================================================================
+
+enum WidgetPrivacyMode {
+  /// Show everything the user toggled on, including exact finance amounts.
+  FULL
+  /// Hide finance amounts (show "—" / percent) + collapse health to mood-only.
+  HIDE_SENSITIVE
+  /// Surface only counts + next-task title; no finance, no health, no AI nudge body.
+  MINIMAL
+}
+
+model WidgetPreferences {
+  id                    String            @id @default(uuid())
+  userId                String            @unique
+  /// Master master — when false, mobile clears the cached snapshot and
+  /// stops calling the summary endpoint.
+  enabled               Boolean           @default(true)
+  showTasks             Boolean           @default(true)
+  showRecommendations   Boolean           @default(true)
+  showHealthData        Boolean           @default(true)
+  showFinance           Boolean           @default(true)
+  /// When false, finance widget shows "—" / percent only — never raw amount.
+  showFinanceAmounts    Boolean           @default(false)
+  privacyMode           WidgetPrivacyMode @default(HIDE_SENSITIVE)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("widget_preferences")
 }

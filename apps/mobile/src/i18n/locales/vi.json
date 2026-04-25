@@ -1367,6 +1367,49 @@
         "remindAt": "Nhắc lúc (ISO date-time)",
         "save": "Lưu nhắc nhở"
       },
+      "widgets": {
+        "menu": "Widget màn hình chính",
+        "title": "Widgets",
+        "subtitle": "Xem nhanh + thao tác nhanh ngay trên home screen. Chúng tôi không hiển thị dữ liệu nhạy cảm nếu bạn không bật.",
+        "promise": "An toàn cho lock-screen mặc định. Không tracking nền. Snapshot bị xoá khi bạn đăng xuất.",
+        "section": {
+          "main": "Hiển thị gì",
+          "finance": "Tài chính",
+          "privacy": "Chế độ riêng tư"
+        },
+        "toggles": {
+          "enabled": { "label": "Bật widget", "hint": "Công tắc tổng. Khi tắt, snapshot bị xoá và widget ngừng làm mới." },
+          "showTasks": { "label": "Hiển thị task", "hint": "Task tiếp theo + số task còn lại trên Today widget." },
+          "showRecommendations": { "label": "Hiển thị AI nudge", "hint": "Recommendation cao nhất trên AI Nudge widget." },
+          "showHealthData": { "label": "Hiển thị sức khoẻ", "hint": "Thời lượng giấc ngủ + mood / năng lượng trên Health widget." },
+          "showFinance": { "label": "Hiển thị widget tài chính", "hint": "Bật Finance widget." },
+          "showFinanceAmounts": { "label": "Hiển thị số tiền chính xác", "hint": "Mặc định tắt — khi tắt, finance widget chỉ hiện phần trăm và dấu gạch." }
+        },
+        "privacyMode": {
+          "label": "Chế độ riêng tư",
+          "FULL": "Đầy đủ",
+          "HIDE_SENSITIVE": "Ẩn nhạy cảm",
+          "MINIMAL": "Tối giản",
+          "FULL_hint": "Mọi widget hiển thị giá trị thực theo các toggle bên trên.",
+          "HIDE_SENSITIVE_hint": "Ẩn số tiền (chỉ phần trăm). Health rút gọn còn mood. Khuyên dùng cho thiết bị chia sẻ / lock-screen.",
+          "MINIMAL_hint": "Chỉ đếm số + tiêu đề task tiếp theo. Ẩn finance, health, AI nudge body."
+        },
+        "preview": {
+          "title": "Xem trước",
+          "subtitle": "Widget hiện đang hiển thị gì với cài đặt của bạn.",
+          "todayCard": "Hôm nay",
+          "nudgeCard": "AI nudge",
+          "financeCard": "Tài chính",
+          "healthCard": "Sức khoẻ",
+          "noFinance": "Finance widget đang bị ẩn theo cài đặt.",
+          "noHealth": "Health widget đang bị ẩn theo cài đặt.",
+          "noNudge": "Hiện không có nudge.",
+          "amountsHidden": "Đã ẩn số tiền",
+          "lastUpdated": "Cập nhật lần cuối",
+          "refresh": "Làm mới ngay"
+        },
+        "deepLinkNote": "Bấm action trên widget mở app qua lifeos:// — xem docs/DEEP_LINKS.md."
+      },
       "context": {
         "title": "Smart context",
         "subtitle": "Gợi ý nhẹ nhàng dựa trên dữ liệu + quyền của bạn. Mỗi gợi ý chỉ là câu hỏi, không phán xét.",

@@ -61,6 +61,9 @@ const basePackage = 'com.yourname.lifeosai';
 const config: ExpoConfig = {
   name: `LifeOS AI${displayNameSuffix}`,
   slug: 'lifeos-ai',
+  // Deep-link scheme used by widget Quick Actions + future Siri / App Shortcuts.
+  // Routes resolved by `services/widgets/deep-link.ts`.
+  scheme: 'lifeos',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',

@@ -37,4 +37,6 @@ export const QUERY_KEYS = {
   contextToday: ['context', 'today'] as const,
   contextInferences: ['context', 'inferences'] as const,
   contextPatterns: ['context', 'patterns'] as const,
+  widgetSummary: ['widgets', 'summary'] as const,
+  widgetPreferences: ['widgets', 'preferences'] as const,
 };

@@ -12,3 +12,4 @@ export * from './privacy.schema';
 export * from './communication.schema';
 export * from './voice-companion.schema';
 export * from './context-inference.schema';
+export * from './widgets.schema';

@@ -101,6 +101,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       // Best-effort — never block logout on cache purge.
     }
+    // Wipe widget snapshot — defends against cross-user leak when the
+    // native widget reads the file on the next refresh.
+    try {
+      const { widgetSnapshotStore } = await import('../services/widgets/snapshot-store');
+      await widgetSnapshotStore.clear();
+    } catch {
+      // Best-effort.
+    }
     // Wipe React Query's in-memory cache so the next login doesn't see the
     // previous user's data. cancelQueries() first to avoid in-flight handlers
     // writing back into the cleared cache.
