@@ -91,6 +91,7 @@ export type RootStackParamList = {
   MoodQuickLog: undefined;
   SmartCheckinSettings: undefined;
   HealthIntegrationSettings: undefined;
+  ContextInferences: undefined;
 };
 
 export type AuthScreenProps<T extends keyof AuthStackParamList> = NativeStackScreenProps<

@@ -65,6 +65,7 @@ import { SleepQuickLogScreen } from '../screens/voice/SleepQuickLogScreen';
 import { MoodQuickLogScreen } from '../screens/voice/MoodQuickLogScreen';
 import { SmartCheckinSettingsScreen } from '../screens/voice/SmartCheckinSettingsScreen';
 import { HealthIntegrationSettingsScreen } from '../screens/voice/HealthIntegrationSettingsScreen';
+import { ContextInferencesScreen } from '../screens/context/ContextInferencesScreen';
 import { AIChatScreen } from '../screens/ai/AIChatScreen';
 import type { RootStackParamList } from './types';
 
@@ -264,6 +265,11 @@ export function RootNavigator() {
                 name="HealthIntegrationSettings"
                 component={HealthIntegrationSettingsScreen}
                 options={{ title: 'Health & fitness' }}
+              />
+              <Stack.Screen
+                name="ContextInferences"
+                component={ContextInferencesScreen}
+                options={{ title: 'Smart context' }}
               />
             </Stack.Group>
           </>

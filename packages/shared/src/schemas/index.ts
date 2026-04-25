@@ -11,3 +11,4 @@ export * from './user-ai-provider.schema';
 export * from './privacy.schema';
 export * from './communication.schema';
 export * from './voice-companion.schema';
+export * from './context-inference.schema';

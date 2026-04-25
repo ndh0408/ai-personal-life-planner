@@ -1367,6 +1367,31 @@
         "remindAt": "Nhắc lúc (ISO date-time)",
         "save": "Lưu nhắc nhở"
       },
+      "context": {
+        "title": "Smart context",
+        "subtitle": "Gợi ý nhẹ nhàng dựa trên dữ liệu + quyền của bạn. Mỗi gợi ý chỉ là câu hỏi, không phán xét.",
+        "noNudges": "Hiện không có gợi ý nào.",
+        "dismiss": "Bỏ qua",
+        "applied": "Áp dụng",
+        "viewed": "Đã hiểu",
+        "whyTitle": "Vì sao tôi thấy gợi ý này?",
+        "actions": {
+          "RESCHEDULE_LIGHT": "Dời 2 việc nhẹ sang ngày mai",
+          "OPEN_MEAL_QUICK_LOG": "Ghi nhanh bữa ăn",
+          "OPEN_BUDGET_REVIEW": "Xem ngân sách",
+          "OPEN_DAILY_REVIEW": "Mở daily review"
+        },
+        "type": {
+          "POSSIBLE_SLEEPINESS": "Có thể nên giảm tải tối nay",
+          "WORKLOAD_OVERLOAD": "Tối nay nhiều việc",
+          "MEAL_MAY_BE_SKIPPED": "Bạn đã ăn chưa?",
+          "BUDGET_RISK": "Theo dõi ngân sách",
+          "TASK_PROCRASTINATION_RISK": "Một số task đang bị dời",
+          "HABIT_DROP_RISK": "Thói quen có nguy cơ bị bỏ",
+          "LOW_ENERGY_DAY": "Ngày năng lượng thấp",
+          "NEED_REVIEW_DAY": "Review cuối ngày"
+        }
+      },
       "voice": {
         "menu": "Voice companion",
         "title": "Voice companion",

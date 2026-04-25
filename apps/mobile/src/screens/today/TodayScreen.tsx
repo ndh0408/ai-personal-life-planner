@@ -25,6 +25,8 @@ type Status = ScheduleItem['status'];
 import { schedulesApi, type ScheduleItem } from '../../services/api/schedules.api';
 import { aiApi } from '../../services/api/ai.api';
 import { dashboardApi } from '../../services/api/dashboard.api';
+import { contextApi } from '../../services/api/context.api';
+import { SmartNudgeCard } from '../../components/context/SmartNudgeCard';
 import { useErrorMessage } from '../../i18n/useErrorMessage';
 import { QUERY_KEYS } from '../../constants';
 import {
@@ -59,6 +61,14 @@ export function TodayScreen() {
   const dashboardQ = useQuery({
     queryKey: ['dashboard', 'summary'],
     queryFn: () => dashboardApi.summary(),
+  });
+  // Smart nudges — privacy-gated context inferences. The query hits
+  // /context/today which already short-circuits per the user's
+  // PrivacySetting toggles, so a user with everything OFF gets an empty
+  // inferences array.
+  const contextQ = useQuery({
+    queryKey: QUERY_KEYS.contextToday,
+    queryFn: () => contextApi.today(),
   });
 
   const [refreshing, setRefreshing] = useState(false);
@@ -177,6 +187,14 @@ export function TodayScreen() {
           </Text>
         </View>
       )}
+
+      {/* Top of Today: surface up to 2 highest-confidence smart nudges. */}
+      {contextQ.data?.inferences
+        .filter((i) => i.status !== 'DISMISSED' && i.status !== 'APPLIED')
+        .slice(0, 2)
+        .map((inf) => (
+          <SmartNudgeCard key={inf.id} inference={inf} />
+        ))}
 
       {/* 1. HEADER + mood check-in */}
       <View style={{ marginBottom: spacing.md }}>

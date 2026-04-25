@@ -1367,6 +1367,31 @@
         "remindAt": "Remind me at (ISO date-time)",
         "save": "Save reminder"
       },
+      "context": {
+        "title": "Smart context",
+        "subtitle": "Light nudges based on your data + permissions. Each one is a question, not a verdict.",
+        "noNudges": "Nothing to suggest right now.",
+        "dismiss": "Dismiss",
+        "applied": "Apply",
+        "viewed": "Got it",
+        "whyTitle": "Why am I seeing this?",
+        "actions": {
+          "RESCHEDULE_LIGHT": "Move 2 light tasks to tomorrow",
+          "OPEN_MEAL_QUICK_LOG": "Quick-log meal",
+          "OPEN_BUDGET_REVIEW": "Review budget",
+          "OPEN_DAILY_REVIEW": "Open daily review"
+        },
+        "type": {
+          "POSSIBLE_SLEEPINESS": "Maybe wind down soon",
+          "WORKLOAD_OVERLOAD": "Tonight looks heavy",
+          "MEAL_MAY_BE_SKIPPED": "Did you eat?",
+          "BUDGET_RISK": "Budget watch",
+          "TASK_PROCRASTINATION_RISK": "Some tasks are slipping",
+          "HABIT_DROP_RISK": "Habits at risk",
+          "LOW_ENERGY_DAY": "Low-energy day",
+          "NEED_REVIEW_DAY": "End-of-day review"
+        }
+      },
       "voice": {
         "menu": "Voice companion",
         "title": "Voice companion",

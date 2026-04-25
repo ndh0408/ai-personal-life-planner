@@ -34,4 +34,7 @@ export const QUERY_KEYS = {
   smartCheckinSettings: ['voice', 'smart-checkins'] as const,
   healthIntegration: ['voice', 'health-integration'] as const,
   pendingActions: ['voice', 'pending-actions'] as const,
+  contextToday: ['context', 'today'] as const,
+  contextInferences: ['context', 'inferences'] as const,
+  contextPatterns: ['context', 'patterns'] as const,
 };

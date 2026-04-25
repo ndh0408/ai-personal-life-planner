@@ -45,6 +45,7 @@ import { UserAiProvidersModule } from './modules/user-ai-providers/user-ai-provi
 import { PrivacyModule } from './modules/privacy/privacy.module';
 import { CommunicationModule } from './modules/communication/communication.module';
 import { VoiceCompanionModule } from './modules/voice-companion/voice-companion.module';
+import { ContextInferenceModule } from './modules/context-inference/context-inference.module';
 
 // Cross-cutting
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -108,6 +109,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     PrivacyModule,
     CommunicationModule,
     VoiceCompanionModule,
+    ContextInferenceModule,
 
     // Cross-cutting
     NotificationsModule,

@@ -301,6 +301,9 @@ model User {
   voiceCaptures           VoiceCapture[]
   suggestedActions        SuggestedAction[]
   healthIntegrationSetting HealthIntegrationSetting?
+  contextSignals          ContextSignal[]
+  contextInferences       ContextInference[]
+  userPatterns            UserPattern[]
 
   @@index([status])
   @@map("users")
@@ -1553,4 +1556,119 @@ model HealthIntegrationSetting {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("health_integration_settings")
+}
+
+// =============================================================================
+// O. Context Inference Engine — rule-based detection + AI-assisted nudges.
+//    Privacy-first: signal collection short-circuits per PrivacySetting gates;
+//    inference rows store only safe summaries, never raw payload.
+// =============================================================================
+
+enum ContextSignalType {
+  SLEEP_DURATION
+  SLEEP_TIME_NEAR
+  ENERGY_LOW
+  STRESS_HIGH
+  TASK_PENDING_LATE
+  TASK_OVERDUE
+  TASK_DEFERRED_REPEAT
+  HABIT_MISS
+  HABIT_BROKEN_STREAK
+  MEAL_OVERDUE
+  EXPENSE_VELOCITY_HIGH
+  BUDGET_USAGE_HIGH
+  CALENDAR_EARLY_TOMORROW
+  END_OF_DAY_NO_REVIEW
+}
+
+enum ContextInferenceType {
+  POSSIBLE_SLEEPINESS
+  WORKLOAD_OVERLOAD
+  MEAL_MAY_BE_SKIPPED
+  BUDGET_RISK
+  TASK_PROCRASTINATION_RISK
+  HABIT_DROP_RISK
+  LOW_ENERGY_DAY
+  NEED_REVIEW_DAY
+}
+
+enum ContextInferenceStatus {
+  NEW
+  VIEWED
+  DISMISSED
+  APPLIED
+}
+
+enum UserPatternType {
+  USUAL_SLEEP_TIME
+  USUAL_WAKE_TIME
+  USUAL_MEAL_TIME_BREAKFAST
+  USUAL_MEAL_TIME_LUNCH
+  USUAL_MEAL_TIME_DINNER
+  USUAL_HABIT_TIME
+  USUAL_PRODUCTIVE_HOURS
+  COMMON_OVERLOAD_DAYS
+  COMMON_SKIPPED_TASK_CATEGORY
+  AVG_DAILY_EXPENSE
+}
+
+model ContextSignal {
+  id          String              @id @default(uuid())
+  userId      String
+  type        ContextSignalType
+  /// Safe-summary payload — never raw notes / amounts. Examples:
+  /// { minutes: 320 }, { hoursSinceUsual: 2.5 }, { count: 4 }.
+  value       Json
+  source      String
+  confidence  Float?
+  occurredAt  DateTime
+  createdAt   DateTime            @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, occurredAt])
+  @@index([userId, occurredAt])
+  @@map("context_signals")
+}
+
+model ContextInference {
+  id              String                  @id @default(uuid())
+  userId          String
+  type            ContextInferenceType
+  confidence      Float
+  /// Locale-tagged human evidence list — never raw amounts/notes. Schema:
+  /// { locale: "vi"|"en", items: Array<{ key: string, summary: string }> }.
+  evidence        Json
+  /// Optional structured action the mobile UI can wire as Quick Action,
+  /// eg. { type: "RESCHEDULE_LIGHT", count: 2 }.
+  suggestedAction Json?
+  status          ContextInferenceStatus  @default(NEW)
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, createdAt])
+  @@index([userId, type, createdAt])
+  @@map("context_inferences")
+}
+
+model UserPattern {
+  id              String          @id @default(uuid())
+  userId          String
+  patternType     UserPatternType
+  /// Pattern shape varies by type. Examples:
+  /// USUAL_SLEEP_TIME: { hour: 23, minute: 30 }
+  /// AVG_DAILY_EXPENSE: { amount: 200000, currency: "VND" }
+  value           Json
+  confidence      Float
+  lastObservedAt  DateTime
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, patternType])
+  @@index([userId])
+  @@map("user_patterns")
 }
