@@ -1105,6 +1105,26 @@
         "label": "Personalise my experience",
         "hint": "Master switch. When off, AI returns generic responses, the assistant stops using your profile/timezone, and the gates below have no effect."
       },
+      "useTasksForAI": {
+        "label": "Use tasks + deadlines for AI",
+        "hint": "Sends task counts and statuses to AI for daily review and weekly insight."
+      },
+      "useHabitsForAI": {
+        "label": "Use habits for AI",
+        "hint": "Sends recent habit log counts to AI for review and gentle nudges."
+      },
+      "useMealsForAI": {
+        "label": "Use meals + dietary profile for AI",
+        "hint": "Sends meal logs and dietary preferences to AI for meal suggestions."
+      },
+      "useGoalsForAI": {
+        "label": "Use personal goals for AI",
+        "hint": "Sends goal progress so AI can suggest small daily actions."
+      },
+      "useVoiceInput": {
+        "label": "Voice input",
+        "hint": "Microphone is used only while you hold a record button. We never record in the background."
+      },
       "useScheduleForAI": {
         "label": "Use schedule + tasks + habits for AI",
         "hint": "Sends today's plan, tasks and habit progress to AI when generating your schedule, daily review or weekly insight."
@@ -1202,6 +1222,81 @@
           }
         },
         "noBackground": "No background recording. No tracking. No reading other apps."
+      },
+      "consent": {
+        "title": "How LifeOS learns about you",
+        "intro": "You control your data. Toggle anything on or off — anytime. AI only uses the data you allow to give you personal advice.",
+        "promise": "We do not listen in. We do not track your phone. We do not read other apps.",
+        "groupDailyLifeTitle": "Daily life",
+        "groupBodyTitle": "Body & mood",
+        "groupMoneyTitle": "Money",
+        "groupGoalsTitle": "Goals",
+        "groupDeviceTitle": "Device features",
+        "groupBehaviourTitle": "Behaviour",
+        "enableRecommended": "Enable recommended",
+        "customize": "Customize",
+        "skip": "Skip for now",
+        "learnMore": "Learn more",
+        "items": {
+          "schedule": { "title": "Schedule & tasks", "purpose": "Lets AI plan your day around your real lifetime — no surprise reminders." },
+          "habits":   { "title": "Habits", "purpose": "Used for gentle nudges, never to shame you for missed days." },
+          "meals":    { "title": "Meals", "purpose": "Personalises meal suggestions to your goals + dietary preferences." },
+          "health":   { "title": "Health & lifestyle", "purpose": "Sleep, mood, energy you log yourself. Never a medical diagnosis." },
+          "finance":  { "title": "Finance (sensitive)", "purpose": "Income / expenses / budget aggregates only. Stays in the app — no third-party sharing." },
+          "goals":    { "title": "Personal goals", "purpose": "Lets AI suggest one small action a day toward what matters to you." },
+          "calendar": { "title": "Phone calendar", "purpose": "OFF by default. Asked only when you turn it on." },
+          "healthFitness": { "title": "Phone Health / Fitness", "purpose": "OFF by default. Asked only when you turn it on." },
+          "location": { "title": "Foreground location", "purpose": "OFF by default. Used only while the app is open. No background tracking." },
+          "voice":    { "title": "Voice input", "purpose": "OFF by default. Mic only when you hold record." },
+          "proactive":   { "title": "Proactive recommendations", "purpose": "Lets the assistant nudge you. Rule-based, no AI cost." },
+          "diagnostics": { "title": "Anonymous diagnostics", "purpose": "Crash + perf metrics. No PII. OFF by default." }
+        }
+      },
+      "evidence": {
+        "title": "Why am I seeing this?",
+        "subtitle": "Each recommendation is built from the data you allowed. Here's what informed this one.",
+        "empty": "No evidence recorded for this recommendation yet.",
+        "open": "Why am I seeing this?",
+        "dataType": {
+          "SCHEDULE": "Schedule",
+          "TASKS": "Tasks",
+          "HABITS": "Habits",
+          "MEALS": "Meals",
+          "HEALTH": "Health",
+          "FINANCE": "Finance",
+          "GOALS": "Goals",
+          "CALENDAR": "Calendar",
+          "LOCATION": "Location",
+          "HEALTH_FITNESS": "Phone Health / Fitness"
+        }
+      },
+      "clearMemory": {
+        "title": "Clear AI memory",
+        "subtitle": "AI keeps a small set of preferences and patterns to give you better advice. Clearing wipes them — past chat history is NOT deleted.",
+        "explainerTitle": "What gets cleared",
+        "explainer": "• Patterns the AI noticed (eg. \"prefers light dinners\")\n• Routines (eg. \"usually walks after dinner\")\n• Long-term preferences\n\nWhat's NOT cleared: your tasks, expenses, sleep logs, finance data, or chat messages. Use Export data + Delete account for those.",
+        "confirmTitle": "Clear AI memory?",
+        "confirmBody": "This cannot be undone. AI will rebuild memory from new interactions if you keep personalisation on.",
+        "cta": "Clear memory",
+        "doneToast": "Cleared {{count}} memory items"
+      },
+      "actions": {
+        "exportTitle": "Export my data",
+        "exportHint": "Get a JSON copy of every row you own. May take a moment.",
+        "exportDoing": "Preparing export…",
+        "exportReady": "Export ready — saved to clipboard.",
+        "deleteTitle": "Delete account",
+        "deleteHint": "Schedules permanent deletion of your account + every owned row in 30 days.",
+        "deleteConfirmTitle": "Delete this account?",
+        "deleteConfirmBody": "Your account and every row tied to it will be permanently deleted in 30 days. You can cancel by signing back in within that window.",
+        "deleteAck": "Deletion scheduled for {{date}}.",
+        "clearMemory": "Clear AI memory"
+      },
+      "voiceModal": {
+        "title": "Voice input",
+        "body": "When enabled, the microphone activates only while you hold a record button. We never listen in the background.",
+        "enable": "Enable",
+        "later": "Maybe later"
       }
     }
   },

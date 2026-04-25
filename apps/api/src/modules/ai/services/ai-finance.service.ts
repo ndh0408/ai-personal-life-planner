@@ -95,6 +95,14 @@ export class AiFinanceService {
         disabledByPrivacy: true,
       };
     }
+    // Audit pin — finance domain accessed for AI analysis. Metadata only.
+    void this.privacy.logAccess(
+      userId,
+      'FINANCE',
+      'ai-finance:analyze',
+      'AiFinanceService',
+      'POST /api/ai/analyze-finance',
+    );
     const ctx = await this.collect(userId, input.month);
 
     const system = buildFinanceAnalysisSystem(locale);

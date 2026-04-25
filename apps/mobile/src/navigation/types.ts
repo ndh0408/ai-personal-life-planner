@@ -74,6 +74,9 @@ export type RootStackParamList = {
   PrivacySettings: undefined;
   PermissionCenter: undefined;
   DataUsageSummary: undefined;
+  PersonalizationConsent: undefined;
+  ClearAIMemory: undefined;
+  RecommendationEvidence: { recommendationId: string };
 };
 
 export type AuthScreenProps<T extends keyof AuthStackParamList> = NativeStackScreenProps<

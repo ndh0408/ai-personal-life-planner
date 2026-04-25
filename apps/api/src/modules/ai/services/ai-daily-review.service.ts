@@ -76,16 +76,44 @@ export class AiDailyReviewService {
     }
     const ctx = await this.collect(userId, input.date);
     // Domain-level redaction on the assembled context — what we already
-    // queried stays in DB, but we zero it out before AI sees it.
+    // queried stays in DB, but we zero it out before AI sees it. Each
+    // INCLUDED domain triggers a metadata-only audit pin.
     if (!gates.finance) {
       ctx.expenses = { total: 0, count: 0, byNeed: [] };
+    } else {
+      void this.privacy.logAccess(userId, 'FINANCE', 'ai-daily-review',
+        'AiDailyReviewService', 'POST /api/ai/daily-review');
     }
     if (!gates.health) {
       ctx.sleep = null;
       ctx.mood = null;
+    } else {
+      void this.privacy.logAccess(userId, 'HEALTH', 'ai-daily-review',
+        'AiDailyReviewService', 'POST /api/ai/daily-review');
     }
-    if (!gates.meal) {
+    if (!gates.meals) {
       ctx.meals = { planCount: 0, logCount: 0, estimatedCaloriesSum: null, cost: null };
+    } else {
+      void this.privacy.logAccess(userId, 'MEALS', 'ai-daily-review',
+        'AiDailyReviewService', 'POST /api/ai/daily-review');
+    }
+    if (!gates.tasks) {
+      ctx.tasks = { completed: 0, inProgress: 0, todo: 0 };
+    } else {
+      void this.privacy.logAccess(userId, 'TASKS', 'ai-daily-review',
+        'AiDailyReviewService', 'POST /api/ai/daily-review');
+    }
+    if (!gates.habits) {
+      ctx.habits = { logged: 0, completed: 0, active: 0 };
+    } else {
+      void this.privacy.logAccess(userId, 'HABITS', 'ai-daily-review',
+        'AiDailyReviewService', 'POST /api/ai/daily-review');
+    }
+    if (!gates.goals) {
+      ctx.goals = [];
+    } else {
+      void this.privacy.logAccess(userId, 'GOALS', 'ai-daily-review',
+        'AiDailyReviewService', 'POST /api/ai/daily-review');
     }
 
     const system = buildDailyReviewSystem(locale);

@@ -1105,6 +1105,26 @@
         "label": "Cá nhân hoá trải nghiệm của tôi",
         "hint": "Công tắc tổng. Khi tắt, AI sẽ trả lời chung chung, trợ lý ngừng dùng hồ sơ/múi giờ của bạn, các toggle bên dưới không có tác dụng."
       },
+      "useTasksForAI": {
+        "label": "Dùng task + deadline cho AI",
+        "hint": "Gửi số lượng và trạng thái task vào AI để daily review và weekly insight."
+      },
+      "useHabitsForAI": {
+        "label": "Dùng thói quen cho AI",
+        "hint": "Gửi log thói quen gần đây vào AI để review và nhắc nhẹ."
+      },
+      "useMealsForAI": {
+        "label": "Dùng bữa ăn + sở thích ăn uống cho AI",
+        "hint": "Gửi log bữa ăn và sở thích ăn uống vào AI để gợi ý món."
+      },
+      "useGoalsForAI": {
+        "label": "Dùng mục tiêu cá nhân cho AI",
+        "hint": "Gửi tiến độ mục tiêu để AI gợi ý hành động nhỏ mỗi ngày."
+      },
+      "useVoiceInput": {
+        "label": "Ghi âm giọng nói",
+        "hint": "Mic chỉ hoạt động khi bạn giữ nút ghi âm. Không bao giờ ghi âm nền."
+      },
       "useScheduleForAI": {
         "label": "Dùng lịch + task + thói quen cho AI",
         "hint": "Gửi lịch trình hôm nay, task và tiến độ thói quen vào AI khi tạo lịch, daily review, weekly insight."
@@ -1202,6 +1222,81 @@
           }
         },
         "noBackground": "Không ghi âm nền. Không tracking. Không đọc app khác."
+      },
+      "consent": {
+        "title": "LifeOS hiểu bạn như thế nào",
+        "intro": "Bạn kiểm soát dữ liệu của mình. Bật/tắt bất kỳ lúc nào. AI chỉ dùng dữ liệu bạn cho phép để đưa lời khuyên cá nhân hoá.",
+        "promise": "Chúng tôi không nghe lén. Không theo dõi điện thoại. Không đọc app khác.",
+        "groupDailyLifeTitle": "Cuộc sống hàng ngày",
+        "groupBodyTitle": "Cơ thể & tâm trạng",
+        "groupMoneyTitle": "Tài chính",
+        "groupGoalsTitle": "Mục tiêu",
+        "groupDeviceTitle": "Tính năng thiết bị",
+        "groupBehaviourTitle": "Hành vi",
+        "enableRecommended": "Bật các thiết lập đề xuất",
+        "customize": "Tuỳ chỉnh",
+        "skip": "Bỏ qua",
+        "learnMore": "Tìm hiểu thêm",
+        "items": {
+          "schedule": { "title": "Lịch & task", "purpose": "Cho AI sắp ngày dựa trên thời gian thực của bạn — không có nhắc bất ngờ." },
+          "habits":   { "title": "Thói quen", "purpose": "Để nhắc nhẹ, không bao giờ phán xét bạn vì những ngày bị bỏ." },
+          "meals":    { "title": "Bữa ăn", "purpose": "Cá nhân hoá gợi ý món theo mục tiêu + sở thích ăn uống của bạn." },
+          "health":   { "title": "Sức khoẻ & lối sống", "purpose": "Giấc ngủ, tâm trạng, năng lượng do bạn ghi. Không bao giờ chẩn đoán y khoa." },
+          "finance":  { "title": "Tài chính (nhạy cảm)", "purpose": "Chỉ dùng tổng thu/chi/ngân sách. Lưu trong app — không chia sẻ bên thứ ba." },
+          "goals":    { "title": "Mục tiêu cá nhân", "purpose": "Để AI gợi ý mỗi ngày một hành động nhỏ hướng tới điều bạn cần." },
+          "calendar": { "title": "Lịch điện thoại", "purpose": "Mặc định TẮT. Chỉ xin khi bạn bật." },
+          "healthFitness": { "title": "Health / Fitness của điện thoại", "purpose": "Mặc định TẮT. Chỉ xin khi bạn bật." },
+          "location": { "title": "Vị trí khi mở app", "purpose": "Mặc định TẮT. Chỉ dùng khi app đang mở. Không tracking nền." },
+          "voice":    { "title": "Ghi âm giọng nói", "purpose": "Mặc định TẮT. Mic chỉ bật khi bạn giữ nút ghi âm." },
+          "proactive":   { "title": "Gợi ý chủ động", "purpose": "Cho phép trợ lý nhắc bạn (rule-based, không tốn AI)." },
+          "diagnostics": { "title": "Chẩn đoán ẩn danh", "purpose": "Crash + chỉ số hiệu năng. Không có PII. Mặc định TẮT." }
+        }
+      },
+      "evidence": {
+        "title": "Vì sao tôi thấy gợi ý này?",
+        "subtitle": "Mỗi gợi ý được tạo từ dữ liệu bạn đã cho phép. Đây là những dữ liệu đã dùng cho gợi ý này.",
+        "empty": "Chưa có evidence cho gợi ý này.",
+        "open": "Vì sao tôi thấy gợi ý này?",
+        "dataType": {
+          "SCHEDULE": "Lịch",
+          "TASKS": "Task",
+          "HABITS": "Thói quen",
+          "MEALS": "Bữa ăn",
+          "HEALTH": "Sức khoẻ",
+          "FINANCE": "Tài chính",
+          "GOALS": "Mục tiêu",
+          "CALENDAR": "Lịch điện thoại",
+          "LOCATION": "Vị trí",
+          "HEALTH_FITNESS": "Health / Fitness điện thoại"
+        }
+      },
+      "clearMemory": {
+        "title": "Xoá AI memory",
+        "subtitle": "AI lưu một số sở thích và pattern nhỏ để đưa lời khuyên tốt hơn. Xoá memory sẽ xoá những thứ đó — KHÔNG xoá lịch sử chat.",
+        "explainerTitle": "Sẽ xoá những gì",
+        "explainer": "• Pattern AI ghi nhận (vd. \"thích bữa tối nhẹ\")\n• Routine (vd. \"hay đi bộ sau bữa tối\")\n• Sở thích lâu dài\n\nKhông xoá: task, chi tiêu, log giấc ngủ, dữ liệu tài chính, hay tin nhắn chat. Dùng Export data + Delete account cho những thứ đó.",
+        "confirmTitle": "Xoá AI memory?",
+        "confirmBody": "Hành động không thể hoàn tác. AI sẽ học lại từ tương tác mới nếu bạn vẫn bật cá nhân hoá.",
+        "cta": "Xoá memory",
+        "doneToast": "Đã xoá {{count}} mục memory"
+      },
+      "actions": {
+        "exportTitle": "Tải dữ liệu của tôi",
+        "exportHint": "Lấy bản JSON của mọi dòng dữ liệu bạn sở hữu. Có thể mất vài giây.",
+        "exportDoing": "Đang chuẩn bị export…",
+        "exportReady": "Đã sẵn sàng — đã copy vào clipboard.",
+        "deleteTitle": "Xoá tài khoản",
+        "deleteHint": "Lên lịch xoá vĩnh viễn tài khoản + mọi dữ liệu liên quan sau 30 ngày.",
+        "deleteConfirmTitle": "Xoá tài khoản này?",
+        "deleteConfirmBody": "Tài khoản và mọi dòng dữ liệu liên quan sẽ bị xoá vĩnh viễn sau 30 ngày. Đăng nhập lại trong khoảng đó để huỷ.",
+        "deleteAck": "Đã lên lịch xoá vào {{date}}.",
+        "clearMemory": "Xoá AI memory"
+      },
+      "voiceModal": {
+        "title": "Ghi âm giọng nói",
+        "body": "Khi bật, microphone chỉ hoạt động khi bạn giữ nút ghi âm. Chúng tôi không bao giờ nghe nền.",
+        "enable": "Bật",
+        "later": "Để sau"
       }
     }
   },

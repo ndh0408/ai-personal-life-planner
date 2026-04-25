@@ -1,29 +1,17 @@
 import { api } from './client';
 import type {
+  ClearAiMemoryResultDto,
+  DataUsageSummaryDto,
+  DeleteAccountRequestDto,
   PrivacySettingsDto,
+  RecommendationEvidenceDto,
   RecordConsentInput,
   UpdatePrivacySettingsInput,
   UserConsentDto,
   UserConsentTypeDto,
 } from '@planner/shared';
 
-export interface DataUsageSummary {
-  aiSeesSchedule: boolean;
-  aiSeesFinance: boolean;
-  aiSeesHealth: boolean;
-  aiSeesMeal: boolean;
-  storedCounts: {
-    schedules: number;
-    tasks: number;
-    expenses: number;
-    incomes: number;
-    sleepLogs: number;
-    moodLogs: number;
-    healthMetrics: number;
-    aiMessages: number;
-  };
-  recentConsents: UserConsentDto[];
-}
+export type DataUsageSummary = DataUsageSummaryDto;
 
 export const privacyApi = {
   getSettings: () => api.get<PrivacySettingsDto>('/privacy/settings'),
@@ -33,6 +21,12 @@ export const privacyApi = {
   recordConsent: (input: RecordConsentInput) =>
     api.post<{ id: string }>('/privacy/consent', input),
   dataUsageSummary: () => api.get<DataUsageSummary>('/privacy/data-usage-summary'),
+  recommendationEvidence: (id: string) =>
+    api.get<RecommendationEvidenceDto[]>(`/privacy/recommendations/${id}/evidence`),
+  exportData: () => api.post<Record<string, unknown>>('/privacy/export-data'),
+  clearAiMemory: () => api.post<ClearAiMemoryResultDto>('/privacy/clear-ai-memory'),
+  deleteAccountRequest: () =>
+    api.post<DeleteAccountRequestDto>('/privacy/delete-account-request'),
 };
 
 /** Current privacy/ToS policy version surfaced to users on every consent log. */

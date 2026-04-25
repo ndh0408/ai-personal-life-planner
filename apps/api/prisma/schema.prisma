@@ -283,10 +283,13 @@ model User {
   notificationDevices NotificationDevice[]
   notificationSetting NotificationSetting?
   notificationLogs    NotificationLog[]
-  aiProviders         UserAiProvider[]
-  aiPreference        UserAiPreference?
-  privacySetting      PrivacySetting?
-  consents            UserConsent[]
+  aiProviders             UserAiProvider[]
+  aiPreference            UserAiPreference?
+  privacySetting          PrivacySetting?
+  consents                UserConsent[]
+  sensitiveAccessLogs     SensitiveAccessLog[]
+  recommendationEvidences RecommendationEvidence[]
+  personalizationMemories AiPersonalizationMemory[]
 
   @@index([status])
   @@map("users")
@@ -833,7 +836,8 @@ model AIRecommendation {
   createdAt  DateTime               @default(now())
   updatedAt  DateTime               @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  evidences RecommendationEvidence[]
 
   @@index([userId, status])
   @@index([userId, type])
@@ -1040,8 +1044,15 @@ model PrivacySetting {
   // Per-domain "may we send this to AI?" toggles. The resolver/services
   // check these BEFORE attaching that data to a prompt.
   useScheduleForAI            Boolean  @default(true)
-  useFinanceForAI             Boolean  @default(true)
+  useTasksForAI               Boolean  @default(true)
+  useHabitsForAI              Boolean  @default(true)
+  useMealsForAI               Boolean  @default(true)
   useHealthForAI              Boolean  @default(true)
+  useFinanceForAI             Boolean  @default(true)
+  useGoalsForAI               Boolean  @default(true)
+  // Legacy alias kept for the v1.1 mobile clients still in flight; the
+  // resolver treats it as equivalent to `useMealsForAI`. New code reads
+  // the singular form. Safe to drop once mobile pins to >=1.2.
   useMealForAI                Boolean  @default(true)
 
   // Per-OS-permission "may we use this device capability?" toggles.
@@ -1049,6 +1060,9 @@ model PrivacySetting {
   useCalendarContext          Boolean  @default(false)
   useLocationContext          Boolean  @default(false)
   useHealthFitnessContext     Boolean  @default(false)
+  // Renamed from voiceInputEnabled in v1.2 — kept the old column name in
+  // the table for backwards compatibility (no migration churn for existing
+  // rows). The DTO surfaces both `voiceInputEnabled` and `useVoiceInput`.
   voiceInputEnabled           Boolean  @default(false)
 
   // Behaviour toggles
@@ -1088,4 +1102,99 @@ model UserConsent {
   @@index([userId, consentType])
   @@index([userId, grantedAt])
   @@map("user_consents")
+}
+
+// =============================================================================
+// L. Personalization context — sensitive-access audit + recommendation
+//    evidence + AI memory ledger.
+// =============================================================================
+
+enum SensitiveDataType {
+  SCHEDULE
+  TASKS
+  HABITS
+  MEALS
+  HEALTH
+  FINANCE
+  GOALS
+  CALENDAR
+  LOCATION
+  HEALTH_FITNESS
+}
+
+enum AiMemoryType {
+  PREFERENCE
+  PATTERN
+  GOAL
+  ROUTINE
+  WARNING
+  OTHER
+}
+
+model SensitiveAccessLog {
+  id            String            @id @default(uuid())
+  userId        String
+  dataType      SensitiveDataType
+  // Short purpose tag — eg "ai-finance:analyze", "assistant:nudge".
+  purpose       String
+  // Component that performed the read — service class name. Never raw IP.
+  accessedBy    String
+  // Feature surface the access was triggered from — eg "POST /api/ai/analyze-finance".
+  sourceFeature String
+  createdAt     DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, dataType])
+  @@map("sensitive_access_logs")
+}
+
+model RecommendationEvidence {
+  id               String            @id @default(uuid())
+  recommendationId String
+  userId           String
+  dataType         SensitiveDataType
+  // Human-friendly one-liner the user can read inside "Why am I seeing this?".
+  // Stored as locale-tagged plain text — see locale field. Never contains
+  // raw monetary amounts, raw notes, or raw transaction descriptions.
+  summary          String
+  locale           String            @default("vi")
+  // Optional weight 0..1 representing how much this evidence influenced the
+  // recommendation. Resolver / mobile may sort by this for the UI.
+  weight           Float?
+  createdAt        DateTime          @default(now())
+
+  recommendation AIRecommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([recommendationId])
+  @@index([userId, createdAt])
+  @@map("recommendation_evidences")
+}
+
+model AiPersonalizationMemory {
+  id         String       @id @default(uuid())
+  userId     String
+  memoryType AiMemoryType
+  // Free-form extracted memory line, eg "prefers light dinners on weekdays".
+  // Bounded at the application layer so a malicious prompt can't write a
+  // megabyte. Never contains PII the user did not enter themselves.
+  content    String
+  // Where this memory came from — eg "chat:2026-04-25", "daily-review",
+  // "manual:profile". Used for traceability + Clear AI memory UI.
+  source     String
+  // 0..1 model-supplied confidence; nullable for human-entered memories.
+  confidence Float?
+  // Soft delete: clearing AI memory flips this off rather than hard delete,
+  // so we keep an audit trail of "memory existed at point in time".
+  isActive   Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@index([userId, memoryType])
+  @@map("ai_personalization_memories")
 }

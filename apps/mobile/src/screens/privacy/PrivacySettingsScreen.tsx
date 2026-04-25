@@ -34,9 +34,12 @@ const TOGGLES: Array<{
 }> = [
   { key: 'personalizationEnabled', consent: 'PERSONALIZATION', section: 'personalization' },
   { key: 'useScheduleForAI', consent: null, section: 'aiData' },
+  { key: 'useTasksForAI', consent: null, section: 'aiData' },
+  { key: 'useHabitsForAI', consent: null, section: 'aiData' },
+  { key: 'useMealsForAI', consent: null, section: 'aiData' },
   { key: 'useFinanceForAI', consent: null, section: 'aiData' },
   { key: 'useHealthForAI', consent: null, section: 'aiData' },
-  { key: 'useMealForAI', consent: null, section: 'aiData' },
+  { key: 'useGoalsForAI', consent: null, section: 'aiData' },
   { key: 'useCalendarContext', consent: 'CALENDAR', section: 'deviceContext' },
   { key: 'useLocationContext', consent: 'LOCATION', section: 'deviceContext' },
   {
@@ -44,10 +47,18 @@ const TOGGLES: Array<{
     consent: 'HEALTH_FITNESS',
     section: 'deviceContext',
   },
-  { key: 'voiceInputEnabled', consent: 'MICROPHONE', section: 'deviceContext' },
+  { key: 'useVoiceInput', consent: 'MICROPHONE', section: 'deviceContext' },
   { key: 'proactiveRecommendations', consent: null, section: 'behavior' },
   { key: 'anonymizedDiagnostics', consent: 'DIAGNOSTICS', section: 'behavior' },
 ];
+
+/** Toggling these OFF shows a confirm — they're load-bearing for the
+ *  product (finance/health) or destructive (personalisation master). */
+const CONFIRM_OFF: ReadonlySet<ToggleKey> = new Set<ToggleKey>([
+  'personalizationEnabled',
+  'useFinanceForAI',
+  'useHealthForAI',
+]);
 
 export function PrivacySettingsScreen() {
   const { colors, spacing } = useTheme();
@@ -82,7 +93,7 @@ export function PrivacySettingsScreen() {
     onError: () => undefined, // Best-effort — never block the toggle.
   });
 
-  const onToggle = (key: ToggleKey, consent: ConsentType | null, value: boolean) => {
+  const applyToggle = (key: ToggleKey, consent: ConsentType | null, value: boolean) => {
     if (!draft) return;
     setDraft({ ...draft, [key]: value });
     updateMut.mutate({ [key]: value } as UpdatePrivacySettingsInput);
@@ -95,6 +106,60 @@ export function PrivacySettingsScreen() {
       });
     }
   };
+
+  const onToggle = (key: ToggleKey, consent: ConsentType | null, value: boolean) => {
+    // Confirm before disabling load-bearing toggles — protects users from
+    // an accidental tap that silently kills their AI personalisation.
+    if (value === false && CONFIRM_OFF.has(key)) {
+      Alert.alert(
+        t(`settings.privacy.${key}.label`),
+        t(`settings.privacy.${key}.hint`),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.confirm'),
+            style: 'destructive',
+            onPress: () => applyToggle(key, consent, false),
+          },
+        ],
+      );
+      return;
+    }
+    applyToggle(key, consent, value);
+  };
+
+  // ---- Export / Delete / Clear-memory mutations ----------------------------
+  const exportMut = useMutation({
+    mutationFn: privacyApi.exportData,
+    onSuccess: () => Alert.alert(t('settings.privacy.actions.exportReady')),
+    onError: (e) => Alert.alert(t('errors.UNKNOWN_ERROR'), messageFor(e)),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: privacyApi.deleteAccountRequest,
+    onSuccess: (r) =>
+      Alert.alert(
+        t('settings.privacy.actions.deleteTitle'),
+        t('settings.privacy.actions.deleteAck', {
+          date: new Date(r.scheduledFor).toLocaleDateString(),
+        }),
+      ),
+    onError: (e) => Alert.alert(t('errors.UNKNOWN_ERROR'), messageFor(e)),
+  });
+
+  const onDeleteAccount = () =>
+    Alert.alert(
+      t('settings.privacy.actions.deleteConfirmTitle'),
+      t('settings.privacy.actions.deleteConfirmBody'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: () => deleteMut.mutate(),
+        },
+      ],
+    );
 
   if (settingsQ.isLoading || !draft) return <Loading />;
   if (settingsQ.isError) {
@@ -196,6 +261,23 @@ export function PrivacySettingsScreen() {
             title={t('settings.privacy.summary.title')}
             variant="secondary"
             onPress={() => nav.navigate('DataUsageSummary')}
+          />
+          <Button
+            title={t('settings.privacy.actions.exportTitle')}
+            variant="secondary"
+            loading={exportMut.isPending}
+            onPress={() => exportMut.mutate()}
+          />
+          <Button
+            title={t('settings.privacy.actions.clearMemory')}
+            variant="ghost"
+            onPress={() => nav.navigate('ClearAIMemory')}
+          />
+          <Button
+            title={t('settings.privacy.actions.deleteTitle')}
+            variant="danger"
+            loading={deleteMut.isPending}
+            onPress={onDeleteAccount}
           />
         </View>
       </ScrollView>

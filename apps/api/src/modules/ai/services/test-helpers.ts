@@ -34,9 +34,13 @@ export function makeStubPrivacy(
   overrides: Partial<{
     personalization: boolean;
     schedule: boolean;
+    tasks: boolean;
+    habits: boolean;
+    meals: boolean;
+    meal: boolean;
     finance: boolean;
     health: boolean;
-    meal: boolean;
+    goals: boolean;
     calendar: boolean;
     location: boolean;
     healthFitness: boolean;
@@ -45,9 +49,13 @@ export function makeStubPrivacy(
   const gates = {
     personalization: true,
     schedule: true,
+    tasks: true,
+    habits: true,
+    meals: true,
+    meal: true,
     finance: true,
     health: true,
-    meal: true,
+    goals: true,
     calendar: true,
     location: true,
     healthFitness: true,
@@ -56,5 +64,7 @@ export function makeStubPrivacy(
   return {
     aiGates: async () => gates,
     getSettings: async () => ({} as never),
+    logAccess: async () => undefined,
+    addRecommendationEvidence: async () => undefined,
   } as unknown as PrivacyService;
 }

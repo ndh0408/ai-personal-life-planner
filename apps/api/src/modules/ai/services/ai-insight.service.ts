@@ -60,14 +60,26 @@ export class AiInsightService {
     // Promise.all (not $transaction) because the queries are read-only and
     // mixing conditional Promise.resolve sentinels would defeat the
     // transaction overload's typing.
+    if (gates.tasks) {
+      void this.privacy.logAccess(userId, 'TASKS', 'ai-weekly-insight',
+        'AiInsightService', 'POST /api/ai/weekly-insight');
+    }
+    if (gates.habits) {
+      void this.privacy.logAccess(userId, 'HABITS', 'ai-weekly-insight',
+        'AiInsightService', 'POST /api/ai/weekly-insight');
+    }
+    if (gates.health) {
+      void this.privacy.logAccess(userId, 'HEALTH', 'ai-weekly-insight',
+        'AiInsightService', 'POST /api/ai/weekly-insight');
+    }
     const [tasks, habits, sleep, moods] = await Promise.all([
-      gates.schedule
+      gates.tasks
         ? this.prisma.task.findMany({
             where: { userId, updatedAt: { gte: start, lt: end } },
             select: { status: true },
           })
         : Promise.resolve([] as Array<{ status: string }>),
-      gates.schedule
+      gates.habits
         ? this.prisma.habit.findMany({
             where: { userId, isActive: true },
             select: {

@@ -111,19 +111,28 @@ Every short-circuited response carries `usedFallback: true` AND a new `disabledB
 
 ## 5. Mobile UX contract
 
-**PrivacySettingsScreen.** Groups toggles into 4 sections (Personalisation / What AI may see / Device context / Behaviour). Each toggle:
+**PrivacySettingsScreen.** Groups 14 toggles into 4 sections (Personalisation / What AI may see / Device context / Behaviour). Each toggle:
 
 - Shows the human-readable label + a 1–2 sentence hint that names the data sent and the purpose.
 - Writes to `PUT /api/privacy/settings` immediately — no separate "Save" button to forget.
+- Turning OFF the master `personalizationEnabled`, `useFinanceForAI`, or `useHealthForAI` shows an explicit confirm dialog (load-bearing toggles).
 - Posts a matching `UserConsent` event with `version=2026-04-25, source='settings'` for every grant/revoke.
 - Stays bilingual (vi/en) — every label, hint, and section heading goes through `t(...)`.
+- Bottom of the screen exposes Permission Center, Data usage, **Export data**, **Clear AI memory**, and **Delete account** entry-points.
 
 **PermissionCenterScreen.** Lists every OS permission with its purpose. Today only `Notifications` shows live status (Expo Notifications is the only wired permissions module). The rest are documented with explicit "no background recording / no tracking / no reading other apps" statement. Provides a deep-link to OS settings (`app-settings:` on iOS, `Linking.openSettings()` on Android) so the user can revoke any granted permission outside the app.
 
 **DataUsageSummaryScreen.** Reads `GET /api/privacy/data-usage-summary` and shows:
-- 4 boolean badges: what AI can currently see (`aiSeesSchedule`, `aiSeesFinance`, `aiSeesHealth`, `aiSeesMeal`).
+- 7 boolean badges: what AI can currently see (`aiSeesSchedule`, `aiSeesTasks`, `aiSeesHabits`, `aiSeesMeals`, `aiSeesHealth`, `aiSeesFinance`, `aiSeesGoals`).
+- `lastAccess` timestamp per data type (sourced from `SensitiveAccessLog.groupBy`) so the user can see "Finance was last used by AI 2h ago".
 - Per-table row counts the user owns (schedules, tasks, expenses, …) so the user can see "I have 247 expenses on the server".
 - Last 20 consent events.
+
+**PersonalizationConsentScreen** (v1.2). Onboarding-style screen with 12 grouped toggles + three CTAs (Enable recommended / Customize / Skip for now). Reachable from `Settings → Privacy → Personalize` today; v1.3 will gate behind a `personalizationConsentGivenAt` flag so first-run users see it before reaching Today. See `docs/PERSONALIZATION_CONSENT.md`.
+
+**RecommendationEvidenceScreen** (v1.2). Modal-style "Why am I seeing this?" surface reachable from any Recommendation card. Renders one card per `RecommendationEvidence` row (data-type badge + locale-tagged summary + optional weight). See `docs/EXPLAINABLE_RECOMMENDATIONS.md`.
+
+**ClearAIMemoryScreen** (v1.2). Standalone screen with explainer copy + destructive confirm. Calls `POST /api/privacy/clear-ai-memory` — soft-clears `AiPersonalizationMemory` rows (flips `isActive=false`); does NOT touch chat history, finance data, or evidence rows.
 
 ---
 
@@ -167,10 +176,20 @@ Today the Privacy Center has zero env-var dependencies — the toggles are store
 
 ---
 
-## 9. Roadmap
+## 9. Shipped in v1.2
 
-- v1.2: Wire `expo-calendar` / `expo-location` / `expo-camera` / `expo-av` and surface live OS status in `PermissionCenterScreen`.
-- v1.2: Account deletion endpoint + data export.
+- 7 new domain-specific AI gates (`useTasksForAI`, `useHabitsForAI`, `useMealsForAI`, `useGoalsForAI`, …) with confirms on load-bearing toggles.
+- 3 new Prisma models: `SensitiveAccessLog` (metadata-only audit), `RecommendationEvidence` (locale-tagged summaries powering "Why am I seeing this?"), `AiPersonalizationMemory` (soft-clearable AI memory ledger).
+- 3 new endpoints: `POST /api/privacy/export-data`, `POST /api/privacy/clear-ai-memory`, `POST /api/privacy/delete-account-request` (records intent + 30-day grace).
+- 3 new mobile screens: `PersonalizationConsentScreen`, `ClearAIMemoryScreen`, `RecommendationEvidenceScreen`.
+- AI services emit `SensitiveAccessLog` rows on every access of finance / health / tasks / habits / meals / goals.
+
+## 10. Roadmap
+
+- v1.3: First-run gating of `PersonalizationConsentScreen` via `personalizationConsentGivenAt`.
+- v1.3: Wire `expo-calendar` / `expo-location` / `expo-camera` / `expo-av` and surface live OS status in `PermissionCenterScreen`.
+- v1.3: Account-deletion cascade worker (today the request endpoint records intent only).
+- v1.3: Async export job + signed-URL download for very large users.
 - v1.3: Per-row currency on Income/Expense (already noted in `ENTERPRISE_SCALE_SECURITY_AUDIT.md` §7).
 - v1.3: Field-level encryption for `monthlySalary`, `MoodLog.note`, `healthNotes` via `pgcrypto`.
 - v1.4: Differential-privacy aggregation for opt-in diagnostics.

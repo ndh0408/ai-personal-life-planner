@@ -48,6 +48,9 @@ import { EditAiProviderScreen } from '../screens/settings/EditAiProviderScreen';
 import { PrivacySettingsScreen } from '../screens/privacy/PrivacySettingsScreen';
 import { PermissionCenterScreen } from '../screens/privacy/PermissionCenterScreen';
 import { DataUsageSummaryScreen } from '../screens/privacy/DataUsageSummaryScreen';
+import { PersonalizationConsentScreen } from '../screens/privacy/PersonalizationConsentScreen';
+import { ClearAIMemoryScreen } from '../screens/privacy/ClearAIMemoryScreen';
+import { RecommendationEvidenceScreen } from '../screens/privacy/RecommendationEvidenceScreen';
 import { AIChatScreen } from '../screens/ai/AIChatScreen';
 import type { RootStackParamList } from './types';
 
@@ -162,6 +165,21 @@ export function RootNavigator() {
                 name="DataUsageSummary"
                 component={DataUsageSummaryScreen}
                 options={{ title: 'Data usage' }}
+              />
+              <Stack.Screen
+                name="PersonalizationConsent"
+                component={PersonalizationConsentScreen}
+                options={{ title: 'Personalisation' }}
+              />
+              <Stack.Screen
+                name="ClearAIMemory"
+                component={ClearAIMemoryScreen}
+                options={{ title: 'Clear AI memory' }}
+              />
+              <Stack.Screen
+                name="RecommendationEvidence"
+                component={RecommendationEvidenceScreen}
+                options={{ title: 'Why am I seeing this?' }}
               />
             </Stack.Group>
           </>
