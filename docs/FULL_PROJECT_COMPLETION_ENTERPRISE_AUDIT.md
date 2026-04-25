@@ -674,3 +674,36 @@ posture production-grade for the **MVP and pilot tiers**, and lays the
 foundation pgBackRest + SMTP credentials need to lift production-tier.
 
 **End of Round-18 patch.**
+
+---
+
+## Round 19 patch — load-testing harness (scaffolding, not measurement)
+
+Full report: `docs/ROUND_19_LOAD_TEST_COMPLETION.md`. Round 19 is
+**explicitly scaffolding**:
+
+| # | Item | Status |
+|--|--|--|
+| 1 | k6 scripts (8 scenarios) | **DONE** — smoke / auth / dashboard / finance / AI quota / notification / assistant / soak-2h |
+| 2 | Synthetic-user seed + cleanup with prod-guard | **DONE** — `scripts/seed-load-test.ts`, `scripts/cleanup-load-test.ts` |
+| 3 | Operator playbook | **DONE** — `docs/LOAD_TESTING.md` |
+| 4 | Result-capture template | **DONE** — `docs/PERFORMANCE_RESULTS.md` (TBD numbers) |
+| 5 | Measured RPS / p95 / capacity numbers | **NOT THIS ROUND** — operator runs harness on staging |
+| 6 | Capacity claims update | **NOT THIS ROUND** — pending operator's first run |
+
+Tests: 46 suites / **246 tests pass** (zero regression vs round 18; round
+19 added no jest specs — load tests live outside jest).
+
+Quality gate:
+- API + mobile + shared typecheck — clean
+- `node --check` every k6 script — clean
+- `tsc --noEmit` on seed + cleanup — clean
+- No raw token / password / load-test password logged
+
+**Readiness verdict (UNCHANGED from round 18):** the harness ships, but
+no measured capacity is produced in this round. The audit doc will be
+updated with real numbers after the operator's staging run lands per
+`PERFORMANCE_RESULTS.md`. We do NOT inflate the readiness statement based
+on theoretical estimates.
+
+**End of Round-19 patch.**

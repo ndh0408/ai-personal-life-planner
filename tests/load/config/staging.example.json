@@ -1,0 +1,16 @@
+{
+  "_comment": "Copy to staging.json (NOT committed) and edit before running against your staging cluster. The helpers refuse to run against URLs containing 'prod|production|live'.",
+  "baseUrl": "https://api.staging.example.com",
+  "users": 200,
+  "password": "REPLACE_WITH_SHARED_LOAD_TEST_PASSWORD",
+  "seedPrefix": "loadtest+",
+  "seedDomain": "lifeos-staging.local",
+  "expoPushDryRun": true,
+  "aiProvider": "mock",
+  "_setup": [
+    "1) seed: ts-node scripts/seed-load-test.ts --count 200 --password $LOADTEST_PASSWORD",
+    "2) ensure AI_PROVIDER=mock and EXPO_PUSH_DRY_RUN=true on the API process",
+    "3) BASE_URL=$baseUrl USERS=200 PASSWORD=$password k6 run tests/load/smoke.js",
+    "4) cleanup after the run: ts-node scripts/cleanup-load-test.ts --confirm I-AM-IN-STAGING"
+  ]
+}
