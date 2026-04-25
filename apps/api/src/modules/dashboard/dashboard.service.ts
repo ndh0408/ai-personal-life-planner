@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LocaleService } from '../../common/i18n/locale.service';
+import { serialiseMoney, sumMoney } from '../../common/finance/money';
 import { DailyMonitoringService } from '../assistant/services/daily-monitoring.service';
 import { LifeInsightService } from '../assistant/services/life-insight.service';
 import { RecommendationService } from '../assistant/services/recommendation.service';
@@ -130,11 +132,11 @@ export class DashboardService {
       }),
       this.prisma.income.findMany({
         where: { userId, incomeDate: { gte: month.start, lt: month.end } },
-        select: { amount: true },
+        select: { amount: true, currency: true },
       }),
       this.prisma.expense.findMany({
         where: { userId, expenseDate: { gte: month.start, lt: month.end } },
-        select: { amount: true, category: true },
+        select: { amount: true, category: true, currency: true },
       }),
       this.prisma.budget.findMany({ where: { userId } }),
       this.prisma.personalGoal.findMany({
@@ -174,7 +176,7 @@ export class DashboardService {
       },
     });
 
-    const currency = profile?.currency ?? 'VND';
+    const primaryCurrency = (profile?.currency ?? 'VND').toUpperCase();
 
     // ---- Schedule rollup ----------------------------------------------------
     const items = schedule?.items ?? [];
@@ -190,26 +192,60 @@ export class DashboardService {
     const habitsActive = habits.length;
 
     // ---- Finance rollup -----------------------------------------------------
-    const totalIncome = incomesMonth.reduce((s, r) => s + Number(r.amount), 0);
-    const totalExpense = expensesMonth.reduce((s, r) => s + Number(r.amount), 0);
-    const remaining = totalIncome - totalExpense;
-    const totalCash = walletsAll.reduce((s, w) => s + Number(w.balance), 0);
+    // Round-13: aggregate ONLY rows in the user's primary currency. Multi-
+    // currency users still get per-currency wallet sums (see walletBalances)
+    // so they don't lose visibility into other-currency holdings — they just
+    // never see meaningless mixed totals.
+    const incomesPrimary = incomesMonth.filter((r) => r.currency === primaryCurrency);
+    const expensesPrimary = expensesMonth.filter((r) => r.currency === primaryCurrency);
+    const totalIncomeDec = sumMoney(incomesPrimary.map((r) => r.amount));
+    const totalExpenseDec = sumMoney(expensesPrimary.map((r) => r.amount));
+    const remainingDec = totalIncomeDec.minus(totalExpenseDec);
 
-    const budgetSpentByCategory = new Map<string, number>();
+    // Per-currency wallet balances. The legacy `totalCash` is kept for
+    // backwards compatibility and is the primary-currency total only.
+    const walletBalances: Record<string, string> = {};
+    for (const w of walletsAll) {
+      const cur = (w.currency ?? primaryCurrency).toUpperCase();
+      const cur_total = walletBalances[cur]
+        ? new Prisma.Decimal(walletBalances[cur]).plus(w.balance)
+        : new Prisma.Decimal(w.balance);
+      walletBalances[cur] = cur_total.toFixed(2);
+    }
+    const totalCashDec = walletsAll
+      .filter((w) => (w.currency ?? primaryCurrency).toUpperCase() === primaryCurrency)
+      .reduce<Prisma.Decimal>(
+        (acc, w) => acc.plus(w.balance),
+        new Prisma.Decimal(0),
+      );
+
+    const mixedCurrencyDetected =
+      Object.keys(walletBalances).length > 1 ||
+      incomesMonth.some((r) => r.currency !== primaryCurrency) ||
+      expensesMonth.some((r) => r.currency !== primaryCurrency);
+
+    // Budget warnings — match category AND currency (a USD budget never
+    // counts VND expenses).
+    const budgetSpentByKey = new Map<string, Prisma.Decimal>();
     for (const e of expensesMonth) {
-      budgetSpentByCategory.set(
-        e.category,
-        (budgetSpentByCategory.get(e.category) ?? 0) + Number(e.amount),
+      const k = `${e.category}|${e.currency}`;
+      budgetSpentByKey.set(
+        k,
+        (budgetSpentByKey.get(k) ?? new Prisma.Decimal(0)).plus(e.amount),
       );
     }
     const budgetWarnings = budgets
       .map((b) => {
-        const spent = budgetSpentByCategory.get(b.category) ?? 0;
-        const pct = Number(b.amount) === 0 ? 0 : (spent / Number(b.amount)) * 100;
+        const cur = (b as { currency?: string }).currency ?? primaryCurrency;
+        const k = `${b.category}|${cur}`;
+        const spent = budgetSpentByKey.get(k) ?? new Prisma.Decimal(0);
+        const amt = new Prisma.Decimal(b.amount);
+        const pct = amt.isZero() ? 0 : Number(spent.times(100).dividedBy(amt).toFixed(2));
         return {
           category: b.category,
-          amount: Number(b.amount),
-          spent,
+          currency: cur,
+          amount: serialiseMoney(amt),
+          spent: serialiseMoney(spent),
           usedPercent: Math.round(pct),
           overThreshold: pct >= b.alertThresholdPercent,
         };
@@ -254,15 +290,22 @@ export class DashboardService {
         scheduleStatus: schedule?.status ?? null,
       },
       finance: {
-        currency,
-        monthlySalary: profile?.monthlySalary !== null && profile?.monthlySalary !== undefined
-          ? Number(profile.monthlySalary)
-          : null,
-        totalIncome,
-        totalExpense,
-        remaining,
-        totalCash,
+        currency: primaryCurrency,
+        monthlySalary:
+          profile?.monthlySalary !== null && profile?.monthlySalary !== undefined
+            ? serialiseMoney(profile.monthlySalary)
+            : null,
+        // Numeric fields stay numeric for the existing mobile JSON parser;
+        // they represent the primary-currency-only sums (round-13 fix).
+        totalIncome: Number(totalIncomeDec.toFixed(2)),
+        totalExpense: Number(totalExpenseDec.toFixed(2)),
+        remaining: Number(remainingDec.toFixed(2)),
+        totalCash: Number(totalCashDec.toFixed(2)),
         walletsCount: walletsAll.length,
+        // Per-currency wallet totals — mobile renders a "+ USD 50.00" badge
+        // when this map has more than one entry.
+        walletBalances,
+        mixedCurrencyDetected,
         budgetWarnings,
       },
       health: {

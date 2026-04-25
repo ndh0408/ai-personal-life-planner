@@ -1,117 +1,85 @@
 import { ExpensesService } from './expenses.service';
-import { NeedLevel, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
+import type { FinanceAuditService } from '../finance-core/finance-audit.service';
+import type { FinanceIdempotencyService } from '../finance-core/finance-idempotency.service';
 
-type WalletRow = { id: string; userId: string; balance: number };
-type ExpenseRow = {
-  id: string;
-  userId: string;
-  walletId: string | null;
-  title: string;
-  amount: number;
-  category: string;
-  expenseDate: Date;
-  paymentMethod: string | null;
-  needLevel: NeedLevel | null;
-  note: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
+function makePrisma() {
+  const wallets = new Map<string, any>();
+  const expenses = new Map<string, any>();
 
-type PrismaMock = {
-  wallet: {
-    findUnique: jest.Mock;
-    update: jest.Mock;
-  };
-  expense: {
-    findUnique: jest.Mock;
-    create: jest.Mock;
-    update: jest.Mock;
-    delete: jest.Mock;
-  };
-  $transaction: jest.Mock;
-};
-
-function makePrisma(): { prisma: PrismaMock; wallets: Map<string, WalletRow>; expenses: Map<string, ExpenseRow>; seedWallet: (id: string, userId: string, balance: number) => void } {
-  const wallets = new Map<string, WalletRow>();
-  const expenses = new Map<string, ExpenseRow>();
-
-  // Minimal mock that captures the balance-math we care about.
-  const api: PrismaMock = {
+  const api: any = {
     wallet: {
-      findUnique: jest.fn(({ where }: { where: { id: string } }) =>
-        Promise.resolve(wallets.get(where.id) ?? null),
-      ),
-      update: jest.fn(
-        ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
-          const w = wallets.get(where.id);
-          if (!w) throw new Error('wallet not found');
-          if (data.balance && typeof data.balance === 'object') {
-            const op = data.balance as { increment?: number; decrement?: number };
-            if (op.increment !== undefined) w.balance += Number(op.increment);
-            if (op.decrement !== undefined) w.balance -= Number(op.decrement);
-          } else if (typeof data.balance === 'number') {
-            w.balance = data.balance;
+      findUnique: jest.fn(({ where }: any) => Promise.resolve(wallets.get(where.id) ?? null)),
+      update: jest.fn(({ where, data }: any) => {
+        const w = wallets.get(where.id);
+        if (!w) throw new Error('wallet not found');
+        if (data.balance && typeof data.balance === 'object') {
+          if ('increment' in data.balance) {
+            w.balance = new Prisma.Decimal(w.balance).plus(data.balance.increment);
           }
-          return Promise.resolve(w);
-        },
-      ),
+          if ('decrement' in data.balance) {
+            w.balance = new Prisma.Decimal(w.balance).minus(data.balance.decrement);
+          }
+        }
+        return Promise.resolve(w);
+      }),
+    },
+    userProfile: {
+      findUnique: jest.fn(async () => ({ currency: 'VND' })),
     },
     expense: {
-      findUnique: jest.fn(({ where }: { where: { id: string } }) =>
-        Promise.resolve(expenses.get(where.id) ?? null),
-      ),
-      create: jest.fn(({ data }: { data: Prisma.ExpenseUncheckedCreateInput }) => {
-        const row: ExpenseRow = {
+      findUnique: jest.fn(({ where }: any) => Promise.resolve(expenses.get(where.id) ?? null)),
+      create: jest.fn(({ data }: any) => {
+        const row: any = {
           id: `e-${expenses.size + 1}`,
-          userId: data.userId,
-          walletId: (data.walletId as string | null) ?? null,
-          title: data.title,
-          amount: Number(data.amount),
-          category: data.category,
-          expenseDate: data.expenseDate as Date,
-          paymentMethod: (data.paymentMethod as string | null) ?? null,
-          needLevel: (data.needLevel as NeedLevel | null) ?? null,
-          note: (data.note as string | null) ?? null,
+          ...data,
+          amount: new Prisma.Decimal(data.amount),
+          currency: data.currency ?? 'VND',
+          walletId: data.walletId ?? null,
+          paymentMethod: data.paymentMethod ?? null,
+          needLevel: data.needLevel ?? null,
+          note: data.note ?? null,
           createdAt: new Date(),
           updatedAt: new Date(),
         };
         expenses.set(row.id, row);
         return Promise.resolve(row);
       }),
-      update: jest.fn(
-        ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
-          const row = expenses.get(where.id)!;
-          Object.assign(row, {
-            title: (data.title as string) ?? row.title,
-            amount: (data.amount as number) ?? row.amount,
-            category: (data.category as string) ?? row.category,
-            expenseDate: (data.expenseDate as Date) ?? row.expenseDate,
-            paymentMethod: data.paymentMethod !== undefined ? data.paymentMethod : row.paymentMethod,
-            needLevel: data.needLevel !== undefined ? data.needLevel : row.needLevel,
-            note: data.note !== undefined ? data.note : row.note,
-          });
-          if (data.wallet) {
-            const w = data.wallet as { connect?: { id: string }; disconnect?: boolean };
+      update: jest.fn(({ where, data }: any) => {
+        const row = expenses.get(where.id);
+        if (!row) throw new Error('not found');
+        for (const [k, v] of Object.entries(data)) {
+          if (k === 'wallet') {
+            const w = v as { connect?: { id: string }; disconnect?: boolean };
             if (w.connect) row.walletId = w.connect.id;
             if (w.disconnect) row.walletId = null;
+          } else {
+            row[k] = v;
           }
-          return Promise.resolve(row);
-        },
-      ),
-      delete: jest.fn(({ where }: { where: { id: string } }) => {
+        }
+        if (data.amount !== undefined) row.amount = new Prisma.Decimal(data.amount);
+        return Promise.resolve(row);
+      }),
+      delete: jest.fn(({ where }: any) => {
         expenses.delete(where.id);
         return Promise.resolve({ id: where.id });
       }),
     },
-    $transaction: jest.fn((fn: (tx: PrismaMock) => unknown) => Promise.resolve(fn(api))),
+    $transaction: jest.fn((fn: any) => Promise.resolve(fn(api))),
   };
 
-  const seedWallet = (id: string, userId: string, balance: number) =>
-    wallets.set(id, { id, userId, balance });
+  const seedWallet = (id: string, userId: string, balance: number, currency = 'VND') =>
+    wallets.set(id, { id, userId, balance: new Prisma.Decimal(balance), currency });
 
   return { prisma: api, wallets, expenses, seedWallet };
 }
+
+const stubAudit = { record: jest.fn(async () => undefined) } as unknown as FinanceAuditService;
+const stubIdem = {
+  lookup: jest.fn(async () => null),
+  record: jest.fn(async () => undefined),
+} as unknown as FinanceIdempotencyService;
 
 describe('ExpensesService', () => {
   let svc: ExpensesService;
@@ -119,7 +87,7 @@ describe('ExpensesService', () => {
 
   beforeEach(() => {
     ctx = makePrisma();
-    svc = new ExpensesService(ctx.prisma as never);
+    svc = new ExpensesService(ctx.prisma as never, stubAudit, stubIdem);
   });
 
   it('create: decrements wallet balance by amount', async () => {
@@ -131,8 +99,9 @@ describe('ExpensesService', () => {
       category: 'food',
       expenseDate: '2026-04-24',
     });
-    expect(ctx.wallets.get('w1')!.balance).toBe(935_000);
+    expect(Number(ctx.wallets.get('w1')!.balance.toString())).toBe(935_000);
     expect(e.userId).toBe('u1');
+    expect(e.currency).toBe('VND');
   });
 
   it('create with no walletId: does not touch any wallet', async () => {
@@ -144,6 +113,20 @@ describe('ExpensesService', () => {
     });
     expect(ctx.prisma.wallet.update).not.toHaveBeenCalled();
     expect(e.walletId).toBeNull();
+    // Currency falls back to user profile.
+    expect(e.currency).toBe('VND');
+  });
+
+  it('create snapshots wallet currency on the expense row', async () => {
+    ctx.seedWallet('w-usd', 'u1', 500, 'USD');
+    const e = await svc.create('u1', {
+      walletId: 'w-usd',
+      title: 'Coffee abroad',
+      amount: 5,
+      category: 'food',
+      expenseDate: '2026-04-24',
+    });
+    expect(e.currency).toBe('USD');
   });
 
   it('update amount: reverts old deduction, applies new', async () => {
@@ -155,10 +138,8 @@ describe('ExpensesService', () => {
       category: 'food',
       expenseDate: '2026-04-24',
     });
-    // wallet now 900k
     await svc.update('u1', created.id, { amount: 150_000 });
-    // Revert +100k back → 1,000,000; then -150k → 850,000
-    expect(ctx.wallets.get('w1')!.balance).toBe(850_000);
+    expect(Number(ctx.wallets.get('w1')!.balance.toString())).toBe(850_000);
   });
 
   it('delete: refunds the amount to the wallet', async () => {
@@ -171,7 +152,7 @@ describe('ExpensesService', () => {
       expenseDate: '2026-04-24',
     });
     await svc.delete('u1', created.id);
-    expect(ctx.wallets.get('w1')!.balance).toBe(1_000_000);
+    expect(Number(ctx.wallets.get('w1')!.balance.toString())).toBe(1_000_000);
     expect(ctx.expenses.has(created.id)).toBe(false);
   });
 
@@ -202,7 +183,7 @@ describe('ExpensesService', () => {
     await expect(svc.getById('u1', 'missing')).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('rejects creating expense against someone else\'s wallet', async () => {
+  it("rejects creating expense against someone else's wallet", async () => {
     ctx.seedWallet('w2', 'other-user', 100_000);
     await expect(
       svc.create('u1', {
@@ -213,5 +194,36 @@ describe('ExpensesService', () => {
         expenseDate: '2026-04-24',
       }),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('idempotent create: same key returns the same expense, not a duplicate', async () => {
+    ctx.seedWallet('w1', 'u1', 1_000_000);
+    const a = await svc.create(
+      'u1',
+      {
+        walletId: 'w1',
+        title: 'Coffee',
+        amount: 65_000,
+        category: 'food',
+        expenseDate: '2026-04-24',
+      },
+      { idempotencyKey: 'idem-1' },
+    );
+    // Force the second lookup to hit.
+    (stubIdem.lookup as jest.Mock).mockImplementationOnce(async () => ({ entityId: a.id }));
+    const b = await svc.create(
+      'u1',
+      {
+        walletId: 'w1',
+        title: 'Coffee',
+        amount: 65_000,
+        category: 'food',
+        expenseDate: '2026-04-24',
+      },
+      { idempotencyKey: 'idem-1' },
+    );
+    expect(b.id).toBe(a.id);
+    // Wallet balance reflects only the first deduction.
+    expect(Number(ctx.wallets.get('w1')!.balance.toString())).toBe(935_000);
   });
 });

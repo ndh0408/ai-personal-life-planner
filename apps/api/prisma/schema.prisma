@@ -307,6 +307,8 @@ model User {
   widgetPreferences        WidgetPreferences?
   aiUsageLogs              AiUsageLog[]
   aiUsageQuota             AiUsageQuota?
+  financeAuditLogs         FinanceAuditLog[]
+  financeIdempotencyKeys   FinanceIdempotencyKey[]
 
   @@index([status])
   @@map("users")
@@ -636,6 +638,10 @@ model Income {
   walletId      String?
   title         String
   amount        Decimal  @db.Decimal(18, 2)
+  /// Snapshot of the wallet currency (or the user's primary currency when
+  /// walletId is null) at write time. Round-13 added this so multi-currency
+  /// users never see meaningless mixed sums in dashboards/reports.
+  currency      String   @default("VND")
   category      String?
   source        String?
   incomeDate    DateTime @db.Date
@@ -650,6 +656,7 @@ model Income {
 
   @@index([userId, incomeDate])
   @@index([userId, category])
+  @@index([userId, currency, incomeDate])
   @@index([walletId])
   @@map("incomes")
 }
@@ -660,6 +667,9 @@ model Expense {
   walletId      String?
   title         String
   amount        Decimal    @db.Decimal(18, 2)
+  /// Snapshot of the wallet currency (or user's primary currency when
+  /// walletId is null) at write time — see Income.currency.
+  currency      String     @default("VND")
   category      String
   expenseDate   DateTime   @db.Date
   paymentMethod String?
@@ -674,6 +684,7 @@ model Expense {
   @@index([userId, expenseDate])
   @@index([userId, category])
   @@index([userId, needLevel])
+  @@index([userId, currency, expenseDate])
   @@index([walletId])
   @@map("expenses")
 }
@@ -683,6 +694,10 @@ model Budget {
   userId                String
   category              String
   amount                Decimal      @db.Decimal(18, 2)
+  /// Currency the budget tracks. Usage aggregation now joins on
+  /// Expense.currency = Budget.currency so a USD budget doesn't accidentally
+  /// count VND expenses (round 13 fix).
+  currency              String       @default("VND")
   period                BudgetPeriod @default(MONTHLY)
   startDate             DateTime     @db.Date
   endDate               DateTime     @db.Date
@@ -705,6 +720,8 @@ model Debt {
   title       String
   totalAmount Decimal    @db.Decimal(18, 2)
   paidAmount  Decimal    @default(0) @db.Decimal(18, 2)
+  /// Currency the debt is denominated in.
+  currency    String     @default("VND")
   dueDate     DateTime?  @db.Date
   status      DebtStatus @default(ACTIVE)
   note        String?
@@ -725,6 +742,8 @@ model SavingGoal {
   title         String
   targetAmount  Decimal          @db.Decimal(18, 2)
   currentAmount Decimal          @default(0) @db.Decimal(18, 2)
+  /// Currency the saving goal is denominated in.
+  currency      String           @default("VND")
   targetDate    DateTime?        @db.Date
   priority      Priority         @default(MEDIUM)
   status        SavingGoalStatus @default(ACTIVE)
@@ -1782,4 +1801,73 @@ model AiUsageQuota {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("ai_usage_quotas")
+}
+
+// =============================================================================
+// M. Finance correctness — round 13
+// =============================================================================
+
+enum FinanceEntityType {
+  WALLET
+  INCOME
+  EXPENSE
+  BUDGET
+  DEBT
+  SAVING_GOAL
+  DEBT_PAYMENT
+  SAVING_CONTRIBUTION
+}
+
+enum FinanceAction {
+  CREATE
+  UPDATE
+  DELETE
+  PAY
+  CONTRIBUTE
+}
+
+/// Append-only audit trail for every finance write. Stores `before` + `after`
+/// JSON snapshots so a customer-support investigation can reconstruct what
+/// happened without depending on application logs.
+///
+/// Privacy: only finance entity fields are stored; we never persist payment
+/// notes when they look free-form (the controller layer is responsible for
+/// not stuffing PII into the note field).
+model FinanceAuditLog {
+  id         String            @id @default(uuid())
+  userId     String
+  entityType FinanceEntityType
+  entityId   String
+  action     FinanceAction
+  before     Json?
+  after      Json?
+  createdAt  DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, entityType, entityId])
+  @@map("finance_audit_logs")
+}
+
+/// Per-user idempotency key for finance writes. Mobile generates a uuid for
+/// every finance create + sends it via `Idempotency-Key`; the server inserts
+/// the row inside the same transaction as the entity, so a retried POST
+/// (network flake / sync queue) is a no-op rather than a duplicate.
+model FinanceIdempotencyKey {
+  id         String            @id @default(uuid())
+  userId     String
+  key        String
+  /// "expense:create", "income:create", "debt:pay", "saving:contribute"
+  scope      String
+  /// Reference back to the entity that was actually written.
+  entityType FinanceEntityType
+  entityId   String
+  createdAt  DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, scope, key])
+  @@index([userId, createdAt])
+  @@map("finance_idempotency_keys")
 }

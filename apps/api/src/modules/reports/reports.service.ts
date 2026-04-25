@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { sumMoney } from '../../common/finance/money';
 
 function startOfDay(d: Date): Date {
   const x = new Date(d);
@@ -31,11 +33,39 @@ function monthBounds(month: string): { from: Date; to: Date } {
   return { from, to };
 }
 
+/**
+ * Decimal-safe → Number for the JSON wire. Money fields cap at 1e13 so they
+ * fit IEEE 754 (Number.MAX_SAFE_INTEGER ≈ 9e15) — but we still go through
+ * Decimal first to avoid IEEE drift when summing many rows.
+ */
 function toNumber(v: unknown): number {
   if (v === null || v === undefined) return 0;
   if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
-  const n = Number(v.toString());
-  return Number.isFinite(n) ? n : 0;
+  if (v instanceof Prisma.Decimal) return Number(v.toFixed(2));
+  if (typeof v === 'string' || typeof v === 'object') {
+    try {
+      const dec = new Prisma.Decimal(v as string);
+      return Number(dec.toFixed(2));
+    } catch {
+      return 0;
+    }
+  }
+  return 0;
+}
+
+/** Sum a list of Decimal-or-string-or-number into a JSON-safe number. */
+function sumToNumber(values: Array<unknown>): number {
+  return Number(
+    sumMoney(values as Array<number | string | Prisma.Decimal>).toFixed(2),
+  );
+}
+
+async function primaryCurrencyOf(prisma: PrismaService, userId: string): Promise<string> {
+  const profile = await prisma.userProfile.findUnique({
+    where: { userId },
+    select: { currency: true },
+  });
+  return (profile?.currency ?? 'VND').toUpperCase();
 }
 
 @Injectable()
@@ -56,6 +86,7 @@ export class ReportsService {
    */
   async daily(userId: string, date: string) {
     const { from, to } = dayBounds(date);
+    const currency = await primaryCurrencyOf(this.prisma, userId);
 
     const [tasks, habitLogs, totalHabits, sleep, mood, schedule, meals, expenses] =
       await Promise.all([
@@ -85,7 +116,7 @@ export class ReportsService {
           select: { id: true, mealType: true, title: true, estimatedCalories: true, cost: true },
         }),
         this.prisma.expense.findMany({
-          where: { userId, expenseDate: from },
+          where: { userId, expenseDate: from, currency },
           select: { amount: true, category: true, title: true },
         }),
       ]);
@@ -100,13 +131,18 @@ export class ReportsService {
     const scheduleItemsDone =
       schedule?.items.filter((i) => i.status === 'COMPLETED').length ?? 0;
 
-    const spendingByCategory = expenses.reduce<Record<string, number>>((acc, e) => {
-      acc[e.category] = (acc[e.category] ?? 0) + toNumber(e.amount);
-      return acc;
-    }, {});
-    const totalSpending = expenses.reduce((sum, e) => sum + toNumber(e.amount), 0);
+    const spendingByCategory: Record<string, number> = {};
+    const groupedByCategory = new Map<string, Prisma.Decimal>();
+    for (const e of expenses) {
+      const cur = groupedByCategory.get(e.category) ?? new Prisma.Decimal(0);
+      groupedByCategory.set(e.category, cur.plus(e.amount));
+    }
+    for (const [k, v] of groupedByCategory) {
+      spendingByCategory[k] = Number(v.toFixed(2));
+    }
+    const totalSpending = sumToNumber(expenses.map((e) => e.amount));
     const totalCalories = meals.reduce((sum, m) => sum + (m.estimatedCalories ?? 0), 0);
-    const totalMealCost = meals.reduce((sum, m) => sum + toNumber(m.cost), 0);
+    const totalMealCost = sumToNumber(meals.map((m) => m.cost));
 
     return {
       date,
@@ -146,11 +182,12 @@ export class ReportsService {
         })),
       },
       spending: {
+        currency,
         total: totalSpending,
         byCategory: spendingByCategory,
         topExpenses: expenses
           .slice()
-          .sort((a, b) => toNumber(b.amount) - toNumber(a.amount))
+          .sort((a, b) => Number(new Prisma.Decimal(b.amount).minus(new Prisma.Decimal(a.amount))))
           .slice(0, 3)
           .map((e) => ({
             title: e.title,
@@ -170,8 +207,9 @@ export class ReportsService {
     const { from, to, to7dLabels } = weekBounds(weekStart);
     const weekEnd = new Date(to.getTime() - 1);
     const todayIso = new Date().toISOString().slice(0, 10);
+    const currency = await primaryCurrencyOf(this.prisma, userId);
 
-    const [tasks, habitLogs, activeHabits, sleepLogs, moodLogs, meals, schedules, expenses, budgets, goals] =
+    const [tasks, habitLogs, activeHabits, sleepLogs, moodLogs, meals, schedules, expenses, expensesAll, budgets, goals] =
       await Promise.all([
         this.prisma.task.groupBy({
           by: ['status'],
@@ -202,15 +240,35 @@ export class ReportsService {
           select: { date: true, items: { select: { status: true } } },
         }),
         this.prisma.expense.findMany({
-          where: { userId, expenseDate: { gte: from, lte: weekEnd } },
-          select: { amount: true, category: true, expenseDate: true, needLevel: true },
+          where: { userId, expenseDate: { gte: from, lte: weekEnd }, currency },
+          select: { amount: true, category: true, expenseDate: true, needLevel: true, currency: true },
+        }),
+        // Round-13: also fetch a tiny "any-currency" probe so we can surface
+        // mixedCurrencyDetected without doing a second query.
+        this.prisma.expense.findMany({
+          where: {
+            userId,
+            expenseDate: { gte: from, lte: weekEnd },
+            NOT: { currency },
+          },
+          select: { id: true },
+          take: 1,
         }),
         this.prisma.budget.findMany({
           where: {
             userId,
             AND: [{ startDate: { lte: weekEnd } }, { endDate: { gte: from } }],
           },
-          select: { id: true, category: true, amount: true, period: true, startDate: true, endDate: true, alertThresholdPercent: true },
+          select: {
+            id: true,
+            category: true,
+            amount: true,
+            currency: true,
+            period: true,
+            startDate: true,
+            endDate: true,
+            alertThresholdPercent: true,
+          },
         }),
         this.prisma.personalGoal.findMany({
           where: { userId, status: 'ACTIVE' },
@@ -249,39 +307,48 @@ export class ReportsService {
     // Meals per day — simple "consistency" = days with ≥1 logged meal.
     const mealDays = new Set(meals.map((m) => m.date.toISOString().slice(0, 10))).size;
 
-    // Spending totals + by-category for the week.
-    const weekSpending = expenses.reduce((s, e) => s + toNumber(e.amount), 0);
-    const spendingByCategory = expenses.reduce<Record<string, number>>((acc, e) => {
-      acc[e.category] = (acc[e.category] ?? 0) + toNumber(e.amount);
-      return acc;
-    }, {});
+    // Spending totals + by-category for the week (primary-currency only).
+    const weekSpending = sumToNumber(expenses.map((e) => e.amount));
+    const grouped = new Map<string, Prisma.Decimal>();
+    for (const e of expenses) {
+      const cur = grouped.get(e.category) ?? new Prisma.Decimal(0);
+      grouped.set(e.category, cur.plus(e.amount));
+    }
+    const spendingByCategory: Record<string, number> = {};
+    for (const [k, v] of grouped) spendingByCategory[k] = Number(v.toFixed(2));
+
     const spendByDay = to7dLabels.map((iso) => ({
       date: iso,
-      amount: expenses
-        .filter((e) => e.expenseDate.toISOString().slice(0, 10) === iso)
-        .reduce((s, e) => s + toNumber(e.amount), 0),
+      amount: sumToNumber(
+        expenses
+          .filter((e) => e.expenseDate.toISOString().slice(0, 10) === iso)
+          .map((e) => e.amount),
+      ),
     }));
 
-    // Budget warnings — compute usage within each budget's period window.
+    // Budget warnings — match category AND currency.
     const budgetWarnings = await Promise.all(
       budgets.map(async (b) => {
         const spent = await this.prisma.expense.aggregate({
           where: {
             userId,
             category: b.category,
+            currency: b.currency,
             expenseDate: { gte: b.startDate, lte: b.endDate },
           },
           _sum: { amount: true },
         });
-        const usedAmount = toNumber(spent._sum.amount);
-        const usedPercent = toNumber(b.amount) > 0
-          ? Math.round((usedAmount / toNumber(b.amount)) * 100)
-          : 0;
+        const usedDec = spent._sum.amount ?? new Prisma.Decimal(0);
+        const amtDec = b.amount;
+        const usedPercent = amtDec.isZero()
+          ? 0
+          : Math.round(Number(usedDec.times(100).dividedBy(amtDec).toFixed(2)));
         return {
           id: b.id,
           category: b.category,
-          amount: toNumber(b.amount),
-          used: usedAmount,
+          currency: b.currency,
+          amount: Number(amtDec.toFixed(2)),
+          used: Number(usedDec.toFixed(2)),
           usedPercent,
           overThreshold: usedPercent >= b.alertThresholdPercent,
           period: b.period,
@@ -338,9 +405,11 @@ export class ReportsService {
       mood: { entries: moodLogs },
       meals: { daysLogged: mealDays, total: meals.length },
       spending: {
+        currency,
         total: weekSpending,
         byCategory: spendingByCategory,
         byDay: spendByDay,
+        mixedCurrencyDetected: expensesAll.length > 0,
       },
       budgetWarnings,
       goalProgress,
@@ -355,15 +424,23 @@ export class ReportsService {
   async monthlyFinance(userId: string, month: string) {
     const { from, to } = monthBounds(month);
     const monthEnd = new Date(to.getTime() - 1);
+    const currency = await primaryCurrencyOf(this.prisma, userId);
 
-    const [incomes, expenses, budgets, debts, savingGoals] = await Promise.all([
+    const [incomes, expenses, otherCurrencyProbe, budgets, debts, savingGoals] = await Promise.all([
       this.prisma.income.findMany({
-        where: { userId, incomeDate: { gte: from, lt: to } },
+        where: { userId, incomeDate: { gte: from, lt: to }, currency },
         select: { amount: true, category: true },
       }),
       this.prisma.expense.findMany({
-        where: { userId, expenseDate: { gte: from, lt: to } },
+        where: { userId, expenseDate: { gte: from, lt: to }, currency },
         select: { amount: true, category: true, needLevel: true, expenseDate: true },
+      }),
+      this.prisma.expense.count({
+        where: {
+          userId,
+          expenseDate: { gte: from, lt: to },
+          NOT: { currency },
+        },
       }),
       this.prisma.budget.findMany({
         where: {
@@ -374,6 +451,7 @@ export class ReportsService {
           id: true,
           category: true,
           amount: true,
+          currency: true,
           startDate: true,
           endDate: true,
           alertThresholdPercent: true,
@@ -381,30 +459,39 @@ export class ReportsService {
         },
       }),
       this.prisma.debt.findMany({
-        where: { userId, status: 'ACTIVE' },
-        select: { id: true, type: true, title: true, totalAmount: true, paidAmount: true, dueDate: true, status: true },
+        where: { userId, status: 'ACTIVE', currency },
+        select: { id: true, type: true, title: true, totalAmount: true, paidAmount: true, currency: true, dueDate: true, status: true },
       }),
       this.prisma.savingGoal.findMany({
-        where: { userId, status: 'ACTIVE' },
-        select: { id: true, title: true, targetAmount: true, currentAmount: true, targetDate: true, priority: true },
+        where: { userId, status: 'ACTIVE', currency },
+        select: { id: true, title: true, targetAmount: true, currentAmount: true, currency: true, targetDate: true, priority: true },
       }),
     ]);
 
-    const totalIncome = incomes.reduce((s, i) => s + toNumber(i.amount), 0);
-    const totalExpense = expenses.reduce((s, e) => s + toNumber(e.amount), 0);
-    const saving = totalIncome - totalExpense;
-    const savingRatePercent =
-      totalIncome > 0 ? Math.round((saving / totalIncome) * 100) : null;
+    const totalIncomeDec = sumMoney(incomes.map((i) => i.amount));
+    const totalExpenseDec = sumMoney(expenses.map((e) => e.amount));
+    const savingDec = totalIncomeDec.minus(totalExpenseDec);
+    const savingRatePercent = totalIncomeDec.isZero()
+      ? null
+      : Math.round(Number(savingDec.times(100).dividedBy(totalIncomeDec).toFixed(2)));
 
-    const byCategory = expenses.reduce<Record<string, number>>((acc, e) => {
-      acc[e.category] = (acc[e.category] ?? 0) + toNumber(e.amount);
-      return acc;
-    }, {});
-    const byNeedLevel = expenses.reduce<Record<string, number>>((acc, e) => {
+    const byCategoryGrouped = new Map<string, Prisma.Decimal>();
+    for (const e of expenses) {
+      byCategoryGrouped.set(
+        e.category,
+        (byCategoryGrouped.get(e.category) ?? new Prisma.Decimal(0)).plus(e.amount),
+      );
+    }
+    const byCategory: Record<string, number> = {};
+    for (const [k, v] of byCategoryGrouped) byCategory[k] = Number(v.toFixed(2));
+
+    const byNeedGrouped = new Map<string, Prisma.Decimal>();
+    for (const e of expenses) {
       const k = e.needLevel ?? 'UNKNOWN';
-      acc[k] = (acc[k] ?? 0) + toNumber(e.amount);
-      return acc;
-    }, {});
+      byNeedGrouped.set(k, (byNeedGrouped.get(k) ?? new Prisma.Decimal(0)).plus(e.amount));
+    }
+    const byNeedLevel: Record<string, number> = {};
+    for (const [k, v] of byNeedGrouped) byNeedLevel[k] = Number(v.toFixed(2));
 
     const budgetUsage = await Promise.all(
       budgets.map(async (b) => {
@@ -412,51 +499,67 @@ export class ReportsService {
           where: {
             userId,
             category: b.category,
+            currency: b.currency,
             expenseDate: { gte: b.startDate, lte: b.endDate },
           },
           _sum: { amount: true },
         });
-        const used = toNumber(spent._sum.amount);
-        const usedPercent = toNumber(b.amount) > 0
-          ? Math.round((used / toNumber(b.amount)) * 100)
-          : 0;
+        const usedDec = spent._sum.amount ?? new Prisma.Decimal(0);
+        const amtDec = b.amount;
+        const usedPercent = amtDec.isZero()
+          ? 0
+          : Math.round(Number(usedDec.times(100).dividedBy(amtDec).toFixed(2)));
         return {
           id: b.id,
           category: b.category,
-          amount: toNumber(b.amount),
-          used,
+          currency: b.currency,
+          amount: Number(amtDec.toFixed(2)),
+          used: Number(usedDec.toFixed(2)),
           usedPercent,
           overThreshold: usedPercent >= b.alertThresholdPercent,
         };
       }),
     );
 
+    const remainingOf = (d: { totalAmount: Prisma.Decimal; paidAmount: Prisma.Decimal }) =>
+      d.totalAmount.minus(d.paidAmount);
     const debtSummary = {
-      iOwe: debts
-        .filter((d) => d.type === 'I_OWE')
-        .reduce((s, d) => s + (toNumber(d.totalAmount) - toNumber(d.paidAmount)), 0),
-      owedToMe: debts
-        .filter((d) => d.type === 'OWED_TO_ME')
-        .reduce((s, d) => s + (toNumber(d.totalAmount) - toNumber(d.paidAmount)), 0),
+      currency,
+      iOwe: Number(
+        debts.filter((d) => d.type === 'I_OWE').reduce<Prisma.Decimal>(
+          (s, d) => s.plus(remainingOf(d)),
+          new Prisma.Decimal(0),
+        ).toFixed(2),
+      ),
+      owedToMe: Number(
+        debts.filter((d) => d.type === 'OWED_TO_ME').reduce<Prisma.Decimal>(
+          (s, d) => s.plus(remainingOf(d)),
+          new Prisma.Decimal(0),
+        ).toFixed(2),
+      ),
       items: debts.map((d) => ({
         id: d.id,
         type: d.type,
         title: d.title,
-        remaining: toNumber(d.totalAmount) - toNumber(d.paidAmount),
+        remaining: Number(remainingOf(d).toFixed(2)),
+        currency: d.currency,
         dueDate: d.dueDate ? d.dueDate.toISOString().slice(0, 10) : null,
         status: d.status,
       })),
     };
 
     const savingGoalSummary = savingGoals.map((g) => {
-      const target = toNumber(g.targetAmount);
-      const current = toNumber(g.currentAmount);
-      const percent = target > 0 ? Math.round((current / target) * 100) : 0;
+      const target = g.targetAmount;
+      const current = g.currentAmount;
+      const percent = target.isZero()
+        ? 0
+        : Math.round(Number(current.times(100).dividedBy(target).toFixed(2)));
       return {
         id: g.id,
         title: g.title,
-        target,
-        current,
+        target: Number(target.toFixed(2)),
+        current: Number(current.toFixed(2)),
+        currency: g.currency,
         percent,
         targetDate: g.targetDate ? g.targetDate.toISOString().slice(0, 10) : null,
         priority: g.priority,
@@ -465,10 +568,12 @@ export class ReportsService {
 
     return {
       month,
+      currency,
+      mixedCurrencyDetected: otherCurrencyProbe > 0,
       totals: {
-        income: totalIncome,
-        expense: totalExpense,
-        saving,
+        income: Number(totalIncomeDec.toFixed(2)),
+        expense: Number(totalExpenseDec.toFixed(2)),
+        saving: Number(savingDec.toFixed(2)),
         savingRatePercent,
       },
       byCategory,

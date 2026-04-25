@@ -62,6 +62,9 @@ import { QueueModule } from './modules/queue/queue.module';
 import { ObservabilityModule } from './modules/observability/observability.module';
 import { AiUsageModule } from './modules/ai-usage/ai-usage.module';
 
+// Round 13: finance correctness primitives
+import { FinanceCoreModule } from './modules/finance-core/finance-core.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -87,6 +90,7 @@ import { AiUsageModule } from './modules/ai-usage/ai-usage.module';
     QueueModule,
     ObservabilityModule,
     AiUsageModule,
+    FinanceCoreModule,
 
     // Foundation
     HealthModule,

@@ -536,3 +536,36 @@ ceiling from ~60-80k DAU to ~500k MAU on a single primary; passing 1M MAU
 is its own program of work.
 
 **End of Round-12 patch.**
+
+---
+
+## Round 13 patch — finance correctness
+
+The 9 finance correctness items from §9 above closed (or downgraded) by
+Round 13. Full report: `docs/ROUND_13_FINANCE_CORRECTNESS.md`.
+
+| # | Round-11 item | Status |
+|--|--|--|
+| 1 | Debt `addPayment` race | **CLOSED** — conditional `updateMany` + `$transaction` |
+| 2 | SavingGoal `contribute` race | **CLOSED** — same pattern + clamp-to-target + `appliedAmount` reconciliation |
+| 3 | Multi-currency aggregation in dashboard | **CLOSED** — primary-currency-only sums + per-currency wallet map + `mixedCurrencyDetected` |
+| 4 | `Number(decimal)` lossy in reports | **MITIGATED** — Decimal end-to-end via `sumMoney`/`pctOf` helpers |
+| 5 | No `Idempotency-Key` middleware | **CLOSED** — header on expense/income/debt-pay/saving-contribute + `FinanceIdempotencyKey` table |
+| 6 | No `AuditLog` table | **CLOSED** — `FinanceAuditLog` table + `FinanceAuditService` writing inside every write transaction |
+| 7 | No soft delete on finance models | **OPEN (LOW)** — audit trail is the recovery path; soft-delete deferred to round 14 |
+| 8 | Timezone bug in daily reports | **OPEN (LOW)** — documented in `docs/FINANCE_LOGIC_AUDIT.md`; round-14 fix |
+| 9 | Decimal overpay tolerance on debt closeout | **CLOSED** — Decimal compare exact |
+
+P1 backlog after Round 13:
+1. Per-account login lockout
+2. Email verification + forgot-password
+3. Encrypted off-box backups
+4. Soft delete on finance entities (round 14)
+5. Timezone-aware daily report bounds (round 14)
+
+Production readiness verdict unchanged from Round-12 patch:
+- Pilot ≤10k MAU: GO
+- 100k MAU: GO once #1–#3 above land
+- 500k+: needs PgBouncer + read replica + worker-only deploy
+
+**End of Round-13 patch.**

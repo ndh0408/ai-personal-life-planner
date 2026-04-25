@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -15,6 +16,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { ok } from '../../common/interceptors/response.interceptor';
+import { sanitiseIdemKey } from '../../common/finance/idempotency-key';
 import { SavingGoalsService } from './saving-goals.service';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -22,11 +24,14 @@ const DateStr = z.string().regex(DATE_RE, 'Must be YYYY-MM-DD');
 const PrioritySchema = z.enum(['LOW', 'MEDIUM', 'HIGH']);
 const StatusSchema = z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED']);
 
+const CurrencyStr = z.string().min(2).max(8).regex(/^[A-Z]{2,8}$/i, 'Currency must be ISO 4217-like');
+
 const CreateSchema = z
   .object({
     title: z.string().min(1).max(200),
     targetAmount: z.number().positive().max(1e13),
     currentAmount: z.number().nonnegative().max(1e13).optional(),
+    currency: CurrencyStr.optional(),
     targetDate: DateStr.optional(),
     priority: PrioritySchema.optional(),
     note: z.string().max(1000).optional(),
@@ -71,8 +76,14 @@ export class SavingGoalsController {
     @CurrentUser() user: AuthUser,
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body(new ZodValidationPipe(ContributeSchema)) body: z.infer<typeof ContributeSchema>,
+    @Headers('idempotency-key') idempotencyKey?: string,
   ) {
-    return ok(await this.svc.contribute(user.id, id, body.amount), 'Contribution recorded');
+    return ok(
+      await this.svc.contribute(user.id, id, body.amount, {
+        idempotencyKey: sanitiseIdemKey(idempotencyKey),
+      }),
+      'Contribution recorded',
+    );
   }
 
   @Delete(':id')

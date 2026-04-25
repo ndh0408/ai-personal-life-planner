@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -15,12 +16,15 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser, type AuthUser } from '../../common/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { ok } from '../../common/interceptors/response.interceptor';
+import { sanitiseIdemKey } from '../../common/finance/idempotency-key';
 import { DebtsService } from './debts.service';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DateStr = z.string().regex(DATE_RE, 'Must be YYYY-MM-DD');
 const DebtTypeSchema = z.enum(['I_OWE', 'OWED_TO_ME']);
 const DebtStatusSchema = z.enum(['ACTIVE', 'PAID', 'CANCELLED']);
+
+const CurrencyStr = z.string().min(2).max(8).regex(/^[A-Z]{2,8}$/i, 'Currency must be ISO 4217-like');
 
 const CreateDebtSchema = z
   .object({
@@ -29,6 +33,7 @@ const CreateDebtSchema = z
     title: z.string().min(1).max(200),
     totalAmount: z.number().positive().max(1e13),
     paidAmount: z.number().nonnegative().max(1e13).optional(),
+    currency: CurrencyStr.optional(),
     dueDate: DateStr.optional(),
     note: z.string().max(1000).optional(),
   })
@@ -77,8 +82,15 @@ export class DebtsController {
     @CurrentUser() user: AuthUser,
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body(new ZodValidationPipe(PaymentSchema)) body: z.infer<typeof PaymentSchema>,
+    @Headers('idempotency-key') idempotencyKey?: string,
   ) {
-    return ok(await this.svc.addPayment(user.id, id, body.amount, body.markPaid), 'Payment recorded');
+    return ok(
+      await this.svc.addPayment(user.id, id, body.amount, {
+        markPaid: body.markPaid,
+        idempotencyKey: sanitiseIdemKey(idempotencyKey),
+      }),
+      'Payment recorded',
+    );
   }
 
   @Delete(':id')

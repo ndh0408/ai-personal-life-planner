@@ -20,10 +20,13 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DateStr = z.string().regex(DATE_RE, 'Must be YYYY-MM-DD');
 const BudgetPeriodSchema = z.enum(['WEEKLY', 'MONTHLY']);
 
+const CurrencyStr = z.string().min(2).max(8).regex(/^[A-Z]{2,8}$/i, 'Currency must be ISO 4217-like');
+
 const CreateBudgetSchema = z
   .object({
     category: z.string().min(1).max(60),
     amount: z.number().positive().max(1e13),
+    currency: CurrencyStr.optional(),
     period: BudgetPeriodSchema,
     startDate: DateStr,
     endDate: DateStr,
