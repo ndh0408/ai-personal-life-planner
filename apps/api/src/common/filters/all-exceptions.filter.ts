@@ -78,10 +78,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     const errorCode = explicitCode ?? toErrorCode(status, message, exception);
+    const requestId = (request as Request & { requestId?: string }).requestId;
 
     if (status >= 500) {
       this.logger.error(
-        `${request.method} ${request.url} → ${status} [${errorCode}]`,
+        `[req=${requestId ?? '-'}] ${request.method} ${request.url} → ${status} [${errorCode}]`,
         exception instanceof Error ? exception.stack : String(exception),
       );
     }
@@ -98,6 +99,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       ...(issues ? { issues } : {}),
       statusCode: status,
       path: request.url,
+      requestId: requestId ?? null,
       timestamp: new Date().toISOString(),
     });
   }

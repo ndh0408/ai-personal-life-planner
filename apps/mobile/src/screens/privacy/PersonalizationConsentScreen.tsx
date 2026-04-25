@@ -150,8 +150,10 @@ export function PersonalizationConsentScreen() {
         ) : (
           <Card style={{ marginBottom: spacing.md }}>
             <Text style={{ color: colors.textMuted }}>
-              {ITEMS.filter((i) => i.recommended).length} /{ITEMS.length}{' '}
-              recommended.
+              {t('settings.privacy.consent.recommendedSummary', {
+                count: ITEMS.filter((i) => i.recommended).length,
+                total: ITEMS.length,
+              })}
             </Text>
           </Card>
         )}

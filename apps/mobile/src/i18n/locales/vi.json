@@ -1237,6 +1237,7 @@
         "customize": "Tuỳ chỉnh",
         "skip": "Bỏ qua",
         "learnMore": "Tìm hiểu thêm",
+        "recommendedSummary": "{{count}} / {{total}} đề xuất.",
         "items": {
           "schedule": { "title": "Lịch & task", "purpose": "Cho AI sắp ngày dựa trên thời gian thực của bạn — không có nhắc bất ngờ." },
           "habits":   { "title": "Thói quen", "purpose": "Để nhắc nhẹ, không bao giờ phán xét bạn vì những ngày bị bỏ." },
@@ -1406,7 +1407,10 @@
           "noNudge": "Hiện không có nudge.",
           "amountsHidden": "Đã ẩn số tiền",
           "lastUpdated": "Cập nhật lần cuối",
-          "refresh": "Làm mới ngay"
+          "refresh": "Làm mới ngay",
+          "healthSummary": "{{sleep}} · tâm trạng: {{mood}} · năng lượng: {{energy}}",
+          "healthSleep": "ngủ {{hours}} giờ",
+          "budgetWarningRow": "{{category}}: {{percent}}%"
         },
         "deepLinkNote": "Bấm action trên widget mở app qua lifeos:// — xem docs/DEEP_LINKS.md."
       },

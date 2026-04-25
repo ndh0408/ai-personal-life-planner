@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { requestIdMiddleware } from './common/middleware/request-id.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -13,6 +14,10 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   app.use(helmet());
+  app.use(requestIdMiddleware);
+  // Listen for SIGTERM / SIGINT and run module onApplicationShutdown hooks
+  // (PrismaService.$disconnect etc.) so docker stop doesn't drop in-flight.
+  app.enableShutdownHooks();
 
   const isProd = config.get<string>('NODE_ENV') === 'production';
   const corsOriginRaw = (config.get<string>('CORS_ORIGIN') ?? '').trim();

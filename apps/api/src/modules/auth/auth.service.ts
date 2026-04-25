@@ -84,7 +84,24 @@ export class AuthService {
       where: { tokenHash },
       include: { user: true },
     });
-    if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
+    if (!stored) {
+      throw new UnauthorizedException({
+        message: 'Invalid refresh token',
+        errorCode: 'AUTH_INVALID_REFRESH_TOKEN',
+      });
+    }
+    // OAuth 2 refresh-token rotation §6.1: a presented-but-revoked token
+    // signals reuse-after-rotation (likely token theft). Revoke the entire
+    // family so the attacker AND the legitimate user are both forced to
+    // re-authenticate from scratch.
+    if (stored.revokedAt) {
+      await this.logoutAll(stored.userId).catch(() => undefined);
+      throw new UnauthorizedException({
+        message: 'Invalid refresh token',
+        errorCode: 'AUTH_INVALID_REFRESH_TOKEN',
+      });
+    }
+    if (stored.expiresAt < new Date()) {
       throw new UnauthorizedException({
         message: 'Invalid refresh token',
         errorCode: 'AUTH_INVALID_REFRESH_TOKEN',

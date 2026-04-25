@@ -94,30 +94,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       // ignore — clearing tokens is what matters
     }
-    await tokenStore.clear();
-    try {
-      const { resetOfflineState } = await import('../services/offline');
-      await resetOfflineState();
-    } catch {
-      // Best-effort — never block logout on cache purge.
-    }
-    // Wipe widget snapshot — defends against cross-user leak when the
-    // native widget reads the file on the next refresh.
-    try {
-      const { widgetSnapshotStore } = await import('../services/widgets/snapshot-store');
-      await widgetSnapshotStore.clear();
-    } catch {
-      // Best-effort.
-    }
-    // Wipe React Query's in-memory cache so the next login doesn't see the
-    // previous user's data. cancelQueries() first to avoid in-flight handlers
-    // writing back into the cleared cache.
-    try {
-      await queryClient.cancelQueries();
-      queryClient.clear();
-    } catch {
-      // Best-effort.
-    }
+    await wipeClientState();
     set({ status: 'unauthenticated', user: null, profile: null, needsOnboarding: false });
   },
 
@@ -136,10 +113,35 @@ async function applyTokens(tokens: AuthTokens) {
   await tokenStore.set(tokens.accessToken, tokens.refreshToken);
 }
 
-// Wire 401-from-anywhere → log out + wipe caches.
+// Full client-side teardown — must be identical between explicit `logout()`
+// and the 401 reactive handler so a server-forced sign-out cannot leave a
+// stale widget snapshot, offline cache, or react-query entry behind.
+async function wipeClientState(): Promise<void> {
+  await tokenStore.clear().catch(() => undefined);
+  try {
+    const { resetOfflineState } = await import('../services/offline');
+    await resetOfflineState();
+  } catch {
+    // Best-effort — never block teardown on cache purge.
+  }
+  try {
+    const { widgetSnapshotStore } = await import('../services/widgets/snapshot-store');
+    await widgetSnapshotStore.clear();
+  } catch {
+    // Best-effort.
+  }
+  try {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+  } catch {
+    // Best-effort.
+  }
+}
+
+// Wire 401-from-anywhere → log out + wipe ALL client state (same teardown
+// as explicit logout). Fire-and-forget; UI flips to unauthenticated
+// immediately so the user is not stuck on a protected screen.
 registerUnauthorizedHandler(() => {
-  // Best-effort: cancel in-flight queries before clearing.
-  queryClient.cancelQueries().catch(() => undefined);
-  queryClient.clear();
+  void wipeClientState();
   useAuthStore.setState({ status: 'unauthenticated', user: null, profile: null, needsOnboarding: false });
 });

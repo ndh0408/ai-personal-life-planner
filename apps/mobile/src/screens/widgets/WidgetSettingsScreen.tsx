@@ -295,7 +295,10 @@ function PreviewCards({ summary }: { summary: WidgetSummaryDto }) {
               <Badge tone="info">{t('settings.widgets.preview.amountsHidden')}</Badge>
               {summary.finance.budgetWarnings.map((b) => (
                 <Text key={b.category} style={{ color: colors.textMuted, marginTop: 4 }}>
-                  {b.category}: {Math.round(b.usagePercent)}%
+                  {t('settings.widgets.preview.budgetWarningRow', {
+                    category: b.category,
+                    percent: Math.round(b.usagePercent),
+                  })}
                 </Text>
               ))}
             </View>
@@ -313,10 +316,15 @@ function PreviewCards({ summary }: { summary: WidgetSummaryDto }) {
         </Text>
         {summary.health ? (
           <Text style={{ color: colors.text, marginTop: 4 }}>
-            {summary.health.sleepMinutes
-              ? `${(summary.health.sleepMinutes / 60).toFixed(1)}h sleep`
-              : '—'}{' '}
-            · mood: {summary.health.mood ?? '—'} · energy: {summary.health.energy ?? '—'}
+            {t('settings.widgets.preview.healthSummary', {
+              sleep: summary.health.sleepMinutes
+                ? t('settings.widgets.preview.healthSleep', {
+                    hours: (summary.health.sleepMinutes / 60).toFixed(1),
+                  })
+                : '—',
+              mood: summary.health.mood ?? '—',
+              energy: summary.health.energy ?? '—',
+            })}
           </Text>
         ) : (
           <Text style={{ color: colors.textMuted, marginTop: 4 }}>

@@ -1237,6 +1237,7 @@
         "customize": "Customize",
         "skip": "Skip for now",
         "learnMore": "Learn more",
+        "recommendedSummary": "{{count}} of {{total}} recommended.",
         "items": {
           "schedule": { "title": "Schedule & tasks", "purpose": "Lets AI plan your day around your real lifetime — no surprise reminders." },
           "habits":   { "title": "Habits", "purpose": "Used for gentle nudges, never to shame you for missed days." },
@@ -1406,7 +1407,10 @@
           "noNudge": "No nudges right now.",
           "amountsHidden": "Amounts hidden",
           "lastUpdated": "Last updated",
-          "refresh": "Refresh now"
+          "refresh": "Refresh now",
+          "healthSummary": "{{sleep}} · mood: {{mood}} · energy: {{energy}}",
+          "healthSleep": "{{hours}}h sleep",
+          "budgetWarningRow": "{{category}}: {{percent}}%"
         },
         "deepLinkNote": "Tapping a widget action opens this app via lifeos:// — see docs/DEEP_LINKS.md."
       },

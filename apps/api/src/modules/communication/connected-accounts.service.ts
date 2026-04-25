@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ConnectedAccountProvider, type ConnectedAccount, type Prisma } from '@prisma/client';
-import { randomBytes, createHmac } from 'node:crypto';
+import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EncryptionService } from '../../common/crypto/encryption.service';
 
@@ -116,6 +116,38 @@ export class ConnectedAccountsService {
       this.oauthStates.delete(state);
       throw new ForbiddenException({
         message: 'OAuth state expired',
+        errorCode: 'OAUTH_STATE_INVALID',
+      });
+    }
+    // Provider mismatch: a /gmail/callback URL must not consume an Outlook
+    // state (and vice versa). The provider is asserted by URL routing today,
+    // but make the binding explicit so v1.3 can't accidentally relax it.
+    if (entry.provider !== _provider) {
+      this.oauthStates.delete(state);
+      throw new ForbiddenException({
+        message: 'OAuth state provider mismatch',
+        errorCode: 'OAUTH_STATE_INVALID',
+      });
+    }
+    // Defence-in-depth: re-derive the HMAC over `userId:provider:nonce` and
+    // constant-time-compare with the sig fragment shipped in the state.
+    // Today the state is also a Map key (so an attacker who lacks the secret
+    // can't forge entries), but this guard means any future swap to Redis or
+    // signed-JWT (no server map) inherits the same forgery resistance.
+    const dot = state.indexOf('.');
+    const nonce = dot > 0 ? state.slice(0, dot) : '';
+    const sig = dot > 0 ? state.slice(dot + 1) : '';
+    const secret = this.config.get<string>('AI_PROVIDER_ENCRYPTION_KEY') ?? 'dev-fallback';
+    const expectedSig = createHmac('sha256', secret)
+      .update(`${entry.userId}:${entry.provider}:${nonce}`)
+      .digest('hex')
+      .slice(0, 32);
+    const sigBuf = Buffer.from(sig, 'utf8');
+    const expBuf = Buffer.from(expectedSig, 'utf8');
+    if (sigBuf.length !== expBuf.length || !timingSafeEqual(sigBuf, expBuf)) {
+      this.oauthStates.delete(state);
+      throw new ForbiddenException({
+        message: 'OAuth state signature invalid',
         errorCode: 'OAUTH_STATE_INVALID',
       });
     }
