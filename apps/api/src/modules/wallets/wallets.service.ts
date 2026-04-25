@@ -17,14 +17,16 @@ export class WalletsService {
 
   list(userId: string) {
     return this.prisma.wallet.findMany({
-      where: { userId },
+      where: { userId, deletedAt: null },
       orderBy: [{ isActive: 'desc' }, { createdAt: 'asc' }],
     });
   }
 
   async getById(userId: string, id: string) {
     const wallet = await this.prisma.wallet.findUnique({ where: { id } });
-    if (!wallet) throw new NotFoundException({ message: 'Wallet not found', errorCode: 'NOT_FOUND' });
+    if (!wallet || wallet.deletedAt) {
+      throw new NotFoundException({ message: 'Wallet not found', errorCode: 'NOT_FOUND' });
+    }
     if (wallet.userId !== userId) throw new ForbiddenException({ errorCode: 'FORBIDDEN' });
     return wallet;
   }
@@ -54,7 +56,25 @@ export class WalletsService {
 
   async delete(userId: string, id: string) {
     await this.getById(userId, id);
-    // Income/Expense rows keep their history via ON DELETE SET NULL on walletId.
-    await this.prisma.wallet.delete({ where: { id } });
+    // Soft delete (round 14): linked income/expense rows keep walletId so the
+    // audit trail is intact; list/get queries hide the wallet via deletedAt.
+    await this.prisma.wallet.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  async restore(userId: string, id: string) {
+    const wallet = await this.prisma.wallet.findUnique({ where: { id } });
+    if (!wallet || wallet.userId !== userId) {
+      throw new NotFoundException({ message: 'Wallet not found', errorCode: 'NOT_FOUND' });
+    }
+    if (!wallet.deletedAt) {
+      throw new NotFoundException({ message: 'Wallet is not deleted', errorCode: 'NOT_FOUND' });
+    }
+    return this.prisma.wallet.update({
+      where: { id },
+      data: { deletedAt: null },
+    });
   }
 }

@@ -1,10 +1,22 @@
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { SecurityEventType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import type { LoginInput, RegisterInput, AuthTokens } from '@planner/shared';
 import { PrismaService } from '../../prisma/prisma.service';
+import { SecurityAuditService } from '../auth-security/security-audit.service';
+
+const LOCKOUT_THRESHOLD = 5;
+const LOCKOUT_WINDOW_MS = 15 * 60_000;
+const LOCKOUT_DURATION_MS = 15 * 60_000;
+
+// Pre-computed bcrypt hash of an unrelated string. We run a bcrypt against
+// this when the email is unknown so the wall-clock time of "wrong email"
+// matches "wrong password" — defends against email-enumeration via timing.
+// Cost matches our real cost-10 hashes. Generated once with bcrypt.hashSync.
+const DUMMY_HASH = '$2b$10$abcdefghijklmnopqrstuuKqGyqL2yIVTKZqKkj.Ay9yTQJ6uyOOK';
 
 type JwtPayload = { sub: string; email: string };
 
@@ -19,6 +31,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly audit: SecurityAuditService,
   ) {}
 
   async register(input: RegisterInput, ctx: IssueContext = {}): Promise<AuthTokens> {
@@ -53,29 +66,124 @@ export class AuthService {
   }
 
   async login(input: LoginInput, ctx: IssueContext = {}): Promise<AuthTokens> {
-    const user = await this.prisma.user.findUnique({ where: { email: input.email } });
+    const lower = input.email.toLowerCase();
+    const user = await this.prisma.user.findUnique({ where: { email: lower } });
+
+    // Privacy: do not reveal that the email is unknown — same wall-clock
+    // path (run a bcrypt against a fixed dummy hash) and the same error
+    // envelope as a wrong-password attempt.
     if (!user) {
+      await bcrypt.compare(input.password, DUMMY_HASH).catch(() => undefined);
+      await this.audit.record({
+        emailHint: lower,
+        type: SecurityEventType.LOGIN_FAILED,
+        ipAddress: ctx.ipAddress,
+        userAgent: ctx.userAgent,
+        metadata: { reason: 'unknown_email' },
+      });
       throw new UnauthorizedException({
         message: 'Invalid credentials',
         errorCode: 'AUTH_INVALID_CREDENTIALS',
       });
     }
     if (user.status === 'DISABLED') {
+      await this.audit.record({
+        userId: user.id,
+        emailHint: lower,
+        type: SecurityEventType.LOGIN_FAILED,
+        ipAddress: ctx.ipAddress,
+        userAgent: ctx.userAgent,
+        metadata: { reason: 'account_disabled' },
+      });
       throw new UnauthorizedException({
         message: 'Account disabled',
         errorCode: 'AUTH_ACCOUNT_DISABLED',
       });
     }
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      const retryAfterSec = Math.max(1, Math.ceil((user.lockedUntil.getTime() - Date.now()) / 1000));
+      throw new UnauthorizedException({
+        message: 'Account is temporarily locked due to too many failed attempts',
+        errorCode: 'ACCOUNT_TEMPORARILY_LOCKED',
+        retryAfterSec,
+      });
+    }
 
     const ok = await bcrypt.compare(input.password, user.passwordHash);
     if (!ok) {
+      await this.recordFailedAttempt(user.id, lower, ctx);
       throw new UnauthorizedException({
         message: 'Invalid credentials',
         errorCode: 'AUTH_INVALID_CREDENTIALS',
       });
     }
 
+    // Success — reset counter; note "after failure" for audit signal.
+    if (user.failedLoginCount > 0 || user.lockedUntil) {
+      await this.audit.record({
+        userId: user.id,
+        emailHint: lower,
+        type: SecurityEventType.LOGIN_SUCCESS_AFTER_FAILURE,
+        ipAddress: ctx.ipAddress,
+        userAgent: ctx.userAgent,
+        metadata: { previousFailedCount: user.failedLoginCount },
+      });
+    }
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { failedLoginCount: 0, lastFailedLoginAt: null, lockedUntil: null },
+    });
     return this.issueTokens(user.id, user.email, ctx);
+  }
+
+  /**
+   * Bumps failedLoginCount; if the user crosses the threshold inside the
+   * window, sets `lockedUntil`. The window check uses
+   * `lastFailedLoginAt`: if the prior failure was outside the window, the
+   * counter resets to 1 (so a single failure 6 months later doesn't trigger
+   * a lockout).
+   */
+  private async recordFailedAttempt(
+    userId: string,
+    emailHint: string,
+    ctx: IssueContext,
+  ): Promise<void> {
+    const now = new Date();
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { failedLoginCount: true, lastFailedLoginAt: true },
+    });
+    if (!user) return;
+    const inWindow =
+      user.lastFailedLoginAt && now.getTime() - user.lastFailedLoginAt.getTime() <= LOCKOUT_WINDOW_MS;
+    const nextCount = inWindow ? user.failedLoginCount + 1 : 1;
+    const shouldLock = nextCount >= LOCKOUT_THRESHOLD;
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        failedLoginCount: nextCount,
+        lastFailedLoginAt: now,
+        lockedUntil: shouldLock ? new Date(now.getTime() + LOCKOUT_DURATION_MS) : null,
+      },
+    });
+    await this.audit.record({
+      userId,
+      emailHint,
+      type: SecurityEventType.LOGIN_FAILED,
+      ipAddress: ctx.ipAddress,
+      userAgent: ctx.userAgent,
+      metadata: { failedCount: nextCount, locked: shouldLock },
+    });
+    if (shouldLock) {
+      await this.audit.record({
+        userId,
+        emailHint,
+        type: SecurityEventType.ACCOUNT_LOCKED,
+        ipAddress: ctx.ipAddress,
+        userAgent: ctx.userAgent,
+        metadata: { lockoutDurationMs: LOCKOUT_DURATION_MS },
+      });
+    }
   }
 
   async refresh(refreshToken: string, ctx: IssueContext = {}): Promise<AuthTokens> {

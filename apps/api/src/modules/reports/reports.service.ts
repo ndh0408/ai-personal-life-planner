@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { sumMoney } from '../../common/finance/money';
+import { getUserDayBounds } from '../../common/datetime/day-bounds';
 
 function startOfDay(d: Date): Date {
   const x = new Date(d);
@@ -85,13 +86,27 @@ export class ReportsService {
    * structured numbers. Mobile composes both.
    */
   async daily(userId: string, date: string) {
+    // Round-14 timezone-aware split:
+    //  - DATE-only columns (`@db.Date`: expense.expenseDate, sleepLog.date,
+    //    mealLog.date, habitLog.date, dailySchedule.date, moodLog.date) are
+    //    matched by the YYYY-MM-DD value the user sent — `dayBounds()` is the
+    //    correct producer for these.
+    //  - TIMESTAMP columns (task.dueDate, scheduleItem.startTime) need a
+    //    UTC instant range that maps to the user's local day; we compute
+    //    `tzWindow` for those.
+    const profile = await this.prisma.userProfile.findUnique({
+      where: { userId },
+      select: { timezone: true, currency: true },
+    });
+    const tz = profile?.timezone ?? 'UTC';
     const { from, to } = dayBounds(date);
-    const currency = await primaryCurrencyOf(this.prisma, userId);
+    const tzWindow = getUserDayBounds(date, tz);
+    const currency = (profile?.currency ?? 'VND').toUpperCase();
 
     const [tasks, habitLogs, totalHabits, sleep, mood, schedule, meals, expenses] =
       await Promise.all([
         this.prisma.task.findMany({
-          where: { userId, dueDate: { gte: from, lt: to } },
+          where: { userId, deletedAt: null, dueDate: { gte: tzWindow.from, lt: tzWindow.to } },
           select: { id: true, title: true, status: true, priority: true, estimatedMinutes: true },
         }),
         this.prisma.habitLog.findMany({
@@ -116,7 +131,7 @@ export class ReportsService {
           select: { id: true, mealType: true, title: true, estimatedCalories: true, cost: true },
         }),
         this.prisma.expense.findMany({
-          where: { userId, expenseDate: from, currency },
+          where: { userId, deletedAt: null, expenseDate: from, currency },
           select: { amount: true, category: true, title: true },
         }),
       ]);
@@ -240,7 +255,7 @@ export class ReportsService {
           select: { date: true, items: { select: { status: true } } },
         }),
         this.prisma.expense.findMany({
-          where: { userId, expenseDate: { gte: from, lte: weekEnd }, currency },
+          where: { userId, deletedAt: null, expenseDate: { gte: from, lte: weekEnd }, currency },
           select: { amount: true, category: true, expenseDate: true, needLevel: true, currency: true },
         }),
         // Round-13: also fetch a tiny "any-currency" probe so we can surface
@@ -248,6 +263,7 @@ export class ReportsService {
         this.prisma.expense.findMany({
           where: {
             userId,
+            deletedAt: null,
             expenseDate: { gte: from, lte: weekEnd },
             NOT: { currency },
           },
@@ -257,6 +273,7 @@ export class ReportsService {
         this.prisma.budget.findMany({
           where: {
             userId,
+            deletedAt: null,
             AND: [{ startDate: { lte: weekEnd } }, { endDate: { gte: from } }],
           },
           select: {
@@ -332,6 +349,7 @@ export class ReportsService {
         const spent = await this.prisma.expense.aggregate({
           where: {
             userId,
+            deletedAt: null,
             category: b.category,
             currency: b.currency,
             expenseDate: { gte: b.startDate, lte: b.endDate },
@@ -428,16 +446,17 @@ export class ReportsService {
 
     const [incomes, expenses, otherCurrencyProbe, budgets, debts, savingGoals] = await Promise.all([
       this.prisma.income.findMany({
-        where: { userId, incomeDate: { gte: from, lt: to }, currency },
+        where: { userId, deletedAt: null, incomeDate: { gte: from, lt: to }, currency },
         select: { amount: true, category: true },
       }),
       this.prisma.expense.findMany({
-        where: { userId, expenseDate: { gte: from, lt: to }, currency },
+        where: { userId, deletedAt: null, expenseDate: { gte: from, lt: to }, currency },
         select: { amount: true, category: true, needLevel: true, expenseDate: true },
       }),
       this.prisma.expense.count({
         where: {
           userId,
+          deletedAt: null,
           expenseDate: { gte: from, lt: to },
           NOT: { currency },
         },
@@ -445,6 +464,7 @@ export class ReportsService {
       this.prisma.budget.findMany({
         where: {
           userId,
+          deletedAt: null,
           AND: [{ startDate: { lte: monthEnd } }, { endDate: { gte: from } }],
         },
         select: {
@@ -459,11 +479,11 @@ export class ReportsService {
         },
       }),
       this.prisma.debt.findMany({
-        where: { userId, status: 'ACTIVE', currency },
+        where: { userId, deletedAt: null, status: 'ACTIVE', currency },
         select: { id: true, type: true, title: true, totalAmount: true, paidAmount: true, currency: true, dueDate: true, status: true },
       }),
       this.prisma.savingGoal.findMany({
-        where: { userId, status: 'ACTIVE', currency },
+        where: { userId, deletedAt: null, status: 'ACTIVE', currency },
         select: { id: true, title: true, targetAmount: true, currentAmount: true, currency: true, targetDate: true, priority: true },
       }),
     ]);
@@ -498,6 +518,7 @@ export class ReportsService {
         const spent = await this.prisma.expense.aggregate({
           where: {
             userId,
+            deletedAt: null,
             category: b.category,
             currency: b.currency,
             expenseDate: { gte: b.startDate, lte: b.endDate },

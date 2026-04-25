@@ -67,6 +67,30 @@
       "submit": "Đăng ký",
       "switchToLogin": "Đã có tài khoản? Đăng nhập"
     },
+    "forgotPassword": {
+      "title": "Đặt lại mật khẩu",
+      "subtitle": "Nhập email tài khoản. Nếu tồn tại, bạn sẽ nhận được liên kết đặt lại.",
+      "submit": "Gửi liên kết",
+      "successMessage": "Nếu email hợp lệ, liên kết đặt lại đã được gửi.",
+      "backToLogin": "Quay lại đăng nhập"
+    },
+    "resetPassword": {
+      "title": "Đặt mật khẩu mới",
+      "subtitle": "Dán mã token từ email và chọn mật khẩu mới.",
+      "token": "Mã token",
+      "newPassword": "Mật khẩu mới",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "passwordPolicyHint": "Ít nhất 8 ký tự, có chữ và số.",
+      "confirmMismatch": "Mật khẩu xác nhận không khớp.",
+      "submit": "Cập nhật mật khẩu",
+      "successMessage": "Đã cập nhật mật khẩu. Vui lòng đăng nhập lại."
+    },
+    "verifyEmail": {
+      "bannerTitle": "Xác minh email",
+      "bannerBody": "Chúng tôi đã gửi liên kết xác minh tới email của bạn. Một số tính năng sẽ mở khoá sau khi xác minh.",
+      "resend": "Gửi lại",
+      "resendSuccess": "Nếu email chưa xác minh, một liên kết mới đã được gửi."
+    },
     "logout": "Đăng xuất"
   },
   "onboarding": {
@@ -1589,6 +1613,11 @@
     "AUTH_ACCOUNT_DISABLED": "Tài khoản đã bị vô hiệu hoá.",
     "AUTH_EMAIL_TAKEN": "Email đã được đăng ký.",
     "AUTH_UNAUTHORIZED": "Vui lòng đăng nhập để tiếp tục.",
+    "ACCOUNT_TEMPORARILY_LOCKED": "Quá nhiều lần thử thất bại. Tài khoản tạm khoá — vui lòng thử lại sau vài phút.",
+    "AUTH_TOKEN_INVALID": "Liên kết không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.",
+    "AUTH_TOKEN_EXPIRED": "Liên kết đã hết hạn. Vui lòng yêu cầu liên kết mới.",
+    "AUTH_TOKEN_USED": "Liên kết này đã được sử dụng.",
+    "PASSWORD_POLICY_FAILED": "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ và số.",
     "AI_PROVIDER_NOT_CONFIGURED": "Chưa cấu hình nhà cung cấp AI. Thêm trong Cài đặt → Nhà cung cấp AI.",
     "USER_AI_PROVIDER_FAILED": "Nhà cung cấp AI của bạn báo lỗi. Hãy thử lại hoặc bật fallback về nhà cung cấp ứng dụng.",
     "AI_PROVIDER_TEST_FAILED": "Không thể kết nối đến nhà cung cấp AI với key đã nhập.",

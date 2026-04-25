@@ -88,4 +88,9 @@ export class IncomesController {
     await this.svc.delete(user.id, id);
     return ok(null, 'Income deleted');
   }
+
+  @Post(':id/restore')
+  async restore(@CurrentUser() user: AuthUser, @Param('id', new ParseUUIDPipe()) id: string) {
+    return ok(await this.svc.restore(user.id, id), 'Income restored');
+  }
 }

@@ -37,14 +37,16 @@ export class DebtsService {
 
   list(userId: string) {
     return this.prisma.debt.findMany({
-      where: { userId },
+      where: { userId, deletedAt: null },
       orderBy: [{ status: 'asc' }, { dueDate: 'asc' }, { createdAt: 'desc' }],
     });
   }
 
   async getById(userId: string, id: string) {
     const row = await this.prisma.debt.findUnique({ where: { id } });
-    if (!row) throw new NotFoundException({ message: 'Debt not found', errorCode: 'NOT_FOUND' });
+    if (!row || row.deletedAt) {
+      throw new NotFoundException({ message: 'Debt not found', errorCode: 'NOT_FOUND' });
+    }
     if (row.userId !== userId) throw new ForbiddenException({ errorCode: 'FORBIDDEN' });
     return row;
   }
@@ -216,7 +218,10 @@ export class DebtsService {
 
   async delete(userId: string, id: string) {
     const before = await this.getById(userId, id);
-    await this.prisma.debt.delete({ where: { id } });
+    await this.prisma.debt.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
     await this.audit.record({
       userId,
       entityType: FinanceEntityType.DEBT,

@@ -44,7 +44,7 @@ export class BudgetsService {
 
   async list(userId: string) {
     const budgets = await this.prisma.budget.findMany({
-      where: { userId },
+      where: { userId, deletedAt: null },
       orderBy: [{ startDate: 'desc' }, { category: 'asc' }],
     });
     return Promise.all(budgets.map((b) => this.withUsage(userId, b)));
@@ -52,7 +52,9 @@ export class BudgetsService {
 
   async getById(userId: string, id: string): Promise<BudgetWithUsage> {
     const b = await this.prisma.budget.findUnique({ where: { id } });
-    if (!b) throw new NotFoundException({ message: 'Budget not found', errorCode: 'NOT_FOUND' });
+    if (!b || b.deletedAt) {
+      throw new NotFoundException({ message: 'Budget not found', errorCode: 'NOT_FOUND' });
+    }
     if (b.userId !== userId) throw new ForbiddenException({ errorCode: 'FORBIDDEN' });
     return this.withUsage(userId, b);
   }
@@ -153,10 +155,13 @@ export class BudgetsService {
 
   async delete(userId: string, id: string) {
     const before = await this.prisma.budget.findUnique({ where: { id } });
-    if (!before || before.userId !== userId) {
+    if (!before || before.userId !== userId || before.deletedAt) {
       throw new NotFoundException({ message: 'Budget not found', errorCode: 'NOT_FOUND' });
     }
-    await this.prisma.budget.delete({ where: { id } });
+    await this.prisma.budget.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
     await this.audit.record({
       userId,
       entityType: FinanceEntityType.BUDGET,
@@ -182,6 +187,7 @@ export class BudgetsService {
     const agg = await this.prisma.expense.aggregate({
       where: {
         userId,
+        deletedAt: null,
         category: b.category,
         currency: b.currency,
         expenseDate: { gte: b.startDate, lte: b.endDate },

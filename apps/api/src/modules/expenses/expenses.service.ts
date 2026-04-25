@@ -47,7 +47,7 @@ export class ExpensesService {
   ) {}
 
   async list(userId: string, q: ListExpensesQuery) {
-    const where: Prisma.ExpenseWhereInput = { userId };
+    const where: Prisma.ExpenseWhereInput = { userId, deletedAt: null };
     if (q.category) where.category = q.category;
     if (q.needLevel) where.needLevel = q.needLevel;
     if (q.currency) where.currency = q.currency.toUpperCase();
@@ -78,7 +78,9 @@ export class ExpensesService {
 
   async getById(userId: string, id: string) {
     const row = await this.prisma.expense.findUnique({ where: { id } });
-    if (!row) throw new NotFoundException({ message: 'Expense not found', errorCode: 'NOT_FOUND' });
+    if (!row || row.deletedAt) {
+      throw new NotFoundException({ message: 'Expense not found', errorCode: 'NOT_FOUND' });
+    }
     if (row.userId !== userId) throw new ForbiddenException({ errorCode: 'FORBIDDEN' });
     return row;
   }
@@ -207,10 +209,18 @@ export class ExpensesService {
     });
   }
 
+  /**
+   * Soft delete (round 14): sets deletedAt instead of removing the row, but
+   * still reverses the wallet balance so the user's "money I have" line
+   * doesn't keep counting a deleted expense.
+   */
   async delete(userId: string, id: string) {
     const existing = await this.getById(userId, id);
     await this.prisma.$transaction(async (tx) => {
-      await tx.expense.delete({ where: { id } });
+      await tx.expense.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
       if (existing.walletId) {
         await tx.wallet.update({
           where: { id: existing.walletId },
@@ -225,6 +235,43 @@ export class ExpensesService {
         action: FinanceAction.DELETE,
         before: snapshot(existing),
       });
+    });
+  }
+
+  /**
+   * Restore a soft-deleted expense. Re-applies the wallet decrement so
+   * accounting stays consistent. Errors with `NOT_FOUND` if the row was
+   * never deleted.
+   */
+  async restore(userId: string, id: string) {
+    const row = await this.prisma.expense.findUnique({ where: { id } });
+    if (!row || row.userId !== userId) {
+      throw new NotFoundException({ message: 'Expense not found', errorCode: 'NOT_FOUND' });
+    }
+    if (!row.deletedAt) {
+      throw new NotFoundException({ message: 'Expense is not deleted', errorCode: 'NOT_FOUND' });
+    }
+    return this.prisma.$transaction(async (tx) => {
+      const restored = await tx.expense.update({
+        where: { id },
+        data: { deletedAt: null },
+      });
+      if (restored.walletId) {
+        await tx.wallet.update({
+          where: { id: restored.walletId },
+          data: { balance: { decrement: restored.amount } },
+        });
+      }
+      await this.audit.record({
+        tx,
+        userId,
+        entityType: FinanceEntityType.EXPENSE,
+        entityId: id,
+        action: FinanceAction.UPDATE,
+        before: snapshot(row),
+        after: snapshot(restored),
+      });
+      return restored;
     });
   }
 

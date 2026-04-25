@@ -91,4 +91,9 @@ export class ExpensesController {
     await this.svc.delete(user.id, id);
     return ok(null, 'Expense deleted');
   }
+
+  @Post(':id/restore')
+  async restore(@CurrentUser() user: AuthUser, @Param('id', new ParseUUIDPipe()) id: string) {
+    return ok(await this.svc.restore(user.id, id), 'Expense restored');
+  }
 }

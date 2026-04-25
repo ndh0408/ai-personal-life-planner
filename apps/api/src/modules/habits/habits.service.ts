@@ -15,7 +15,7 @@ export class HabitsService {
 
   list(userId: string) {
     return this.prisma.habit.findMany({
-      where: { userId },
+      where: { userId, deletedAt: null },
       orderBy: [{ isActive: 'desc' }, { createdAt: 'desc' }],
     });
   }
@@ -49,7 +49,8 @@ export class HabitsService {
 
   async delete(userId: string, id: string) {
     await this.assertOwn(userId, id);
-    await this.prisma.habit.delete({ where: { id } });
+    // Soft delete (round 14): keep the habit row + log history.
+    await this.prisma.habit.update({ where: { id }, data: { deletedAt: new Date() } });
   }
 
   async log(userId: string, habitId: string, input: LogHabitInput) {
@@ -94,7 +95,7 @@ export class HabitsService {
 
   private async assertOwn(userId: string, id: string) {
     const row = await this.prisma.habit.findUnique({ where: { id } });
-    if (!row) throw new NotFoundException('Habit not found');
+    if (!row || row.deletedAt) throw new NotFoundException('Habit not found');
     if (row.userId !== userId) throw new ForbiddenException();
     return row;
   }

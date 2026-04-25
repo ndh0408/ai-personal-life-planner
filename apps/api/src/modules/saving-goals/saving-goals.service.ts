@@ -44,14 +44,16 @@ export class SavingGoalsService {
 
   list(userId: string) {
     return this.prisma.savingGoal.findMany({
-      where: { userId },
+      where: { userId, deletedAt: null },
       orderBy: [{ status: 'asc' }, { priority: 'desc' }, { createdAt: 'desc' }],
     });
   }
 
   async getById(userId: string, id: string) {
     const row = await this.prisma.savingGoal.findUnique({ where: { id } });
-    if (!row) throw new NotFoundException({ message: 'Saving goal not found', errorCode: 'NOT_FOUND' });
+    if (!row || row.deletedAt) {
+      throw new NotFoundException({ message: 'Saving goal not found', errorCode: 'NOT_FOUND' });
+    }
     if (row.userId !== userId) throw new ForbiddenException({ errorCode: 'FORBIDDEN' });
     return row;
   }
@@ -237,7 +239,10 @@ export class SavingGoalsService {
 
   async delete(userId: string, id: string) {
     const before = await this.getById(userId, id);
-    await this.prisma.savingGoal.delete({ where: { id } });
+    await this.prisma.savingGoal.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
     await this.audit.record({
       userId,
       entityType: FinanceEntityType.SAVING_GOAL,

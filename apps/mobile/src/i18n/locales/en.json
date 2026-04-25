@@ -67,6 +67,30 @@
       "submit": "Sign up",
       "switchToLogin": "Already have an account? Log in"
     },
+    "forgotPassword": {
+      "title": "Reset password",
+      "subtitle": "Enter the email associated with your account. If it exists, we'll email you a reset link.",
+      "submit": "Send reset link",
+      "successMessage": "If an account exists for that email, a reset link is on its way.",
+      "backToLogin": "Back to login"
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "subtitle": "Paste the token from your reset email and choose a new password.",
+      "token": "Reset token",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "passwordPolicyHint": "At least 8 characters, with a letter and a digit.",
+      "confirmMismatch": "Passwords do not match.",
+      "submit": "Update password",
+      "successMessage": "Password updated. Please log in with the new password."
+    },
+    "verifyEmail": {
+      "bannerTitle": "Verify your email",
+      "bannerBody": "We sent a verification link to your email. Some features unlock after you verify.",
+      "resend": "Resend",
+      "resendSuccess": "If your email is unverified, a new link has been sent."
+    },
     "logout": "Log out"
   },
   "onboarding": {
@@ -1589,6 +1613,11 @@
     "AUTH_ACCOUNT_DISABLED": "This account has been disabled.",
     "AUTH_EMAIL_TAKEN": "This email is already registered.",
     "AUTH_UNAUTHORIZED": "Please log in to continue.",
+    "ACCOUNT_TEMPORARILY_LOCKED": "Too many failed attempts. Account locked — try again in a few minutes.",
+    "AUTH_TOKEN_INVALID": "This link is invalid or has expired. Request a new one.",
+    "AUTH_TOKEN_EXPIRED": "This link has expired. Request a new one.",
+    "AUTH_TOKEN_USED": "This link has already been used.",
+    "PASSWORD_POLICY_FAILED": "Password must be at least 8 characters and contain a letter and a digit.",
     "AI_PROVIDER_NOT_CONFIGURED": "No AI provider configured. Add one in Settings → AI provider.",
     "USER_AI_PROVIDER_FAILED": "Your AI provider returned an error. Try again or enable fallback to the app provider.",
     "AI_PROVIDER_TEST_FAILED": "Could not reach the AI provider with that key.",

@@ -40,6 +40,7 @@ function makePrisma() {
           paymentMethod: data.paymentMethod ?? null,
           needLevel: data.needLevel ?? null,
           note: data.note ?? null,
+          deletedAt: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         };
@@ -142,7 +143,7 @@ describe('ExpensesService', () => {
     expect(Number(ctx.wallets.get('w1')!.balance.toString())).toBe(850_000);
   });
 
-  it('delete: refunds the amount to the wallet', async () => {
+  it('delete: refunds the amount to the wallet (soft delete keeps the row)', async () => {
     ctx.seedWallet('w1', 'u1', 1_000_000);
     const created = await svc.create('u1', {
       walletId: 'w1',
@@ -153,7 +154,24 @@ describe('ExpensesService', () => {
     });
     await svc.delete('u1', created.id);
     expect(Number(ctx.wallets.get('w1')!.balance.toString())).toBe(1_000_000);
-    expect(ctx.expenses.has(created.id)).toBe(false);
+    // Round-14 soft delete: row still in the table but deletedAt is set.
+    expect(ctx.expenses.has(created.id)).toBe(true);
+    expect(ctx.expenses.get(created.id)!.deletedAt).toBeInstanceOf(Date);
+  });
+
+  it('restore: re-applies the wallet decrement and clears deletedAt', async () => {
+    ctx.seedWallet('w1', 'u1', 1_000_000);
+    const created = await svc.create('u1', {
+      walletId: 'w1',
+      title: 'Gadget',
+      amount: 500_000,
+      category: 'shopping',
+      expenseDate: '2026-04-24',
+    });
+    await svc.delete('u1', created.id); // wallet → 1_000_000 (refunded)
+    const restored = await svc.restore('u1', created.id);
+    expect(restored.deletedAt).toBeNull();
+    expect(Number(ctx.wallets.get('w1')!.balance.toString())).toBe(500_000);
   });
 
   it('rejects non-positive amount', async () => {

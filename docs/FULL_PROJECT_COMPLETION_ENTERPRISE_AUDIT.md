@@ -569,3 +569,33 @@ Production readiness verdict unchanged from Round-12 patch:
 - 500k+: needs PgBouncer + read replica + worker-only deploy
 
 **End of Round-13 patch.**
+
+---
+
+## Round 14 patch — auth + privacy + backup hardening
+
+The full report is `docs/ROUND_14_AUTH_PRIVACY_HARDENING.md`.
+
+| # | Item | Status |
+|--|--|--|
+| 1 | Per-account login lockout | **DONE** — 5/15min ⇒ 15min lock; SecurityAuditLog; bcrypt-timing email-enumeration defense |
+| 2 | Email verification | **DONE** — `EmailVerificationToken` (sha256-hashed); 24h TTL; per-user resend throttle |
+| 3 | Forgot + reset password | **DONE** — 30min TTL; reset revokes ALL refresh tokens + clears lockout; password policy enforced |
+| 4 | Encrypted off-box backups | **DONE** — `backup-db-encrypted.sh` + restore counterpart; AES-256-CBC + PBKDF2 200k; optional S3 upload |
+| 5 | Soft delete on finance + tasks + habits + goals | **DONE** — `deletedAt` + restore endpoints for finance entities |
+| 6 | Timezone-aware daily report bounds | **DONE** — `getUserDayBounds(date, tz)` for TIMESTAMP columns; DATE-only columns keep wall-clock match |
+
+P1 backlog after Round 14:
+1. Wire SMTP transport (skeleton in place; nodemailer wiring pending)
+2. WAL archiving for sub-hour RPO
+3. GDPR hard-delete admin job (purge soft-deleted rows past 90 days)
+4. Email-verification UI banner (i18n keys ready; renderer pending)
+5. OTel SDK wiring (env hooks declared in round 12)
+
+Production readiness verdict (post-Round 14):
+- Pilot ≤10k MAU: GO
+- 100k MAU: GO once SMTP transport is wired
+- 500k MAU: needs PgBouncer + read replica + WAL archiving
+- 1M+: same as round-13 (own program of work)
+
+**End of Round-14 patch.**

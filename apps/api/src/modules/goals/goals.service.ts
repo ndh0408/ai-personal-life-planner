@@ -25,7 +25,7 @@ export class GoalsService {
 
   list(userId: string) {
     return this.prisma.personalGoal.findMany({
-      where: { userId },
+      where: { userId, deletedAt: null },
       include: { milestones: { orderBy: { createdAt: 'asc' } } },
       orderBy: [{ status: 'asc' }, { priority: 'desc' }, { deadline: 'asc' }],
     });
@@ -36,7 +36,9 @@ export class GoalsService {
       where: { id },
       include: { milestones: { orderBy: { createdAt: 'asc' } } },
     });
-    if (!goal) throw new NotFoundException({ message: 'Goal not found', errorCode: 'NOT_FOUND' });
+    if (!goal || goal.deletedAt) {
+      throw new NotFoundException({ message: 'Goal not found', errorCode: 'NOT_FOUND' });
+    }
     if (goal.userId !== userId) throw new ForbiddenException({ errorCode: 'FORBIDDEN' });
     return goal;
   }
@@ -76,7 +78,11 @@ export class GoalsService {
 
   async delete(userId: string, id: string) {
     await this.getById(userId, id);
-    // milestones cascade.
-    await this.prisma.personalGoal.delete({ where: { id } });
+    // Soft delete (round 14): keep the goal + milestones intact for audit /
+    // restore. Hard delete still possible via admin DBA query for GDPR purge.
+    await this.prisma.personalGoal.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   }
 }

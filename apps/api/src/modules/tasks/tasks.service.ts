@@ -20,7 +20,7 @@ export class TasksService {
   constructor(private readonly prisma: PrismaService) {}
 
   async list(userId: string, query: ListTasksQuery) {
-    const where: Prisma.TaskWhereInput = { userId };
+    const where: Prisma.TaskWhereInput = { userId, deletedAt: null };
 
     if (query.status) where.status = query.status;
     if (query.priority) where.priority = query.priority;
@@ -51,7 +51,7 @@ export class TasksService {
 
   async getById(userId: string, id: string) {
     const task = await this.prisma.task.findUnique({ where: { id } });
-    if (!task) throw new NotFoundException('Task not found');
+    if (!task || task.deletedAt) throw new NotFoundException('Task not found');
     if (task.userId !== userId) throw new ForbiddenException();
     return task;
   }
@@ -103,7 +103,8 @@ export class TasksService {
 
   async delete(userId: string, id: string) {
     await this.getById(userId, id);
-    await this.prisma.task.delete({ where: { id } });
+    // Soft delete (round 14): keep the row so audit + history queries work.
+    await this.prisma.task.update({ where: { id }, data: { deletedAt: new Date() } });
   }
 
   private buildOrderBy(

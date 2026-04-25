@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LocaleService } from '../../common/i18n/locale.service';
 import { serialiseMoney, sumMoney } from '../../common/finance/money';
+import { getUserDayBounds } from '../../common/datetime/day-bounds';
 import { DailyMonitoringService } from '../assistant/services/daily-monitoring.service';
 import { LifeInsightService } from '../assistant/services/life-insight.service';
 import { RecommendationService } from '../assistant/services/recommendation.service';
@@ -52,6 +53,14 @@ export class DashboardService {
     const now = new Date();
     const month = monthBounds(day.start);
     const last7 = weekAgo(day.end);
+    // Round-14 timezone-aware window for TIMESTAMP columns (task.dueDate).
+    // DATE-only columns (`schedule.date`, mood/sleep/meal/habit) keep using
+    // `day` since the YYYY-MM-DD wall-clock matches the DB DATE value.
+    const profileTz = await this.prisma.userProfile.findUnique({
+      where: { userId },
+      select: { timezone: true },
+    });
+    const tzWindow = getUserDayBounds(dateStr, profileTz?.timezone ?? 'UTC');
 
     const [
       user,
@@ -86,7 +95,7 @@ export class DashboardService {
         include: { items: { select: { id: true, status: true } } },
       }),
       this.prisma.task.findMany({
-        where: { userId, dueDate: { gte: day.start, lt: day.end } },
+        where: { userId, deletedAt: null, dueDate: { gte: tzWindow.from, lt: tzWindow.to } },
         select: { id: true, title: true, status: true, priority: true },
         orderBy: [{ priority: 'desc' }, { dueDate: 'asc' }],
         take: 5,
@@ -94,15 +103,21 @@ export class DashboardService {
       this.prisma.task.count({
         where: {
           userId,
+          deletedAt: null,
           status: { in: ['TODO', 'IN_PROGRESS'] },
-          dueDate: { lt: day.start, not: null },
+          dueDate: { lt: tzWindow.from, not: null },
         },
       }),
       this.prisma.task.count({
-        where: { userId, status: { in: ['TODO', 'IN_PROGRESS'] }, priority: 'HIGH' },
+        where: {
+          userId,
+          deletedAt: null,
+          status: { in: ['TODO', 'IN_PROGRESS'] },
+          priority: 'HIGH',
+        },
       }),
       this.prisma.habit.findMany({
-        where: { userId, isActive: true },
+        where: { userId, deletedAt: null, isActive: true },
         select: { id: true, name: true },
       }),
       this.prisma.habitLog.findMany({
@@ -127,20 +142,20 @@ export class DashboardService {
         select: { mood: true, energyLevel: true, stressLevel: true },
       }),
       this.prisma.wallet.findMany({
-        where: { userId },
+        where: { userId, deletedAt: null },
         select: { id: true, name: true, balance: true, currency: true, isActive: true },
       }),
       this.prisma.income.findMany({
-        where: { userId, incomeDate: { gte: month.start, lt: month.end } },
+        where: { userId, deletedAt: null, incomeDate: { gte: month.start, lt: month.end } },
         select: { amount: true, currency: true },
       }),
       this.prisma.expense.findMany({
-        where: { userId, expenseDate: { gte: month.start, lt: month.end } },
+        where: { userId, deletedAt: null, expenseDate: { gte: month.start, lt: month.end } },
         select: { amount: true, category: true, currency: true },
       }),
-      this.prisma.budget.findMany({ where: { userId } }),
+      this.prisma.budget.findMany({ where: { userId, deletedAt: null } }),
       this.prisma.personalGoal.findMany({
-        where: { userId, status: 'ACTIVE' },
+        where: { userId, deletedAt: null, status: 'ACTIVE' },
         select: {
           id: true,
           title: true,
@@ -151,7 +166,7 @@ export class DashboardService {
         },
       }),
       this.prisma.savingGoal.findMany({
-        where: { userId, status: 'ACTIVE' },
+        where: { userId, deletedAt: null, status: 'ACTIVE' },
         select: {
           id: true,
           title: true,

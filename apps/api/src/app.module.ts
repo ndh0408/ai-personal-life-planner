@@ -65,6 +65,9 @@ import { AiUsageModule } from './modules/ai-usage/ai-usage.module';
 // Round 13: finance correctness primitives
 import { FinanceCoreModule } from './modules/finance-core/finance-core.module';
 
+// Round 14: auth security (lockout, email verification, password reset)
+import { AuthSecurityModule } from './modules/auth-security/auth-security.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -91,6 +94,7 @@ import { FinanceCoreModule } from './modules/finance-core/finance-core.module';
     ObservabilityModule,
     AiUsageModule,
     FinanceCoreModule,
+    AuthSecurityModule,
 
     // Foundation
     HealthModule,

@@ -243,15 +243,21 @@ enum NotificationStatus {
 // =============================================================================
 
 model User {
-  id           String     @id @default(uuid())
-  email        String     @unique
-  passwordHash String
-  displayName  String
-  avatarUrl    String?
-  role         UserRole   @default(USER)
-  status       UserStatus @default(ACTIVE)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id                String     @id @default(uuid())
+  email             String     @unique
+  passwordHash      String
+  displayName       String
+  avatarUrl         String?
+  role              UserRole   @default(USER)
+  status            UserStatus @default(ACTIVE)
+  /// Round-14: per-account brute-force protection. Reset to 0 on success.
+  failedLoginCount  Int        @default(0)
+  lastFailedLoginAt DateTime?
+  lockedUntil       DateTime?
+  /// NULL ⇒ unverified. Set when the user clicks the verification link.
+  emailVerifiedAt   DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
   profile                  UserProfile?
   refreshTokens            RefreshToken[]
@@ -309,8 +315,12 @@ model User {
   aiUsageQuota             AiUsageQuota?
   financeAuditLogs         FinanceAuditLog[]
   financeIdempotencyKeys   FinanceIdempotencyKey[]
+  emailVerificationTokens  EmailVerificationToken[]
+  passwordResetTokens      PasswordResetToken[]
+  securityAuditLogs        SecurityAuditLog[]
 
   @@index([status])
+  @@index([lockedUntil])
   @@map("users")
 }
 
@@ -429,6 +439,8 @@ model Task {
   status           TaskStatus @default(TODO)
   category         String?
   completedAt      DateTime?
+  /// Round-14 soft delete (see Expense.deletedAt).
+  deletedAt        DateTime?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -438,6 +450,7 @@ model Task {
   @@index([userId, dueDate])
   @@index([userId, priority])
   @@index([userId, category])
+  @@index([userId, deletedAt])
   @@map("tasks")
 }
 
@@ -455,6 +468,8 @@ model Habit {
   color       String?
   icon        String?
   isActive    Boolean        @default(true)
+  /// Round-14 soft delete (see Expense.deletedAt).
+  deletedAt   DateTime?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
@@ -462,6 +477,7 @@ model Habit {
   logs HabitLog[]
 
   @@index([userId, isActive])
+  @@index([userId, deletedAt])
   @@map("habits")
 }
 
@@ -620,6 +636,8 @@ model Wallet {
   balance   Decimal    @default(0) @db.Decimal(18, 2)
   currency  String     @default("VND")
   isActive  Boolean    @default(true)
+  /// Round-14 soft delete (see Expense.deletedAt).
+  deletedAt DateTime?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
@@ -629,27 +647,30 @@ model Wallet {
 
   @@index([userId, isActive])
   @@index([userId, type])
+  @@index([userId, deletedAt])
   @@map("wallets")
 }
 
 model Income {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   userId        String
   walletId      String?
   title         String
-  amount        Decimal  @db.Decimal(18, 2)
+  amount        Decimal   @db.Decimal(18, 2)
   /// Snapshot of the wallet currency (or the user's primary currency when
   /// walletId is null) at write time. Round-13 added this so multi-currency
   /// users never see meaningless mixed sums in dashboards/reports.
-  currency      String   @default("VND")
+  currency      String    @default("VND")
   category      String?
   source        String?
-  incomeDate    DateTime @db.Date
-  isRecurring   Boolean  @default(false)
+  incomeDate    DateTime  @db.Date
+  isRecurring   Boolean   @default(false)
   recurringRule String?
   note          String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  /// Round-14 soft delete (see Expense.deletedAt).
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   wallet Wallet? @relation(fields: [walletId], references: [id], onDelete: SetNull)
@@ -657,6 +678,7 @@ model Income {
   @@index([userId, incomeDate])
   @@index([userId, category])
   @@index([userId, currency, incomeDate])
+  @@index([userId, deletedAt])
   @@index([walletId])
   @@map("incomes")
 }
@@ -675,6 +697,9 @@ model Expense {
   paymentMethod String?
   needLevel     NeedLevel?
   note          String?
+  /// Round-14 soft delete: list/get queries filter `deletedAt IS NULL`.
+  /// Hard delete still possible via DBA query for GDPR purge.
+  deletedAt     DateTime?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
@@ -685,6 +710,7 @@ model Expense {
   @@index([userId, category])
   @@index([userId, needLevel])
   @@index([userId, currency, expenseDate])
+  @@index([userId, deletedAt])
   @@index([walletId])
   @@map("expenses")
 }
@@ -702,6 +728,8 @@ model Budget {
   startDate             DateTime     @db.Date
   endDate               DateTime     @db.Date
   alertThresholdPercent Int          @default(80)
+  /// Round-14 soft delete (see Expense.deletedAt).
+  deletedAt             DateTime?
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @updatedAt
 
@@ -709,6 +737,7 @@ model Budget {
 
   @@index([userId, category])
   @@index([userId, startDate, endDate])
+  @@index([userId, deletedAt])
   @@map("budgets")
 }
 
@@ -725,6 +754,8 @@ model Debt {
   dueDate     DateTime?  @db.Date
   status      DebtStatus @default(ACTIVE)
   note        String?
+  /// Round-14 soft delete (see Expense.deletedAt).
+  deletedAt   DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
@@ -733,6 +764,7 @@ model Debt {
   @@index([userId, status])
   @@index([userId, type])
   @@index([userId, dueDate])
+  @@index([userId, deletedAt])
   @@map("debts")
 }
 
@@ -748,6 +780,8 @@ model SavingGoal {
   priority      Priority         @default(MEDIUM)
   status        SavingGoalStatus @default(ACTIVE)
   note          String?
+  /// Round-14 soft delete (see Expense.deletedAt).
+  deletedAt     DateTime?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
@@ -755,6 +789,7 @@ model SavingGoal {
 
   @@index([userId, status])
   @@index([userId, priority])
+  @@index([userId, deletedAt])
   @@map("saving_goals")
 }
 
@@ -793,6 +828,8 @@ model PersonalGoal {
   deadline     DateTime?          @db.Date
   priority     Priority           @default(MEDIUM)
   status       PersonalGoalStatus @default(ACTIVE)
+  /// Round-14 soft delete (see Expense.deletedAt).
+  deletedAt    DateTime?
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
 
@@ -802,6 +839,7 @@ model PersonalGoal {
   @@index([userId, status])
   @@index([userId, category])
   @@index([userId, priority])
+  @@index([userId, deletedAt])
   @@map("personal_goals")
 }
 
@@ -1870,4 +1908,76 @@ model FinanceIdempotencyKey {
   @@unique([userId, scope, key])
   @@index([userId, createdAt])
   @@map("finance_idempotency_keys")
+}
+
+// =============================================================================
+// N. Auth security — round 14
+// =============================================================================
+
+enum SecurityEventType {
+  LOGIN_FAILED
+  LOGIN_SUCCESS_AFTER_FAILURE
+  ACCOUNT_LOCKED
+  ACCOUNT_UNLOCKED
+  PASSWORD_RESET_REQUESTED
+  PASSWORD_RESET_COMPLETED
+  EMAIL_VERIFICATION_REQUESTED
+  EMAIL_VERIFICATION_COMPLETED
+}
+
+/// Append-only audit trail for auth-relevant events. Never stores raw tokens
+/// or passwords; only stable metadata (event type + ip + user-agent).
+model SecurityAuditLog {
+  id        String            @id @default(uuid())
+  userId    String?
+  /// Lower-cased email captured from the request when no user matched (so we
+  /// can still see the brute-force pattern without joining user rows).
+  emailHint String?
+  type      SecurityEventType
+  ipAddress String?
+  userAgent String?
+  metadata  Json?
+  createdAt DateTime          @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([emailHint, createdAt])
+  @@index([type, createdAt])
+  @@map("security_audit_logs")
+}
+
+/// Single-use email-verification token. Hashed at rest (sha256 hex). The
+/// raw token is delivered via the EmailProvider and is never logged.
+model EmailVerificationToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+  @@map("email_verification_tokens")
+}
+
+/// Single-use password-reset token. Same hash-at-rest pattern as
+/// EmailVerificationToken. Reset endpoint also revokes every refresh token
+/// for the user inside the same transaction.
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
 }

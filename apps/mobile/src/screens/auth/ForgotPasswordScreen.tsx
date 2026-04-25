@@ -6,35 +6,38 @@ import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme';
 import { Screen, Input, Button } from '../../components/ui';
-import { useAuthStore } from '../../store/auth.store';
+import { authApi } from '../../services/api/auth.api';
 import { ApiError } from '../../services/api/client';
 import { useErrorMessage } from '../../i18n/useErrorMessage';
 import type { AuthScreenProps } from '../../navigation/types';
 
-const Schema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-});
+const Schema = z.object({ email: z.string().email() });
 type Form = z.infer<typeof Schema>;
 
-export function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
+export function ForgotPasswordScreen({ navigation }: AuthScreenProps<'ForgotPassword'>) {
   const { colors, spacing } = useTheme();
   const { t } = useTranslation();
   const messageFor = useErrorMessage();
-  const login = useAuthStore((s) => s.login);
   const [submitting, setSubmitting] = useState(false);
   const { control, handleSubmit, formState: { errors } } = useForm<Form>({
     resolver: zodResolver(Schema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { email: '' },
   });
 
   const onSubmit = async (values: Form) => {
     setSubmitting(true);
     try {
-      await login(values.email, values.password);
+      // Backend always returns 202 even when the email doesn't match — same
+      // success-toast either way (no enumeration leak).
+      await authApi.forgotPassword(values.email);
+      Alert.alert(
+        t('auth.forgotPassword.title'),
+        t('auth.forgotPassword.successMessage'),
+        [{ text: t('common.ok'), onPress: () => navigation.navigate('Login') }],
+      );
     } catch (e) {
       const msg = e instanceof ApiError ? messageFor(e) : t('errors.UNKNOWN_ERROR');
-      Alert.alert(t('auth.login.title'), msg);
+      Alert.alert(t('auth.forgotPassword.title'), msg);
     } finally {
       setSubmitting(false);
     }
@@ -46,11 +49,11 @@ export function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1, justifyContent: 'center' }}
       >
-        <Text style={{ fontSize: 32, fontWeight: '700', color: colors.text, marginBottom: spacing.xs }}>
-          {t('auth.login.subtitle')}
+        <Text style={{ fontSize: 28, fontWeight: '700', color: colors.text, marginBottom: spacing.xs }}>
+          {t('auth.forgotPassword.title')}
         </Text>
         <Text style={{ color: colors.textMuted, marginBottom: spacing.xl }}>
-          {t('app.tagline')}
+          {t('auth.forgotPassword.subtitle')}
         </Text>
 
         <View style={{ gap: spacing.md, marginBottom: spacing.xl }}>
@@ -70,33 +73,13 @@ export function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
               />
             )}
           />
-          <Controller
-            control={control}
-            name="password"
-            render={({ field: { value, onChange, onBlur } }) => (
-              <Input
-                label={t('auth.login.password')}
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                secureTextEntry
-                error={errors.password ? t('errors.VALIDATION_FAILED') : undefined}
-              />
-            )}
-          />
         </View>
 
-        <Button title={t('auth.login.submit')} loading={submitting} onPress={handleSubmit(onSubmit)} fullWidth size="lg" />
+        <Button title={t('auth.forgotPassword.submit')} loading={submitting} onPress={handleSubmit(onSubmit)} fullWidth size="lg" />
         <Button
-          title={t('auth.login.forgotPassword')}
+          title={t('auth.forgotPassword.backToLogin')}
           variant="ghost"
-          onPress={() => navigation.navigate('ForgotPassword')}
-          style={{ marginTop: spacing.sm }}
-        />
-        <Button
-          title={t('auth.login.switchToRegister')}
-          variant="ghost"
-          onPress={() => navigation.navigate('Register')}
+          onPress={() => navigation.navigate('Login')}
           style={{ marginTop: spacing.md }}
         />
       </KeyboardAvoidingView>

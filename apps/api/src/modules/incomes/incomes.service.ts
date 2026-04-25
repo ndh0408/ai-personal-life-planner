@@ -40,7 +40,7 @@ export class IncomesService {
   ) {}
 
   async list(userId: string, q: RangeQuery) {
-    const where: Prisma.IncomeWhereInput = { userId };
+    const where: Prisma.IncomeWhereInput = { userId, deletedAt: null };
     if (q.category) where.category = q.category;
     if (q.currency) where.currency = q.currency.toUpperCase();
     if (q.from || q.to) {
@@ -57,7 +57,9 @@ export class IncomesService {
 
   async getById(userId: string, id: string) {
     const income = await this.prisma.income.findUnique({ where: { id } });
-    if (!income) throw new NotFoundException({ message: 'Income not found', errorCode: 'NOT_FOUND' });
+    if (!income || income.deletedAt) {
+      throw new NotFoundException({ message: 'Income not found', errorCode: 'NOT_FOUND' });
+    }
     if (income.userId !== userId) throw new ForbiddenException({ errorCode: 'FORBIDDEN' });
     return income;
   }
@@ -185,10 +187,11 @@ export class IncomesService {
     });
   }
 
+  /** Soft delete (round 14) — also reverses the wallet balance (decrement). */
   async delete(userId: string, id: string) {
     const existing = await this.getById(userId, id);
     await this.prisma.$transaction(async (tx) => {
-      await tx.income.delete({ where: { id } });
+      await tx.income.update({ where: { id }, data: { deletedAt: new Date() } });
       if (existing.walletId) {
         await tx.wallet.update({
           where: { id: existing.walletId },
@@ -203,6 +206,38 @@ export class IncomesService {
         action: FinanceAction.DELETE,
         before: snapshot(existing),
       });
+    });
+  }
+
+  async restore(userId: string, id: string) {
+    const row = await this.prisma.income.findUnique({ where: { id } });
+    if (!row || row.userId !== userId) {
+      throw new NotFoundException({ message: 'Income not found', errorCode: 'NOT_FOUND' });
+    }
+    if (!row.deletedAt) {
+      throw new NotFoundException({ message: 'Income is not deleted', errorCode: 'NOT_FOUND' });
+    }
+    return this.prisma.$transaction(async (tx) => {
+      const restored = await tx.income.update({
+        where: { id },
+        data: { deletedAt: null },
+      });
+      if (restored.walletId) {
+        await tx.wallet.update({
+          where: { id: restored.walletId },
+          data: { balance: { increment: restored.amount } },
+        });
+      }
+      await this.audit.record({
+        tx,
+        userId,
+        entityType: FinanceEntityType.INCOME,
+        entityId: id,
+        action: FinanceAction.UPDATE,
+        before: snapshot(row),
+        after: snapshot(restored),
+      });
+      return restored;
     });
   }
 

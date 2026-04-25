@@ -79,10 +79,10 @@ export class WidgetSummaryService {
     const [pendingTasks, nextTaskRow] = showTasks
       ? await Promise.all([
           this.prisma.task.count({
-            where: { userId, status: { in: ['TODO', 'IN_PROGRESS'] } },
+            where: { userId, deletedAt: null, status: { in: ['TODO', 'IN_PROGRESS'] } },
           }),
           this.prisma.task.findFirst({
-            where: { userId, status: { in: ['TODO', 'IN_PROGRESS'] } },
+            where: { userId, deletedAt: null, status: { in: ['TODO', 'IN_PROGRESS'] } },
             orderBy: [{ priority: 'desc' }, { dueDate: 'asc' }, { createdAt: 'asc' }],
             select: { id: true, title: true, dueDate: true, priority: true },
           }),
@@ -133,21 +133,24 @@ export class WidgetSummaryService {
             where: { userId },
             select: { currency: true },
           }),
-          this.prisma.wallet.aggregate({ where: { userId }, _sum: { balance: true } }),
+          this.prisma.wallet.aggregate({
+            where: { userId, deletedAt: null },
+            _sum: { balance: true },
+          }),
           this.prisma.income.aggregate({
-            where: { userId, incomeDate: { gte: monthStart, lt: monthEnd } },
+            where: { userId, deletedAt: null, incomeDate: { gte: monthStart, lt: monthEnd } },
             _sum: { amount: true },
           }),
           this.prisma.expense.findMany({
-            where: { userId, expenseDate: { gte: monthStart, lt: monthEnd } },
+            where: { userId, deletedAt: null, expenseDate: { gte: monthStart, lt: monthEnd } },
             select: { category: true, amount: true },
           }),
           this.prisma.budget.findMany({
-            where: { userId },
+            where: { userId, deletedAt: null },
             select: { category: true, amount: true, alertThresholdPercent: true },
           }),
           this.prisma.savingGoal.findFirst({
-            where: { userId, status: 'ACTIVE' },
+            where: { userId, deletedAt: null, status: 'ACTIVE' },
             orderBy: { priority: 'desc' },
             select: { targetAmount: true, currentAmount: true },
           }),
