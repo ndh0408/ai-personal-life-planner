@@ -1367,6 +1367,102 @@
         "remindAt": "Nhắc lúc (ISO date-time)",
         "save": "Lưu nhắc nhở"
       },
+      "voice": {
+        "menu": "Voice companion",
+        "title": "Voice companion",
+        "subtitle": "Nói chuyện với trợ lý khi bạn chủ động bấm. Chúng tôi không bao giờ nghe nền.",
+        "promise": "Không nghe nền. Không hotword luôn nghe. Mic chỉ bật khi bạn giữ nút.",
+        "openQuickCapture": "Ghi nhanh",
+        "openCheckinSettings": "Cài đặt check-in",
+        "openHealthSettings": "Health & Fitness integration",
+        "openPending": "Gợi ý đang chờ",
+        "openMemory": "AI memory"
+      },
+      "quickCapture": {
+        "title": "Ghi nhanh",
+        "subtitle": "Gõ hoặc nói. Chúng tôi sẽ gợi ý hành động — bạn xác nhận.",
+        "placeholder": "Vừa xảy ra gì? (vd. \"Tôi vừa ăn phở 50k\", \"Tôi ngủ 1h, dậy 7h\")",
+        "send": "Phân tích",
+        "voiceCta": "Giữ để nói",
+        "recording": "Đang ghi âm…",
+        "stop": "Dừng",
+        "transcribeStub": "Chuyển giọng nói thành văn bản chưa wired ở bản này. Hãy gõ tạm.",
+        "errorTitle": "Không phân tích được"
+      },
+      "suggestedActions": {
+        "title": "Xem lại gợi ý",
+        "subtitle": "Bấm Confirm để áp dụng, Reject để bỏ. Không có gì được lưu nếu bạn chưa confirm.",
+        "empty": "Không có gợi ý nào đang chờ.",
+        "confirm": "Xác nhận",
+        "reject": "Bỏ",
+        "low": "Độ tin cậy thấp — vui lòng xác nhận",
+        "type": {
+          "ADD_TASK": "Thêm task",
+          "ADD_EXPENSE": "Thêm chi tiêu",
+          "ADD_INCOME": "Thêm thu nhập",
+          "ADD_MEAL_LOG": "Ghi bữa ăn",
+          "ADD_SLEEP_LOG": "Ghi giấc ngủ",
+          "ADD_MOOD_LOG": "Ghi tâm trạng",
+          "CREATE_REMINDER": "Tạo nhắc nhở",
+          "GENERATE_SCHEDULE": "Tạo lịch",
+          "RESCHEDULE_TODAY": "Sắp xếp lại hôm nay",
+          "SAVE_MEMORY": "Lưu memory",
+          "ASK_FOLLOWUP": "Hỏi lại"
+        }
+      },
+      "checkins": {
+        "title": "Smart check-ins",
+        "subtitle": "Notification chỉ hỏi, không suy diễn. Theo múi giờ của bạn và quiet hours.",
+        "morning": { "label": "Check-in buổi sáng", "hint": "Hỏi về giấc ngủ, năng lượng, việc quan trọng hôm nay." },
+        "meal": { "label": "Check-in bữa ăn", "hint": "Ghi nhanh sáng / trưa / tối." },
+        "evening": { "label": "Review buổi tối", "hint": "Đã làm gì, gì bị trễ, mood cuối ngày." },
+        "sleep": { "label": "Nhắc đi ngủ", "hint": "Nhắc nhẹ vào giờ bạn đặt." },
+        "finance": { "label": "Check-in tài chính", "hint": "Chi tiêu hôm nay + tình trạng ngân sách." },
+        "morningTime": "Giờ buổi sáng",
+        "eveningTime": "Giờ buổi tối",
+        "sleepReminderTime": "Giờ nhắc đi ngủ"
+      },
+      "healthIntegration": {
+        "title": "Health & Fitness",
+        "subtitle": "Kết nối HealthKit (iOS) hoặc Health Connect (Android) để AI thấy giấc ngủ + bước chân + vận động. Chỉ tư vấn lifestyle — không bao giờ chẩn đoán.",
+        "notWired": "Tích hợp native sẽ ship ở v1.3. Các toggle bên dưới ghi nhận ý định của bạn hôm nay.",
+        "provider": "Nhà cung cấp",
+        "providerNone": "Chưa kết nối",
+        "providerHealthkit": "HealthKit (iOS)",
+        "providerHealthConnect": "Health Connect (Android)",
+        "readSleep": { "label": "Đọc giấc ngủ", "hint": "Thời lượng + chất lượng." },
+        "readSteps": { "label": "Đọc bước chân", "hint": "Chỉ tổng theo ngày." },
+        "readExercise": { "label": "Đọc phút vận động", "hint": "Tổng theo ngày." },
+        "readHeartRate": { "label": "Đọc nhịp tim", "hint": "Trung bình lúc nghỉ + workout. Mặc định tắt." },
+        "readWeight": { "label": "Đọc cân nặng", "hint": "Nếu bạn ghi trong Health." }
+      },
+      "mealQuickLog": {
+        "title": "Ghi nhanh bữa ăn",
+        "mealType": "Loại bữa",
+        "mealTypeOption": { "BREAKFAST": "Sáng", "LUNCH": "Trưa", "DINNER": "Tối", "SNACK": "Vặt" },
+        "titleField": "Bạn đã ăn gì?",
+        "estimatedCost": "Giá ước tính (tuỳ chọn)",
+        "estimatedCalories": "Calo ước tính (tuỳ chọn)",
+        "alsoCreateExpense": "Đồng thời tạo chi tiêu (Ăn uống)",
+        "save": "Lưu"
+      },
+      "sleepQuickLog": {
+        "title": "Ghi nhanh giấc ngủ",
+        "sleepTime": "Giờ đi ngủ (ISO)",
+        "wakeTime": "Giờ thức dậy (ISO)",
+        "quality": "Chất lượng",
+        "qualityOption": { "VERY_GOOD": "Rất tốt", "GOOD": "Tốt", "NORMAL": "Bình thường", "POOR": "Kém", "BAD": "Rất kém" },
+        "save": "Lưu"
+      },
+      "moodQuickLog": {
+        "title": "Ghi nhanh tâm trạng",
+        "mood": "Tâm trạng",
+        "moodOption": { "HAPPY": "Vui", "NORMAL": "Bình thường", "STRESSED": "Căng thẳng", "TIRED": "Mệt", "SAD": "Buồn", "MOTIVATED": "Hứng khởi" },
+        "energy": "Năng lượng",
+        "stress": "Stress",
+        "energyOption": { "LOW": "Thấp", "MEDIUM": "Vừa", "HIGH": "Cao" },
+        "save": "Lưu"
+      },
       "memory": {
         "title": "AI memory",
         "subtitle": "Những điều AI được phép nhớ về bạn. Bấm để xem, sửa hoặc xoá.",

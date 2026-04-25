@@ -83,6 +83,14 @@ export type RootStackParamList = {
   FollowUpReminders: undefined;
   AddMessageReminder: undefined;
   AICompanionMemory: undefined;
+  VoiceCompanion: undefined;
+  QuickCapture: undefined;
+  SuggestedActionsReview: undefined;
+  MealQuickLog: undefined;
+  SleepQuickLog: undefined;
+  MoodQuickLog: undefined;
+  SmartCheckinSettings: undefined;
+  HealthIntegrationSettings: undefined;
 };
 
 export type AuthScreenProps<T extends keyof AuthStackParamList> = NativeStackScreenProps<

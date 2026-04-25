@@ -31,4 +31,7 @@ export const QUERY_KEYS = {
   messageReminders: ['communication', 'message-reminders'] as const,
   companionMemory: ['communication', 'ai-memory'] as const,
   memoryConsent: ['communication', 'ai-memory', 'consent'] as const,
+  smartCheckinSettings: ['voice', 'smart-checkins'] as const,
+  healthIntegration: ['voice', 'health-integration'] as const,
+  pendingActions: ['voice', 'pending-actions'] as const,
 };

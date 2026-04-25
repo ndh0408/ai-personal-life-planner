@@ -297,6 +297,10 @@ model User {
   emailReminders          EmailReminder[]
   messageReminders        MessageReminder[]
   companionMemories       AICompanionMemory[]
+  smartCheckinSetting     SmartCheckinSetting?
+  voiceCaptures           VoiceCapture[]
+  suggestedActions        SuggestedAction[]
+  healthIntegrationSetting HealthIntegrationSetting?
 
   @@index([status])
   @@map("users")
@@ -1421,4 +1425,132 @@ model AICompanionMemory {
   @@index([userId, isActive])
   @@index([userId, memoryType])
   @@map("ai_companion_memories")
+}
+
+// =============================================================================
+// N. Voice Companion + Smart Check-ins + Health Integration shape.
+//    See docs/VOICE_COMPANION.md, docs/SMART_CHECKINS.md, docs/HEALTH_INTEGRATION.md.
+// =============================================================================
+
+enum SuggestedActionType {
+  ADD_TASK
+  ADD_EXPENSE
+  ADD_INCOME
+  ADD_MEAL_LOG
+  ADD_SLEEP_LOG
+  ADD_MOOD_LOG
+  CREATE_REMINDER
+  GENERATE_SCHEDULE
+  RESCHEDULE_TODAY
+  SAVE_MEMORY
+  ASK_FOLLOWUP
+}
+
+enum SuggestedActionStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  EXPIRED
+}
+
+enum VoiceCaptureSource {
+  PUSH_TO_TALK
+  QUICK_NOTE
+  OS_SHORTCUT
+  TEXT_FALLBACK
+}
+
+enum HealthIntegrationProvider {
+  NONE
+  HEALTHKIT
+  HEALTH_CONNECT
+}
+
+model SmartCheckinSetting {
+  id                       String   @id @default(uuid())
+  userId                   String   @unique
+  morningCheckinEnabled    Boolean  @default(true)
+  mealCheckinEnabled       Boolean  @default(true)
+  eveningReviewEnabled     Boolean  @default(true)
+  sleepReminderEnabled     Boolean  @default(true)
+  financeCheckinEnabled    Boolean  @default(true)
+  // Free-form HH:mm strings; the dispatcher adjusts for the user's timezone
+  // and quiet hours from NotificationSetting.
+  morningTime              String   @default("07:30")
+  eveningTime              String   @default("21:00")
+  sleepReminderTime        String   @default("22:30")
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("smart_checkin_settings")
+}
+
+model VoiceCapture {
+  id              String             @id @default(uuid())
+  userId          String
+  source          VoiceCaptureSource @default(PUSH_TO_TALK)
+  // Locale of the captured input (vi/en).
+  locale          String             @default("vi")
+  // Transcript ONLY. Raw audio is never persisted server-side.
+  transcript      String
+  /// AI-derived parse of suggested actions, validated against schema.
+  parsedJson      Json?
+  // Set when the user confirms at least one suggested action.
+  appliedAt       DateTime?
+  createdAt       DateTime           @default(now())
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  suggestedActions SuggestedAction[]
+
+  @@index([userId, createdAt])
+  @@map("voice_captures")
+}
+
+model SuggestedAction {
+  id              String                @id @default(uuid())
+  userId          String
+  voiceCaptureId  String?
+  type            SuggestedActionType
+  // Locale-tagged human title shown in the confirm modal.
+  title           String
+  locale          String                @default("vi")
+  /// AI-supplied 0..1 confidence. Mobile uses < 0.5 to surface a follow-up question.
+  confidence      Float?
+  /// Action-specific payload — the resolver type-checks before applying.
+  payload         Json
+  status          SuggestedActionStatus @default(PENDING)
+  // Set on first creation; user has 24h to confirm before EXPIRED.
+  expiresAt       DateTime?
+  appliedRefId    String?               // id of the row created on confirm (e.g. expenseId)
+  appliedRefKind  String?               // table name of the applied row
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  voiceCapture  VoiceCapture?  @relation(fields: [voiceCaptureId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@map("suggested_actions")
+}
+
+model HealthIntegrationSetting {
+  id                String                    @id @default(uuid())
+  userId            String                    @unique
+  provider          HealthIntegrationProvider @default(NONE)
+  // Per-data-type opt-in. NONE writes here without an explicit user toggle.
+  readSleep         Boolean                   @default(false)
+  readSteps         Boolean                   @default(false)
+  readExercise      Boolean                   @default(false)
+  readHeartRate     Boolean                   @default(false)
+  readWeight        Boolean                   @default(false)
+  lastSyncedAt      DateTime?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("health_integration_settings")
 }

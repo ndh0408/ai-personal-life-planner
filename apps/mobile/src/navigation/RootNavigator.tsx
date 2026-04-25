@@ -57,6 +57,14 @@ import { EmailAssistantScreen } from '../screens/communication/EmailAssistantScr
 import { FollowUpRemindersScreen } from '../screens/communication/FollowUpRemindersScreen';
 import { AddMessageReminderScreen } from '../screens/communication/AddMessageReminderScreen';
 import { AICompanionMemoryScreen } from '../screens/communication/AICompanionMemoryScreen';
+import { VoiceCompanionScreen } from '../screens/voice/VoiceCompanionScreen';
+import { QuickCaptureScreen } from '../screens/voice/QuickCaptureScreen';
+import { SuggestedActionsReviewScreen } from '../screens/voice/SuggestedActionsReviewScreen';
+import { MealQuickLogScreen } from '../screens/voice/MealQuickLogScreen';
+import { SleepQuickLogScreen } from '../screens/voice/SleepQuickLogScreen';
+import { MoodQuickLogScreen } from '../screens/voice/MoodQuickLogScreen';
+import { SmartCheckinSettingsScreen } from '../screens/voice/SmartCheckinSettingsScreen';
+import { HealthIntegrationSettingsScreen } from '../screens/voice/HealthIntegrationSettingsScreen';
 import { AIChatScreen } from '../screens/ai/AIChatScreen';
 import type { RootStackParamList } from './types';
 
@@ -216,6 +224,46 @@ export function RootNavigator() {
                 name="AICompanionMemory"
                 component={AICompanionMemoryScreen}
                 options={{ title: 'AI memory' }}
+              />
+              <Stack.Screen
+                name="VoiceCompanion"
+                component={VoiceCompanionScreen}
+                options={{ title: 'Voice companion' }}
+              />
+              <Stack.Screen
+                name="QuickCapture"
+                component={QuickCaptureScreen}
+                options={{ title: 'Quick capture' }}
+              />
+              <Stack.Screen
+                name="SuggestedActionsReview"
+                component={SuggestedActionsReviewScreen}
+                options={{ title: 'Review suggestions' }}
+              />
+              <Stack.Screen
+                name="MealQuickLog"
+                component={MealQuickLogScreen}
+                options={{ title: 'Quick meal log' }}
+              />
+              <Stack.Screen
+                name="SleepQuickLog"
+                component={SleepQuickLogScreen}
+                options={{ title: 'Quick sleep log' }}
+              />
+              <Stack.Screen
+                name="MoodQuickLog"
+                component={MoodQuickLogScreen}
+                options={{ title: 'Quick mood log' }}
+              />
+              <Stack.Screen
+                name="SmartCheckinSettings"
+                component={SmartCheckinSettingsScreen}
+                options={{ title: 'Smart check-ins' }}
+              />
+              <Stack.Screen
+                name="HealthIntegrationSettings"
+                component={HealthIntegrationSettingsScreen}
+                options={{ title: 'Health & fitness' }}
               />
             </Stack.Group>
           </>

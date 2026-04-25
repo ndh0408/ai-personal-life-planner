@@ -1367,6 +1367,102 @@
         "remindAt": "Remind me at (ISO date-time)",
         "save": "Save reminder"
       },
+      "voice": {
+        "menu": "Voice companion",
+        "title": "Voice companion",
+        "subtitle": "Talk to your assistant when you bring it up. We never listen in the background.",
+        "promise": "No background listening. No always-on hotword. The mic activates only when you tap and hold.",
+        "openQuickCapture": "Quick capture",
+        "openCheckinSettings": "Smart check-in settings",
+        "openHealthSettings": "Health & fitness integration",
+        "openPending": "Pending suggestions",
+        "openMemory": "AI memory"
+      },
+      "quickCapture": {
+        "title": "Quick capture",
+        "subtitle": "Type or talk. We'll suggest actions — you confirm.",
+        "placeholder": "What just happened? (e.g. \"I ate pho 50k\", \"Slept at 1am, woke at 7\")",
+        "send": "Parse",
+        "voiceCta": "Hold to talk",
+        "recording": "Recording…",
+        "stop": "Stop",
+        "transcribeStub": "Voice transcription isn't wired in this build. Use text for now.",
+        "errorTitle": "Couldn't parse"
+      },
+      "suggestedActions": {
+        "title": "Review suggestions",
+        "subtitle": "Tap Confirm to apply, Reject to dismiss. Nothing is saved until you confirm.",
+        "empty": "No pending suggestions.",
+        "confirm": "Confirm",
+        "reject": "Reject",
+        "low": "Low confidence — please confirm",
+        "type": {
+          "ADD_TASK": "Add task",
+          "ADD_EXPENSE": "Add expense",
+          "ADD_INCOME": "Add income",
+          "ADD_MEAL_LOG": "Log meal",
+          "ADD_SLEEP_LOG": "Log sleep",
+          "ADD_MOOD_LOG": "Log mood",
+          "CREATE_REMINDER": "Create reminder",
+          "GENERATE_SCHEDULE": "Generate schedule",
+          "RESCHEDULE_TODAY": "Reschedule today",
+          "SAVE_MEMORY": "Save memory",
+          "ASK_FOLLOWUP": "Followup question"
+        }
+      },
+      "checkins": {
+        "title": "Smart check-ins",
+        "subtitle": "Notifications that ask, never assume. Times are in your local timezone and respect quiet hours.",
+        "morning": { "label": "Morning check-in", "hint": "Asks about sleep, energy, today's important tasks." },
+        "meal": { "label": "Meal check-ins", "hint": "Quick log breakfast / lunch / dinner." },
+        "evening": { "label": "Evening review", "hint": "What got done, what slipped, mood at end of day." },
+        "sleep": { "label": "Sleep reminder", "hint": "A nudge to wind down at the time you set." },
+        "finance": { "label": "Finance check-in", "hint": "Today's expenses + budget status." },
+        "morningTime": "Morning time",
+        "eveningTime": "Evening time",
+        "sleepReminderTime": "Sleep reminder time"
+      },
+      "healthIntegration": {
+        "title": "Health & fitness",
+        "subtitle": "Connect HealthKit (iOS) or Health Connect (Android) so AI can see sleep + steps + activity. Lifestyle advice only — never a diagnosis.",
+        "notWired": "Native integration ships in v1.3. The toggles below capture your intent today.",
+        "provider": "Provider",
+        "providerNone": "Not connected",
+        "providerHealthkit": "HealthKit (iOS)",
+        "providerHealthConnect": "Health Connect (Android)",
+        "readSleep": { "label": "Read sleep", "hint": "Duration + quality." },
+        "readSteps": { "label": "Read steps", "hint": "Daily totals only." },
+        "readExercise": { "label": "Read exercise minutes", "hint": "Per-day aggregate." },
+        "readHeartRate": { "label": "Read heart rate", "hint": "Resting + workout averages. Off by default." },
+        "readWeight": { "label": "Read weight", "hint": "If you log it in Health." }
+      },
+      "mealQuickLog": {
+        "title": "Quick meal log",
+        "mealType": "Meal type",
+        "mealTypeOption": { "BREAKFAST": "Breakfast", "LUNCH": "Lunch", "DINNER": "Dinner", "SNACK": "Snack" },
+        "titleField": "What did you eat?",
+        "estimatedCost": "Estimated cost (optional)",
+        "estimatedCalories": "Estimated calories (optional)",
+        "alsoCreateExpense": "Also add as expense (Food)",
+        "save": "Save"
+      },
+      "sleepQuickLog": {
+        "title": "Quick sleep log",
+        "sleepTime": "Sleep time (ISO)",
+        "wakeTime": "Wake time (ISO)",
+        "quality": "Quality",
+        "qualityOption": { "VERY_GOOD": "Very good", "GOOD": "Good", "NORMAL": "Normal", "POOR": "Poor", "BAD": "Bad" },
+        "save": "Save"
+      },
+      "moodQuickLog": {
+        "title": "Quick mood log",
+        "mood": "Mood",
+        "moodOption": { "HAPPY": "Happy", "NORMAL": "Normal", "STRESSED": "Stressed", "TIRED": "Tired", "SAD": "Sad", "MOTIVATED": "Motivated" },
+        "energy": "Energy",
+        "stress": "Stress",
+        "energyOption": { "LOW": "Low", "MEDIUM": "Medium", "HIGH": "High" },
+        "save": "Save"
+      },
       "memory": {
         "title": "AI memory",
         "subtitle": "Things AI is allowed to remember about you. Tap any to view, edit, or remove.",
