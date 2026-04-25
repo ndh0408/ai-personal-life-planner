@@ -288,17 +288,21 @@ done
 # in 15 min ⇒ ACCOUNT_TEMPORARILY_LOCKED on the 6th, even from new IPs.
 ```
 
-## 12. Backup setup (round 14)
+## 12. Backup setup (round 14 + 16)
 
 ```bash
 # Cron the encrypted nightly backup (run as the `lifeos` user).
+# Round-16 tiered retention (daily/weekly/monthly) runs automatically at end.
 sudo tee /etc/cron.d/lifeos-backup >/dev/null <<'EOF'
 0 2 * * * lifeos cd /opt/lifeos && /opt/lifeos/scripts/backup-db-encrypted.sh >> /var/log/lifeos-backup.log 2>&1
 EOF
 sudo systemctl restart cron
 ```
 
-To probe the restore path quarterly: `docs/BACKUP_RESTORE_DRILL.md`.
+The quarterly restore drill (with canonical-data verify) is documented in
+`docs/BACKUP_RESTORE_DRILL.md`. The on-call playbook for non-DB outages
+(Redis crash, AI provider, notification provider, bad deploy, migration
+failed) is in `docs/DISASTER_RECOVERY_RUNBOOK.md`.
 
 ## 13. Metrics + APM
 

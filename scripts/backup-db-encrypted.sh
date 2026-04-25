@@ -83,8 +83,16 @@ if [[ -n "${BACKUP_BUCKET:-}" ]]; then
   log "upload OK"
 fi
 
-# Local retention: keep last 14 days of encrypted dumps.
-find "$BACKUP_DIR" -maxdepth 1 -name 'lifeos-*.sql.gz.enc' -mtime +14 -delete \
-  2>/dev/null || true
+# Round-16 tiered retention. The dedicated prune script promotes today's
+# archive into daily/weekly/monthly buckets and trims each bucket
+# independently. Falls back to the simple 14-day delete if the script is
+# unavailable (e.g. on a stripped-down image).
+if [[ -x "$(dirname "$0")/prune-backups.sh" ]]; then
+  BACKUP_DIR="$BACKUP_DIR" "$(dirname "$0")/prune-backups.sh" || \
+    log "warn: prune-backups.sh exited non-zero — leaving archives in place"
+else
+  find "$BACKUP_DIR" -maxdepth 1 -name 'lifeos-*.sql.gz.enc' -mtime +14 -delete \
+    2>/dev/null || true
+fi
 
 log "done"

@@ -1,8 +1,18 @@
-# Production Runbook — LifeOS AI v1.0.0
+# Production Runbook — LifeOS AI v1.4.0
 
 This is the on-call cheat sheet for the LifeOS AI backend. Mobile app issues
 without a backend correlation route to the mobile owner; everything else lives
 here.
+
+> **Sister docs (round 16):**
+> - `docs/DISASTER_RECOVERY_RUNBOOK.md` — six failure scenarios (DB/Redis
+>   crash, AI/notif provider outage, bad deploy, migration failed) — start here
+>   when you're paged at 03:00.
+> - `docs/BACKUP_RESTORE_DRILL.md` — quarterly drill checklist + tiered
+>   RPO/RTO targets (MVP / production / enterprise).
+> - `docs/ENCRYPTED_BACKUPS.md` — the encryption + storage contract for nightly
+>   dumps.
+> - `scripts/prod-rollback.md` — image rollback recipes.
 
 ## 0. Topology
 
@@ -63,27 +73,52 @@ bash scripts/migrate.sh
 docker compose exec api npm run db:migrate:deploy
 ```
 
-### Backup (manual)
+### Backup (encrypted, round 14+16)
 
 ```bash
-bash scripts/backup-db.sh   # writes timestamped dump under ./backups/
+# One-shot, ad hoc. Uses BACKUP_ENCRYPTION_KEY from env / .env.production.
+BACKUP_ENCRYPTION_KEY="$(grep -E '^BACKUP_ENCRYPTION_KEY=' .env.production | cut -d= -f2-)" \
+DATABASE_URL="$(grep -E '^DATABASE_URL=' .env.production | cut -d= -f2-)" \
+  bash scripts/backup-db-encrypted.sh
+
+# Tiered prune (daily/weekly/monthly buckets) runs automatically at end of
+# the script; can also be invoked standalone:
+bash scripts/prune-backups.sh
+bash scripts/prune-backups.sh --dry-run   # preview without deleting
 ```
 
-Recommended cron (daily, retain 7):
+Recommended cron (daily, prune handled by the script):
 
 ```cron
-15 3 * * * cd /home/deploy/AppQuanLY && /usr/bin/bash scripts/backup-db.sh \
-  && find ./backups -name '*.sql.gz' -mtime +7 -delete >> /var/log/lifeos-backup.log 2>&1
+0 2 * * * lifeos /opt/lifeos/scripts/backup-db-encrypted.sh \
+  >> /var/log/lifeos-backup.log 2>&1
 ```
+
+The plaintext `scripts/backup-db.sh` is kept for ad-hoc local dumps but
+**must not** be used for the production cron. See
+`docs/ENCRYPTED_BACKUPS.md` for the encryption contract and
+`docs/BACKUP_RESTORE_DRILL.md` for the tiered retention policy.
 
 ### Restore
 
 ```bash
+# Encrypted (production):
+DATABASE_URL=... BACKUP_ENCRYPTION_KEY=... \
+  bash scripts/restore-db-encrypted.sh /var/lib/lifeos/backups/daily/<dump-file>.sql.gz.enc
+
+# Plain (only for ad-hoc local dumps from scripts/backup-db.sh):
 bash scripts/restore-db.sh ./backups/<dump-file>.sql.gz
 ```
 
-**Always restore to a staging instance first** if you are practising — restore
-DROPs and recreates the DB.
+**Always restore to a SCRATCH instance first** if you're practising —
+restore DROPs and recreates the DB. The full quarterly drill checklist is
+in `docs/BACKUP_RESTORE_DRILL.md`. After restore, verify with the canonical
+sanity script:
+
+```bash
+DATABASE_URL=postgres://postgres:scratch@localhost:5499/scratch \
+  bash scripts/restore-verify.sh
+```
 
 ### Open a psql shell
 
