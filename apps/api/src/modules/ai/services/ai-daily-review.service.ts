@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { LocaleService } from '../../../common/i18n/locale.service';
 import { AiProviderService, briefAiError } from './ai-provider.service';
+import { AiProviderResolverService } from './ai-provider-resolver.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import { AiHealthService } from './ai-health.service';
@@ -60,6 +61,7 @@ export class AiDailyReviewService {
     private readonly locale: LocaleService,
     private readonly health: AiHealthService,
     private readonly goal: AiGoalService,
+    private readonly resolver: AiProviderResolverService,
   ) {}
 
   async review(userId: string, input: DailyReviewInput, req: RequestLike) {
@@ -72,7 +74,7 @@ export class AiDailyReviewService {
     let review: DailyReviewOutput;
     let usedFallback = false;
     try {
-      const completion = await this.provider.complete({
+      const completion = await this.resolver.completeForUser(userId, 'report', {
         system,
         prompt,
         jsonMode: true,

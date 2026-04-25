@@ -202,3 +202,51 @@ Re-running seed wipes the demo user and recreates — it is idempotent.
 - `MealPlan` → `MealSuggestion` cascade.
 - `PersonalGoal` → `GoalMilestone` cascade.
 - `AIConversation` → `AIMessage` cascade.
+- `User` → `UserAiProvider` / `UserAiPreference` cascade (BYOK rows are removed with the user).
+
+## Section J — User AI Providers (BYOK, added v1.1, migration `20260425005147_add_user_ai_providers`)
+
+### `user_ai_providers`
+
+Per-user AI provider configurations. The API key is encrypted at rest via
+`EncryptionService` (AES-256-GCM, env `AI_PROVIDER_ENCRYPTION_KEY`); only
+`api_key_last4` is plaintext for masked UI display.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid pk | |
+| `user_id` | uuid fk → `users.id` | `ON DELETE CASCADE`. Indexed. |
+| `provider` | enum `UserAiProviderType` | `NVIDIA \| OPENAI \| GEMINI \| ANTHROPIC \| OPENROUTER \| CUSTOM_OPENAI_COMPATIBLE`. Indexed. |
+| `name` | text | User-chosen label. **Unique per `user_id`.** |
+| `base_url` | text? | Required when `provider = CUSTOM_OPENAI_COMPATIBLE`; optional override otherwise. |
+| `encrypted_api_key` | text | AES-256-GCM ciphertext, format `v1:<iv-b64>:<tag-b64>:<ct-b64>`. **Never logged.** |
+| `api_key_last4` | text | Last 4 chars of the raw key (for `sk-****cdef` UI mask). |
+| `default_chat_model` | text? | Per-task model overrides — picked by `AiProviderResolverService` based on the AI task. |
+| `default_planner_model` | text? | |
+| `default_finance_model` | text? | |
+| `default_meal_model` | text? | |
+| `default_health_model` | text? | |
+| `default_report_model` | text? | |
+| `is_active` | bool default true | When false, the resolver skips this row. |
+| `is_default` | bool default false | At most one per user (enforced by service logic in `UserAiProviderService`). |
+| `last_tested_at` | timestamptz? | Set by `POST /:id/test`. |
+| `last_test_status` | enum `UserAiProviderTestStatus`? | `SUCCESS` or `FAILED`. |
+| `last_test_error` | text? | Brief, clipped error message — never the raw key. |
+| `created_at` / `updated_at` | timestamptz | |
+
+Indexes: `(user_id)`, `(provider)`, `unique (user_id, name)`.
+
+### `user_ai_preferences`
+
+One-row-per-user preferences for the BYOK flow.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid pk | |
+| `user_id` | uuid fk → `users.id` | `ON DELETE CASCADE`. **Unique** (one row per user). |
+| `use_own_api_key` | bool default false | Master toggle. |
+| `fallback_to_global_provider` | bool default true | When the user provider errors, fall back to the env-configured global provider. |
+| `default_provider_id` | uuid? | Soft pointer to `user_ai_providers.id`. Cleared (set to NULL by service in a transaction) when that provider is deleted. |
+| `created_at` / `updated_at` | timestamptz | |
+
+See `docs/USER_AI_PROVIDERS.md` for the resolver decision tree, encryption design, and rotation procedure.

@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { I18nModule } from './common/i18n/i18n.module';
+import { EncryptionModule } from './common/crypto/encryption.module';
 
 // Foundation
 import { HealthModule } from './modules/health/health.module';
@@ -40,6 +41,7 @@ import { GoalsModule } from './modules/goals/goals.module';
 // AI
 import { AiModule } from './modules/ai/ai.module';
 import { AssistantModule } from './modules/assistant/assistant.module';
+import { UserAiProvidersModule } from './modules/user-ai-providers/user-ai-providers.module';
 
 // Cross-cutting
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -63,6 +65,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     }),
     PrismaModule,
     I18nModule,
+    EncryptionModule,
 
     // Foundation
     HealthModule,
@@ -98,6 +101,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     // AI — AiModule is reactive (user-initiated); AssistantModule is proactive (scheduled insights).
     AiModule,
     AssistantModule,
+    UserAiProvidersModule,
 
     // Cross-cutting
     NotificationsModule,

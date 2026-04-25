@@ -42,6 +42,9 @@ import { CreateGoalScreen } from '../screens/goals/CreateGoalScreen';
 import { GoalDetailScreen } from '../screens/goals/GoalDetailScreen';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
 import { LanguageSettingsScreen } from '../screens/settings/LanguageSettingsScreen';
+import { AiProviderSettingsScreen } from '../screens/settings/AiProviderSettingsScreen';
+import { AddAiProviderScreen } from '../screens/settings/AddAiProviderScreen';
+import { EditAiProviderScreen } from '../screens/settings/EditAiProviderScreen';
 import { AIChatScreen } from '../screens/ai/AIChatScreen';
 import type { RootStackParamList } from './types';
 
@@ -127,6 +130,21 @@ export function RootNavigator() {
                 options={{ title: 'Language' }}
               />
               <Stack.Screen name="AIChat" component={AIChatScreen} options={{ title: 'AI assistant' }} />
+              <Stack.Screen
+                name="AiProviderSettings"
+                component={AiProviderSettingsScreen}
+                options={{ title: 'AI provider' }}
+              />
+              <Stack.Screen
+                name="AddAiProvider"
+                component={AddAiProviderScreen}
+                options={{ title: 'Add provider' }}
+              />
+              <Stack.Screen
+                name="EditAiProvider"
+                component={EditAiProviderScreen}
+                options={{ title: 'Edit provider' }}
+              />
             </Stack.Group>
           </>
         )}

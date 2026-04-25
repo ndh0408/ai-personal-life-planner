@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nest
 import { PrismaService } from '../../../prisma/prisma.service';
 import { LocaleService } from '../../../common/i18n/locale.service';
 import { AiProviderService } from './ai-provider.service';
+import { AiProviderResolverService } from './ai-provider-resolver.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiInvalidJsonError, AiJsonValidationService } from './ai-json-validation.service';
 import { PreviewCacheService } from './preview-cache.service';
@@ -68,6 +69,7 @@ export class AiPlannerService {
     private readonly json: AiJsonValidationService,
     private readonly previews: PreviewCacheService,
     private readonly locale: LocaleService,
+    private readonly resolver: AiProviderResolverService,
   ) {}
 
   // ---- 1) generate-schedule -------------------------------------------------
@@ -81,7 +83,9 @@ export class AiPlannerService {
     let plan: SchedulePlan;
     let usedFallback = false;
     try {
-      const completion = await this.provider.complete(
+      const completion = await this.resolver.completeForUser(
+        userId,
+        'planner',
         { system, prompt, jsonMode: true, maxTokens: 1800, temperature: 0.4 },
       );
       plan = await this.json.parseAndValidate(completion.text, SchedulePlanSchema, {
@@ -130,7 +134,9 @@ export class AiPlannerService {
 
     let preview: ReschedulePreview;
     try {
-      const completion = await this.provider.complete(
+      const completion = await this.resolver.completeForUser(
+        userId,
+        'planner',
         { system, prompt, jsonMode: true, maxTokens: 1200, temperature: 0.3 },
       );
       preview = await this.json.parseAndValidate(completion.text, ReschedulePreviewSchema, {

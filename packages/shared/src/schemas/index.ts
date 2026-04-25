@@ -7,3 +7,4 @@ export * from './schedule.schema';
 export * from './meal.schema';
 export * from './sleep.schema';
 export * from './mood.schema';
+export * from './user-ai-provider.schema';

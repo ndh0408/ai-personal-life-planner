@@ -4,6 +4,7 @@ import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import { PreviewCacheService } from './preview-cache.service';
 import { MockAiProvider } from '../providers/mock.provider';
+import { makeStubResolver } from './test-helpers';
 import type { LocaleService } from '../../../common/i18n/locale.service';
 
 function mockLocaleService(locale: 'vi' | 'en' = 'vi'): LocaleService {
@@ -86,6 +87,7 @@ describe('AiPlannerService.generate', () => {
       new AiJsonValidationService(provider),
       new PreviewCacheService(),
       mockLocaleService(),
+      makeStubResolver(provider),
     );
 
     const result = await service.generate('user-A', { date: '2026-04-24' });
@@ -108,6 +110,7 @@ describe('AiPlannerService.generate', () => {
       new AiJsonValidationService(provider),
       new PreviewCacheService(),
       mockLocaleService(),
+      makeStubResolver(provider),
     );
 
     const result = await service.generate('user-A', { date: '2026-04-24' });
@@ -127,6 +130,7 @@ describe('AiPlannerService.generate', () => {
       new AiJsonValidationService(provider),
       new PreviewCacheService(),
       mockLocaleService(),
+      makeStubResolver(provider),
     );
 
     const origComplete = provider.complete.bind(provider);

@@ -53,17 +53,19 @@ export class AiProviderService {
   async complete(
     req: AiCompletionRequest,
     opts: OrchestratorOptions = {},
+    override?: AiProvider,
   ): Promise<AiCompletionResponse> {
     const { timeoutMs, maxAttempts, retryDelayMs } = { ...DEFAULTS, ...opts };
+    const target = override ?? this.provider;
     let lastErr: unknown;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const started = Date.now();
       try {
-        const result = await this.withTimeout(this.provider.complete(req), timeoutMs);
+        const result = await this.withTimeout(target.complete(req), timeoutMs);
         const elapsed = Date.now() - started;
         this.logger.log(
-          `provider=${this.provider.name} attempt=${attempt} elapsedMs=${elapsed} in=${result.usage?.inputTokens ?? '?'} out=${result.usage?.outputTokens ?? '?'}`,
+          `provider=${target.name} attempt=${attempt} elapsedMs=${elapsed} in=${result.usage?.inputTokens ?? '?'} out=${result.usage?.outputTokens ?? '?'}`,
         );
         return result;
       } catch (err) {
@@ -71,7 +73,7 @@ export class AiProviderService {
         const elapsed = Date.now() - started;
         const tag = err instanceof AiTimeoutError ? 'timeout' : 'error';
         this.logger.warn(
-          `provider=${this.provider.name} attempt=${attempt} ${tag} elapsedMs=${elapsed}`,
+          `provider=${target.name} attempt=${attempt} ${tag} elapsedMs=${elapsed}`,
         );
         if (attempt < maxAttempts) {
           await new Promise((r) => setTimeout(r, retryDelayMs * attempt));

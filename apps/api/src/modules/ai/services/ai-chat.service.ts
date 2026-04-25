@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nest
 import { PrismaService } from '../../../prisma/prisma.service';
 import { LocaleService } from '../../../common/i18n/locale.service';
 import { AiProviderService, briefAiError } from './ai-provider.service';
+import { AiProviderResolverService } from './ai-provider-resolver.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import { ChatReplySchema, type ChatReply } from '../schemas/chat.schema';
@@ -36,6 +37,7 @@ export class AiChatService {
     private readonly tpl: AiPromptTemplateService,
     private readonly json: AiJsonValidationService,
     private readonly locale: LocaleService,
+    private readonly resolver: AiProviderResolverService,
   ) {}
 
   async chat(userId: string, input: AiChatInput, req: RequestLike = {}) {
@@ -82,7 +84,9 @@ export class AiChatService {
     let reply: ChatReply;
     let usedFallback = false;
     try {
-      const completion = await this.provider.complete(
+      const completion = await this.resolver.completeForUser(
+        userId,
+        'chat',
         { system, prompt, jsonMode: true, maxTokens: 1200, temperature: 0.7 },
       );
       reply = await this.json.parseAndValidate(completion.text, ChatReplySchema, {

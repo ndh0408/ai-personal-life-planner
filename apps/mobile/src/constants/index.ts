@@ -18,4 +18,7 @@ export const QUERY_KEYS = {
   meals: (date: string) => ['meals', date] as const,
   sleepLogs: (params?: Record<string, unknown>) => ['sleep-logs', params] as const,
   moodLogs: (params?: Record<string, unknown>) => ['mood-logs', params] as const,
+  aiProviders: ['user-ai-providers'] as const,
+  aiProvider: (id: string) => ['user-ai-providers', id] as const,
+  aiPreference: ['user-ai-preferences'] as const,
 };

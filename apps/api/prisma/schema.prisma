@@ -283,6 +283,8 @@ model User {
   notificationDevices NotificationDevice[]
   notificationSetting NotificationSetting?
   notificationLogs    NotificationLog[]
+  aiProviders         UserAiProvider[]
+  aiPreference        UserAiPreference?
 
   @@index([status])
   @@map("users")
@@ -939,4 +941,70 @@ model NotificationLog {
   @@index([userId, type])
   @@index([scheduledAt])
   @@map("notification_logs")
+}
+
+// =============================================================================
+// J. User AI Providers — Bring Your Own Key (BYOK)
+// =============================================================================
+
+enum UserAiProviderType {
+  NVIDIA
+  OPENAI
+  GEMINI
+  ANTHROPIC
+  OPENROUTER
+  CUSTOM_OPENAI_COMPATIBLE
+}
+
+enum UserAiProviderTestStatus {
+  SUCCESS
+  FAILED
+}
+
+model UserAiProvider {
+  id                 String                    @id @default(uuid())
+  userId             String
+  provider           UserAiProviderType
+  name               String
+  baseUrl            String?
+  // AES-256-GCM ciphertext encoded as `iv:tag:ciphertext` (all base64).
+  encryptedApiKey    String
+  // Last 4 chars of the raw key, kept plaintext for masked UI display only.
+  apiKeyLast4        String
+
+  defaultChatModel    String?
+  defaultPlannerModel String?
+  defaultFinanceModel String?
+  defaultMealModel    String?
+  defaultHealthModel  String?
+  defaultReportModel  String?
+
+  isActive           Boolean                   @default(true)
+  isDefault          Boolean                   @default(false)
+  lastTestedAt       DateTime?
+  lastTestStatus     UserAiProviderTestStatus?
+  lastTestError      String?
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@index([provider])
+  @@map("user_ai_providers")
+}
+
+model UserAiPreference {
+  id                       String   @id @default(uuid())
+  userId                   String   @unique
+  useOwnApiKey             Boolean  @default(false)
+  fallbackToGlobalProvider Boolean  @default(true)
+  defaultProviderId        String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_ai_preferences")
 }

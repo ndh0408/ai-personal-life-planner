@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { LocaleService } from '../../../common/i18n/locale.service';
 import { AiProviderService, briefAiError } from './ai-provider.service';
+import { AiProviderResolverService } from './ai-provider-resolver.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import { dateOnly } from '../../../common/utils/time.util';
@@ -43,6 +44,7 @@ export class AiInsightService {
     private readonly tpl: AiPromptTemplateService,
     private readonly json: AiJsonValidationService,
     private readonly locale: LocaleService,
+    private readonly resolver: AiProviderResolverService,
   ) {}
 
   async weekly(userId: string, input: WeeklyInsightInput, req: RequestLike = {}) {
@@ -113,7 +115,9 @@ export class AiInsightService {
     let insight: WeeklyInsight;
     let usedFallback = false;
     try {
-      const completion = await this.provider.complete(
+      const completion = await this.resolver.completeForUser(
+        userId,
+        'report',
         { system, prompt, jsonMode: true, maxTokens: 1500, temperature: 0.5 },
       );
       insight = await this.json.parseAndValidate(completion.text, WeeklyInsightSchema, {

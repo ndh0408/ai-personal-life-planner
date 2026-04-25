@@ -24,6 +24,13 @@ const EnvSchema = z
     AI_PROVIDER: z.enum(['anthropic', 'openai', 'mock']).default('mock'),
     AI_API_KEY: z.string().optional(),
     AI_MODEL: z.string().default('claude-sonnet-4-6'),
+
+    // BYOK (Bring-Your-Own-Key) — symmetric key for encrypting user-supplied
+    // AI provider API keys at rest. Production builds REFUSE to start without
+    // it. Generate with: `openssl rand -hex 32`.
+    AI_PROVIDER_ENCRYPTION_KEY: z.string().optional(),
+    OPENROUTER_HTTP_REFERER: z.string().url().optional(),
+    OPENROUTER_X_TITLE: z.string().optional(),
   })
   .superRefine((v, ctx) => {
     if (v.NODE_ENV === 'production') {
@@ -47,6 +54,14 @@ const EnvSchema = z
           code: 'custom',
           path: ['JWT_REFRESH_SECRET'],
           message: 'JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must differ in production.',
+        });
+      }
+      if (!v.AI_PROVIDER_ENCRYPTION_KEY || v.AI_PROVIDER_ENCRYPTION_KEY.trim().length < 32) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['AI_PROVIDER_ENCRYPTION_KEY'],
+          message:
+            'AI_PROVIDER_ENCRYPTION_KEY must be set in production (64 hex chars recommended; min 32-char passphrase). Generate via `openssl rand -hex 32`.',
         });
       }
     }

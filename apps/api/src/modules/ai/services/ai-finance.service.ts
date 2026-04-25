@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { LocaleService } from '../../../common/i18n/locale.service';
 import { AiProviderService, briefAiError } from './ai-provider.service';
+import { AiProviderResolverService } from './ai-provider-resolver.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import {
@@ -74,6 +75,7 @@ export class AiFinanceService {
     private readonly tpl: AiPromptTemplateService,
     private readonly json: AiJsonValidationService,
     private readonly locale: LocaleService,
+    private readonly resolver: AiProviderResolverService,
   ) {}
 
   async analyze(userId: string, input: AnalyzeFinanceInput, req: RequestLike) {
@@ -86,7 +88,7 @@ export class AiFinanceService {
     let analysis: FinanceAnalysis;
     let usedFallback = false;
     try {
-      const completion = await this.provider.complete({
+      const completion = await this.resolver.completeForUser(userId, 'finance', {
         system,
         prompt,
         jsonMode: true,

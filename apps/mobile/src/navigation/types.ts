@@ -68,6 +68,9 @@ export type RootStackParamList = {
   Settings: undefined;
   LanguageSettings: undefined;
   AIChat: undefined;
+  AiProviderSettings: undefined;
+  AddAiProvider: undefined;
+  EditAiProvider: { providerId: string };
 };
 
 export type AuthScreenProps<T extends keyof AuthStackParamList> = NativeStackScreenProps<

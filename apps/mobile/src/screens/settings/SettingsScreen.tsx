@@ -77,6 +77,20 @@ export function SettingsScreen() {
         />
       </Card>
 
+      <Card style={{ marginBottom: spacing.md }}>
+        <Text style={{ color: colors.text, fontWeight: '600', marginBottom: spacing.sm }}>
+          {t('settings.aiProviders.title')}
+        </Text>
+        <Text style={{ color: colors.textMuted, marginBottom: spacing.md }}>
+          {t('settings.aiProviders.subtitle')}
+        </Text>
+        <Button
+          title={t('settings.aiProviders.menu')}
+          variant="secondary"
+          onPress={() => nav.navigate('AiProviderSettings')}
+        />
+      </Card>
+
       <Button title={t('auth.logout')} variant="danger" onPress={logout} />
     </Screen>
   );

@@ -3,6 +3,7 @@ import { AiProviderService } from './ai-provider.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import { MockAiProvider } from '../providers/mock.provider';
+import { makeStubResolver } from './test-helpers';
 import type { LocaleService } from '../../../common/i18n/locale.service';
 
 function mockLocale(tag: 'vi' | 'en' = 'vi'): LocaleService {
@@ -67,6 +68,7 @@ describe('AiFinanceService', () => {
       new AiPromptTemplateService(),
       new AiJsonValidationService(provider),
       mockLocale('vi'),
+      makeStubResolver(provider),
     );
     const result = await svc.analyze('u1', { month: '2026-04' }, {});
     expect(result.usedFallback).toBe(false);
@@ -89,6 +91,7 @@ describe('AiFinanceService', () => {
       new AiPromptTemplateService(),
       new AiJsonValidationService(provider),
       mockLocale('en'),
+      makeStubResolver(provider),
     );
     const result = await svc.analyze('u1', { month: '2026-04' }, {});
     expect(result.usedFallback).toBe(true);
@@ -108,6 +111,7 @@ describe('AiFinanceService', () => {
       new AiPromptTemplateService(),
       new AiJsonValidationService(provider),
       mockLocale('vi'),
+      makeStubResolver(provider),
     );
     // Tight timeout to trigger the fallback path deterministically.
     jest

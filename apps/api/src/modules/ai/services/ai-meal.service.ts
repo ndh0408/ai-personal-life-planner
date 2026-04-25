@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { LocaleService } from '../../../common/i18n/locale.service';
 import { AiProviderService, briefAiError } from './ai-provider.service';
+import { AiProviderResolverService } from './ai-provider-resolver.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import { dateOnly } from '../../../common/utils/time.util';
@@ -42,6 +43,7 @@ export class AiMealService {
     private readonly tpl: AiPromptTemplateService,
     private readonly json: AiJsonValidationService,
     private readonly locale: LocaleService,
+    private readonly resolver: AiProviderResolverService,
   ) {}
 
   async suggest(userId: string, input: SuggestMealsInput, req: RequestLike = {}) {
@@ -66,7 +68,9 @@ export class AiMealService {
     let suggestions: MealSuggestionsOutput;
     let usedFallback = false;
     try {
-      const completion = await this.provider.complete(
+      const completion = await this.resolver.completeForUser(
+        userId,
+        'meal',
         { system, prompt, jsonMode: true, maxTokens: 1500, temperature: 0.6 },
       );
       suggestions = await this.json.parseAndValidate(completion.text, MealSuggestionsSchema, {
