@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { LocaleService } from '../../../common/i18n/locale.service';
-import { AiProviderService } from './ai-provider.service';
+import { AiProviderService, briefAiError } from './ai-provider.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import { dateOnly } from '../../../common/utils/time.util';
@@ -121,7 +121,7 @@ export class AiInsightService {
         system,
       });
     } catch (e) {
-      this.logger.warn(`weekly-insight fell back: ${e instanceof Error ? e.message : e}`);
+      this.logger.warn(`weekly-insight fell back: ${briefAiError(e)}`);
       insight = FALLBACK_BY_LOCALE[localeTag];
       usedFallback = true;
     }

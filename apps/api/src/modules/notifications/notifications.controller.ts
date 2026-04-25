@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
   Post,
   Put,
@@ -72,14 +71,8 @@ export class NotificationsController {
 
   @Delete('devices/:id')
   async removeDevice(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    try {
-      await this.svc.removeDevice(user.id, id);
-      return { success: true };
-    } catch (err) {
-      const e = err as { status?: number; message?: string };
-      if (e.status === 404) throw new NotFoundException(e.message ?? 'Device not found');
-      throw err;
-    }
+    await this.svc.removeDevice(user.id, id);
+    return { success: true };
   }
 
   @Get('logs')

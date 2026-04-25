@@ -23,7 +23,12 @@ export class AuthService {
 
   async register(input: RegisterInput, ctx: IssueContext = {}): Promise<AuthTokens> {
     const existing = await this.prisma.user.findUnique({ where: { email: input.email } });
-    if (existing) throw new ConflictException('Email already registered');
+    if (existing) {
+      throw new ConflictException({
+        message: 'Email already registered',
+        errorCode: 'AUTH_EMAIL_TAKEN',
+      });
+    }
 
     const displayName = input.name ?? input.email.split('@')[0];
     const passwordHash = await bcrypt.hash(input.password, 10);
@@ -49,11 +54,26 @@ export class AuthService {
 
   async login(input: LoginInput, ctx: IssueContext = {}): Promise<AuthTokens> {
     const user = await this.prisma.user.findUnique({ where: { email: input.email } });
-    if (!user) throw new UnauthorizedException('Invalid credentials');
-    if (user.status === 'DISABLED') throw new UnauthorizedException('Account disabled');
+    if (!user) {
+      throw new UnauthorizedException({
+        message: 'Invalid credentials',
+        errorCode: 'AUTH_INVALID_CREDENTIALS',
+      });
+    }
+    if (user.status === 'DISABLED') {
+      throw new UnauthorizedException({
+        message: 'Account disabled',
+        errorCode: 'AUTH_ACCOUNT_DISABLED',
+      });
+    }
 
     const ok = await bcrypt.compare(input.password, user.passwordHash);
-    if (!ok) throw new UnauthorizedException('Invalid credentials');
+    if (!ok) {
+      throw new UnauthorizedException({
+        message: 'Invalid credentials',
+        errorCode: 'AUTH_INVALID_CREDENTIALS',
+      });
+    }
 
     return this.issueTokens(user.id, user.email, ctx);
   }
@@ -65,10 +85,16 @@ export class AuthService {
       include: { user: true },
     });
     if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException({
+        message: 'Invalid refresh token',
+        errorCode: 'AUTH_INVALID_REFRESH_TOKEN',
+      });
     }
     if (stored.user.status === 'DISABLED') {
-      throw new UnauthorizedException('Account disabled');
+      throw new UnauthorizedException({
+        message: 'Account disabled',
+        errorCode: 'AUTH_ACCOUNT_DISABLED',
+      });
     }
 
     await this.prisma.refreshToken.update({

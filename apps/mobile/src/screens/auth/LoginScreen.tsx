@@ -3,25 +3,29 @@ import { Alert, KeyboardAvoidingView, Platform, Text, View } from 'react-native'
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme';
 import { Screen, Input, Button } from '../../components/ui';
 import { useAuthStore } from '../../store/auth.store';
 import { ApiError } from '../../services/api/client';
+import { useErrorMessage } from '../../i18n/useErrorMessage';
 import type { AuthScreenProps } from '../../navigation/types';
 
 const Schema = z.object({
-  email: z.string().email('Enter a valid email'),
-  password: z.string().min(8, 'At least 8 characters'),
+  email: z.string().email(),
+  password: z.string().min(8),
 });
 type Form = z.infer<typeof Schema>;
 
 export function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
   const { colors, spacing } = useTheme();
+  const { t } = useTranslation();
+  const messageFor = useErrorMessage();
   const login = useAuthStore((s) => s.login);
   const [submitting, setSubmitting] = useState(false);
   const { control, handleSubmit, formState: { errors } } = useForm<Form>({
     resolver: zodResolver(Schema),
-    defaultValues: { email: 'demo@planner.local', password: 'demo1234' },
+    defaultValues: { email: '', password: '' },
   });
 
   const onSubmit = async (values: Form) => {
@@ -29,8 +33,8 @@ export function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
     try {
       await login(values.email, values.password);
     } catch (e) {
-      const msg = e instanceof ApiError ? e.message : 'Could not log in';
-      Alert.alert('Login failed', msg);
+      const msg = e instanceof ApiError ? messageFor(e) : t('errors.UNKNOWN_ERROR');
+      Alert.alert(t('auth.login.title'), msg);
     } finally {
       setSubmitting(false);
     }
@@ -43,10 +47,10 @@ export function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
         style={{ flex: 1, justifyContent: 'center' }}
       >
         <Text style={{ fontSize: 32, fontWeight: '700', color: colors.text, marginBottom: spacing.xs }}>
-          Welcome back
+          {t('auth.login.subtitle')}
         </Text>
         <Text style={{ color: colors.textMuted, marginBottom: spacing.xl }}>
-          Plan today, then live it.
+          {t('app.tagline')}
         </Text>
 
         <View style={{ gap: spacing.md, marginBottom: spacing.xl }}>
@@ -55,14 +59,14 @@ export function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
             name="email"
             render={({ field: { value, onChange, onBlur } }) => (
               <Input
-                label="Email"
+                label={t('auth.login.email')}
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 autoCapitalize="none"
                 autoCorrect={false}
                 keyboardType="email-address"
-                error={errors.email?.message}
+                error={errors.email ? t('errors.VALIDATION_FAILED') : undefined}
               />
             )}
           />
@@ -71,20 +75,20 @@ export function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
             name="password"
             render={({ field: { value, onChange, onBlur } }) => (
               <Input
-                label="Password"
+                label={t('auth.login.password')}
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 secureTextEntry
-                error={errors.password?.message}
+                error={errors.password ? t('errors.VALIDATION_FAILED') : undefined}
               />
             )}
           />
         </View>
 
-        <Button title="Log in" loading={submitting} onPress={handleSubmit(onSubmit)} fullWidth size="lg" />
+        <Button title={t('auth.login.submit')} loading={submitting} onPress={handleSubmit(onSubmit)} fullWidth size="lg" />
         <Button
-          title="Create an account"
+          title={t('auth.login.switchToRegister')}
           variant="ghost"
           onPress={() => navigation.navigate('Register')}
           style={{ marginTop: spacing.md }}

@@ -19,7 +19,11 @@
     "today": "Hôm nay",
     "inactive": "Tạm dừng",
     "uncategorized": "Chưa phân loại",
-    "viewMore": "Xem thêm"
+    "viewMore": "Xem thêm",
+    "send": "Gửi",
+    "tryAgain": "Thử lại",
+    "openSettings": "Mở Cài đặt",
+    "dash": "—"
   },
   "app": {
     "name": "LifeOS AI",
@@ -985,7 +989,18 @@
     "title": "Cá nhân",
     "settings": "Cài đặt",
     "language": "Ngôn ngữ",
-    "notifications": "Thông báo"
+    "notifications": "Thông báo",
+    "logoutConfirm": "Đăng xuất?",
+    "noOnboarding": "Bạn chưa hoàn tất onboarding.",
+    "runOnboarding": "Chạy onboarding",
+    "weeklyReport": "Báo cáo tuần",
+    "row": {
+      "goal": "Mục tiêu",
+      "activity": "Hoạt động",
+      "wakeSleep": "Thức / Ngủ",
+      "work": "Làm việc",
+      "timezone": "Múi giờ"
+    }
   },
   "settings": {
     "language": {
@@ -994,7 +1009,30 @@
       "vi": "Tiếng Việt",
       "en": "English",
       "system": "Theo hệ thống"
+    },
+    "theme": "Giao diện",
+    "themeDarkSystem": "Tối (theo hệ thống)",
+    "themeLightSystem": "Sáng (theo hệ thống)",
+    "apiUrl": "API",
+    "build": "Bản dựng",
+    "notifications": {
+      "title": "Thông báo",
+      "description": "Nhắc nhở thức dậy, bữa ăn, công việc và thói quen. Chúng tôi chỉ xin quyền hệ thống khi bạn bật.",
+      "enable": "Bật thông báo đẩy",
+      "enabled": "Đã bật thông báo",
+      "denied": "Đã từ chối quyền",
+      "deniedHelp": "Mở Cài đặt để cho phép LifeOS AI gửi thông báo."
     }
+  },
+  "aiChat": {
+    "greeting": "Chào bạn! Hỏi tôi bất cứ điều gì về ngày của bạn.",
+    "placeholder": "Hỏi về hôm nay, giấc ngủ, bữa ăn…",
+    "failTitle": "Chưa nhận được phản hồi"
+  },
+  "schedule": {
+    "noPlan": "Chưa có lịch",
+    "noPlanHint": "Hãy tạo lịch từ tab Hôm nay.",
+    "noSummary": "Chưa có tóm tắt"
   },
   "errors": {
     "UNKNOWN_ERROR": "Có lỗi xảy ra. Vui lòng thử lại.",

@@ -69,7 +69,7 @@ USER lifeos
 
 # Healthcheck so the orchestrator (compose / k8s) knows when we're live.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
-  CMD curl -fsS http://127.0.0.1:3000/api/health || exit 1
+  CMD curl -fsS http://127.0.0.1:3000/api/health/ready || exit 1
 
 # tini is PID 1 so signals (SIGTERM from compose) shut Nest down cleanly.
 ENTRYPOINT ["/sbin/tini", "--"]

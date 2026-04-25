@@ -11,6 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AIRecommendationStatus } from '@prisma/client';
 import type { Request } from 'express';
 import { z } from 'zod';
@@ -114,6 +115,7 @@ export class AssistantController {
    * cron/queue can call the same internal `runDaily` method.
    */
   @Post('run-daily-monitoring')
+  @Throttle({ default: { limit: 12, ttl: 60_000 } })
   async runDaily(
     @CurrentUser() user: AuthUser,
     @Body(new ZodValidationPipe(RunDailySchema)) body: z.infer<typeof RunDailySchema>,
@@ -124,6 +126,7 @@ export class AssistantController {
   }
 
   @Post('generate-daily-review')
+  @Throttle({ default: { limit: 12, ttl: 60_000 } })
   async generateDailyReview(
     @CurrentUser() user: AuthUser,
     @Body(new ZodValidationPipe(GenerateDailyReviewSchema))
@@ -141,6 +144,7 @@ export class AssistantController {
   }
 
   @Post('generate-weekly-review')
+  @Throttle({ default: { limit: 12, ttl: 60_000 } })
   async generateWeeklyReview(
     @CurrentUser() user: AuthUser,
     @Body(new ZodValidationPipe(GenerateWeeklyReviewSchema))

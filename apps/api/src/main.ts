@@ -14,10 +14,22 @@ async function bootstrap() {
 
   app.use(helmet());
 
-  const corsOrigin = config.get<string>('CORS_ORIGIN', '*');
+  const isProd = config.get<string>('NODE_ENV') === 'production';
+  const corsOriginRaw = (config.get<string>('CORS_ORIGIN') ?? '').trim();
+  if (isProd && (!corsOriginRaw || corsOriginRaw === '*')) {
+    throw new Error(
+      'CORS_ORIGIN must be set to a concrete origin list in production (no "*").',
+    );
+  }
+  const corsOrigins = corsOriginRaw === '' || corsOriginRaw === '*'
+    ? true
+    : corsOriginRaw.split(',').map((s) => s.trim()).filter(Boolean);
   app.enableCors({
-    origin: corsOrigin === '*' ? true : corsOrigin.split(',').map((s) => s.trim()),
-    credentials: true,
+    origin: corsOrigins,
+    // Per CORS spec, "*" + credentials is invalid. Only enable credentials
+    // when origins are concrete so we never reflect arbitrary origins with
+    // credentials.
+    credentials: corsOrigins !== true,
   });
 
   app.setGlobalPrefix('api');

@@ -8,16 +8,20 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme';
 import { Screen, Button } from '../../components/ui';
 import { aiApi } from '../../services/api/ai.api';
+import { useErrorMessage } from '../../i18n/useErrorMessage';
 
 type Bubble = { id: string; role: 'user' | 'assistant'; text: string };
 
 export function AIChatScreen() {
   const { colors, spacing, radius } = useTheme();
+  const { t } = useTranslation();
+  const messageFor = useErrorMessage();
   const [bubbles, setBubbles] = useState<Bubble[]>([
-    { id: 'hi', role: 'assistant', text: 'Hi! Ask me anything about your day.' },
+    { id: 'hi', role: 'assistant', text: t('aiChat.greeting') },
   ]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -38,7 +42,7 @@ export function AIChatScreen() {
       setBubbles((b) => [...b, assistant]);
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
     } catch (e) {
-      Alert.alert('AI failed', e instanceof Error ? e.message : 'Try again');
+      Alert.alert(t('aiChat.failTitle'), messageFor(e));
     } finally {
       setSending(false);
     }
@@ -89,7 +93,7 @@ export function AIChatScreen() {
           <TextInput
             value={input}
             onChangeText={setInput}
-            placeholder="Ask about today, sleep, meals…"
+            placeholder={t('aiChat.placeholder')}
             placeholderTextColor={colors.textMuted}
             style={{
               flex: 1,
@@ -102,7 +106,7 @@ export function AIChatScreen() {
               borderColor: colors.border,
             }}
           />
-          <Button title="Send" loading={sending} onPress={send} />
+          <Button title={t('common.send')} loading={sending} onPress={send} />
         </View>
       </KeyboardAvoidingView>
     </Screen>

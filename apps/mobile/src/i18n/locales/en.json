@@ -19,7 +19,11 @@
     "today": "Today",
     "inactive": "Inactive",
     "uncategorized": "Uncategorized",
-    "viewMore": "View more"
+    "viewMore": "View more",
+    "send": "Send",
+    "tryAgain": "Try again",
+    "openSettings": "Open Settings",
+    "dash": "—"
   },
   "app": {
     "name": "LifeOS AI",
@@ -985,7 +989,18 @@
     "title": "Profile",
     "settings": "Settings",
     "language": "Language",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "logoutConfirm": "Log out?",
+    "noOnboarding": "You haven't completed onboarding yet.",
+    "runOnboarding": "Run onboarding",
+    "weeklyReport": "Weekly report",
+    "row": {
+      "goal": "Goal",
+      "activity": "Activity",
+      "wakeSleep": "Wake / Sleep",
+      "work": "Work",
+      "timezone": "Timezone"
+    }
   },
   "settings": {
     "language": {
@@ -994,7 +1009,30 @@
       "vi": "Tiếng Việt",
       "en": "English",
       "system": "System default"
+    },
+    "theme": "Theme",
+    "themeDarkSystem": "Dark (system)",
+    "themeLightSystem": "Light (system)",
+    "apiUrl": "API",
+    "build": "Build",
+    "notifications": {
+      "title": "Notifications",
+      "description": "Reminders for wake-up, meals, tasks and habits. We ask the OS for permission only after you opt in.",
+      "enable": "Enable push notifications",
+      "enabled": "Notifications enabled",
+      "denied": "Permission denied",
+      "deniedHelp": "Open Settings to allow LifeOS AI to send notifications."
     }
+  },
+  "aiChat": {
+    "greeting": "Hi! Ask me anything about your day.",
+    "placeholder": "Ask about today, sleep, meals…",
+    "failTitle": "Could not get a reply"
+  },
+  "schedule": {
+    "noPlan": "No schedule",
+    "noPlanHint": "Try generating a plan from Today.",
+    "noSummary": "No summary"
   },
   "errors": {
     "UNKNOWN_ERROR": "Something went wrong. Please try again.",

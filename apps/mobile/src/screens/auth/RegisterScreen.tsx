@@ -3,21 +3,31 @@ import { Alert, KeyboardAvoidingView, Platform, Text, View } from 'react-native'
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
+import * as Localization from 'expo-localization';
 import { useTheme } from '../../theme';
 import { Screen, Input, Button } from '../../components/ui';
 import { useAuthStore } from '../../store/auth.store';
 import { ApiError } from '../../services/api/client';
+import { useErrorMessage } from '../../i18n/useErrorMessage';
 import type { AuthScreenProps } from '../../navigation/types';
 
 const Schema = z.object({
-  name: z.string().min(1, 'Required').max(60),
+  name: z.string().min(1).max(60),
   email: z.string().email(),
-  password: z.string().min(8, 'At least 8 characters'),
+  password: z.string().min(8),
 });
 type Form = z.infer<typeof Schema>;
 
+function detectTimezone(): string {
+  const cals = Localization.getCalendars();
+  return cals[0]?.timeZone ?? 'Asia/Ho_Chi_Minh';
+}
+
 export function RegisterScreen({ navigation }: AuthScreenProps<'Register'>) {
   const { colors, spacing } = useTheme();
+  const { t } = useTranslation();
+  const messageFor = useErrorMessage();
   const register = useAuthStore((s) => s.register);
   const [submitting, setSubmitting] = useState(false);
   const { control, handleSubmit, formState: { errors } } = useForm<Form>({
@@ -28,10 +38,10 @@ export function RegisterScreen({ navigation }: AuthScreenProps<'Register'>) {
   const onSubmit = async (values: Form) => {
     setSubmitting(true);
     try {
-      await register({ ...values, timezone: 'Asia/Ho_Chi_Minh' });
+      await register({ ...values, timezone: detectTimezone() });
     } catch (e) {
-      const msg = e instanceof ApiError ? e.message : 'Could not register';
-      Alert.alert('Sign up failed', msg);
+      const msg = e instanceof ApiError ? messageFor(e) : t('errors.UNKNOWN_ERROR');
+      Alert.alert(t('auth.register.title'), msg);
     } finally {
       setSubmitting(false);
     }
@@ -44,10 +54,10 @@ export function RegisterScreen({ navigation }: AuthScreenProps<'Register'>) {
         style={{ flex: 1, justifyContent: 'center' }}
       >
         <Text style={{ fontSize: 32, fontWeight: '700', color: colors.text, marginBottom: spacing.xs }}>
-          Create account
+          {t('auth.register.title')}
         </Text>
         <Text style={{ color: colors.textMuted, marginBottom: spacing.xl }}>
-          Tell us a little about you.
+          {t('auth.register.subtitle')}
         </Text>
 
         <View style={{ gap: spacing.md, marginBottom: spacing.xl }}>
@@ -56,11 +66,11 @@ export function RegisterScreen({ navigation }: AuthScreenProps<'Register'>) {
             name="name"
             render={({ field: { value, onChange, onBlur } }) => (
               <Input
-                label="Name"
+                label={t('auth.register.displayName')}
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
-                error={errors.name?.message}
+                error={errors.name ? t('errors.VALIDATION_FAILED') : undefined}
               />
             )}
           />
@@ -69,13 +79,13 @@ export function RegisterScreen({ navigation }: AuthScreenProps<'Register'>) {
             name="email"
             render={({ field: { value, onChange, onBlur } }) => (
               <Input
-                label="Email"
+                label={t('auth.login.email')}
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                error={errors.email?.message}
+                error={errors.email ? t('errors.VALIDATION_FAILED') : undefined}
               />
             )}
           />
@@ -84,20 +94,20 @@ export function RegisterScreen({ navigation }: AuthScreenProps<'Register'>) {
             name="password"
             render={({ field: { value, onChange, onBlur } }) => (
               <Input
-                label="Password"
+                label={t('auth.login.password')}
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 secureTextEntry
-                error={errors.password?.message}
+                error={errors.password ? t('errors.VALIDATION_FAILED') : undefined}
               />
             )}
           />
         </View>
 
-        <Button title="Sign up" loading={submitting} onPress={handleSubmit(onSubmit)} fullWidth size="lg" />
+        <Button title={t('auth.register.submit')} loading={submitting} onPress={handleSubmit(onSubmit)} fullWidth size="lg" />
         <Button
-          title="Back to login"
+          title={t('auth.register.switchToLogin')}
           variant="ghost"
           onPress={() => navigation.goBack()}
           style={{ marginTop: spacing.md }}

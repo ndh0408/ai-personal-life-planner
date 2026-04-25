@@ -1,5 +1,6 @@
 import React from 'react';
 import { Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme';
 import { Button } from './Button';
 
@@ -7,10 +8,11 @@ type Props = { message: string; onRetry?: () => void };
 
 export function ErrorView({ message, onRetry }: Props) {
   const { colors, spacing } = useTheme();
+  const { t } = useTranslation();
   return (
     <View style={{ alignItems: 'center', padding: spacing.xl }}>
       <Text style={{ fontSize: 16, fontWeight: '600', color: colors.danger, marginBottom: 8 }}>
-        Something went wrong
+        {t('errors.UNKNOWN_ERROR')}
       </Text>
       <Text
         style={{
@@ -22,7 +24,7 @@ export function ErrorView({ message, onRetry }: Props) {
       >
         {message}
       </Text>
-      {onRetry ? <Button title="Try again" variant="secondary" onPress={onRetry} /> : null}
+      {onRetry ? <Button title={t('common.tryAgain')} variant="secondary" onPress={onRetry} /> : null}
     </View>
   );
 }

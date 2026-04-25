@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { dateToHhmm, hhmmToDate } from '../../common/utils/time.util';
 
@@ -102,8 +102,13 @@ export class NotificationsService {
     const result = await this.prisma.notificationDevice.deleteMany({ where: { id, userId } });
     if (result.count === 0) {
       const exists = await this.prisma.notificationDevice.findUnique({ where: { id } });
-      if (!exists) throw Object.assign(new Error('Device not found'), { status: 404 });
-      throw Object.assign(new Error('Device not owned by caller'), { status: 403 });
+      if (!exists) {
+        throw new NotFoundException({ message: 'Device not found', errorCode: 'NOT_FOUND' });
+      }
+      throw new ForbiddenException({
+        message: 'Device not owned by caller',
+        errorCode: 'FORBIDDEN',
+      });
     }
   }
 

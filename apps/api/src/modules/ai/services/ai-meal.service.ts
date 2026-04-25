@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { LocaleService } from '../../../common/i18n/locale.service';
-import { AiProviderService } from './ai-provider.service';
+import { AiProviderService, briefAiError } from './ai-provider.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import { dateOnly } from '../../../common/utils/time.util';
@@ -74,7 +74,7 @@ export class AiMealService {
         system,
       });
     } catch (e) {
-      this.logger.warn(`meal-suggestion fell back: ${e instanceof Error ? e.message : e}`);
+      this.logger.warn(`meal-suggestion fell back: ${briefAiError(e)}`);
       usedFallback = true;
       suggestions = FALLBACK;
     }

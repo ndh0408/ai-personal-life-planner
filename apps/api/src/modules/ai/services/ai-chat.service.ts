@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { LocaleService } from '../../../common/i18n/locale.service';
-import { AiProviderService } from './ai-provider.service';
+import { AiProviderService, briefAiError } from './ai-provider.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import { ChatReplySchema, type ChatReply } from '../schemas/chat.schema';
@@ -90,7 +90,7 @@ export class AiChatService {
         system,
       });
     } catch (e) {
-      this.logger.warn(`chat fell back: ${e instanceof Error ? e.message : e}`);
+      this.logger.warn(`chat fell back: ${briefAiError(e)}`);
       reply = FALLBACK_BY_LOCALE[localeTag];
       usedFallback = true;
     }

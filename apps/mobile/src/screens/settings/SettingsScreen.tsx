@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Alert, Linking, Platform, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -20,6 +20,27 @@ export function SettingsScreen() {
   const localeLabel =
     getActiveLocale() === 'vi' ? t('settings.language.vi') : t('settings.language.en');
 
+  const handleEnablePush = async () => {
+    const granted = await requestPushPermission();
+    if (granted) {
+      Alert.alert(t('settings.notifications.enabled'));
+      return;
+    }
+    Alert.alert(t('settings.notifications.denied'), t('settings.notifications.deniedHelp'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.openSettings'),
+        onPress: () => {
+          if (Platform.OS === 'ios') {
+            Linking.openURL('app-settings:');
+          } else {
+            Linking.openSettings();
+          }
+        },
+      },
+    ]);
+  };
+
   return (
     <Screen scroll>
       <Text style={{ color: colors.text, fontSize: 22, fontWeight: '700', marginBottom: spacing.md }}>
@@ -28,9 +49,12 @@ export function SettingsScreen() {
 
       <Card style={{ marginBottom: spacing.md }}>
         <Row label={t('profile.language')} value={localeLabel} />
-        <Row label="Theme" value={isDark ? 'Dark (system)' : 'Light (system)'} />
-        <Row label="API" value={env.apiBaseUrl} />
-        <Row label="Build" value={env.appEnv} />
+        <Row
+          label={t('settings.theme')}
+          value={isDark ? t('settings.themeDarkSystem') : t('settings.themeLightSystem')}
+        />
+        <Row label={t('settings.apiUrl')} value={env.apiBaseUrl} />
+        <Row label={t('settings.build')} value={env.appEnv} />
         <Button
           title={t('settings.language.title')}
           variant="secondary"
@@ -41,19 +65,15 @@ export function SettingsScreen() {
 
       <Card style={{ marginBottom: spacing.md }}>
         <Text style={{ color: colors.text, fontWeight: '600', marginBottom: spacing.sm }}>
-          {t('profile.notifications')}
+          {t('settings.notifications.title')}
         </Text>
         <Text style={{ color: colors.textMuted, marginBottom: spacing.md }}>
-          Reminders for wake-up, meals, tasks and habits. We ask the OS for
-          permission only after you opt in.
+          {t('settings.notifications.description')}
         </Text>
         <Button
-          title="Enable push notifications"
+          title={t('settings.notifications.enable')}
           variant="secondary"
-          onPress={async () => {
-            const ok = await requestPushPermission();
-            Alert.alert(ok ? 'Enabled' : 'Denied');
-          }}
+          onPress={handleEnablePush}
         />
       </Card>
 

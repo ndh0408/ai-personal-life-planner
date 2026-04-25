@@ -23,6 +23,20 @@ const DEFAULTS: Required<OrchestratorOptions> = {
 };
 
 /**
+ * Compact, log-safe representation of an error for AI fallback paths.
+ * Truncates length and drops the trailing serialized payload that some
+ * provider SDKs append (Anthropic/OpenAI may include the entire request body
+ * in `e.message` on validation failures).
+ */
+export function briefAiError(e: unknown, maxChars = 200): string {
+  const raw = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+  // Strip anything from the first JSON-like object boundary onward, and
+  // collapse whitespace.
+  const clipped = raw.split(/\s*[\{\[]/)[0]?.trim() ?? raw.trim();
+  return clipped.slice(0, maxChars);
+}
+
+/**
  * Wraps a raw AiProvider with timeout, retry, and audit-friendly logging that
  * NEVER includes user content or API keys.
  */
