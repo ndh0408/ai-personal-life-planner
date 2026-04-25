@@ -599,3 +599,41 @@ Production readiness verdict (post-Round 14):
 - 1M+: same as round-13 (own program of work)
 
 **End of Round-14 patch.**
+
+---
+
+## Round 17 patch — WAL archiving + SMTP nodemailer
+
+Full report: `docs/ROUND_17_WAL_SMTP_COMPLETION.md`. The round delivers
+both halves of the production-tier prerequisites flagged in earlier
+rounds.
+
+| # | Item | Status |
+|--|--|--|
+| 1 | WAL archive script + healthcheck | **DONE** — encrypted, idempotent, exit-code-driven |
+| 2 | WAL + PITR docs | **DONE** — `docs/WAL_ARCHIVING.md` + `docs/PITR_RESTORE.md` |
+| 3 | SMTP nodemailer transport | **DONE** — replaces round-14 skeleton; pool=1, redacted logs |
+| 4 | EmailTemplateService (vi/en) | **DONE** — verify-email, reset-password, security-alert |
+| 5 | Production env fail-fast for `EMAIL_PROVIDER=smtp` | **DONE** |
+| 6 | Verification + reset wired through templates | **DONE** — never log raw token; SMTP failure doesn't 5xx |
+| 7 | Physical base backup | **DEFERRED** — operator topology choice (RDS / pg_basebackup / pgBackRest) |
+| 8 | Email send failure metric | **DEFERRED** — round-18 backlog |
+| 9 | Multi-AZ replication | **DEFERRED** — enterprise-tier program |
+
+Updated RPO/RTO matrix:
+
+| Tier | RPO | RTO |
+|--|--|--|
+| MVP ≤10k MAU | 24 h | 60 min — ✅ ready |
+| Production 10k–500k | 5 min (`archive_timeout=300s`) | 15-30 min — ⚠ needs operator-chosen base-backup tool |
+| Enterprise 500k+ | 5 min | 5 min — ❌ requires multi-AZ + automated failover (own program) |
+
+We do NOT claim enterprise readiness. Production is reachable once the
+operator wires either `pg_basebackup` (self-managed) or a managed-Postgres
+snapshot (RDS/Cloud SQL) on top of the WAL archiving shipped here.
+
+Tests: 43 suites / **229 tests pass** (217 round-16 baseline + 12 new
+round-17 covering EmailTemplateService + SmtpEmailProvider config
+validation + redactAddress).
+
+**End of Round-17 patch.**

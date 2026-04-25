@@ -10,6 +10,7 @@ import { SecurityEventType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { generateAuthToken, hashAuthToken } from './auth-token.util';
 import { EMAIL_PROVIDER, type EmailProvider } from './email-provider';
+import { EmailTemplateService } from './email-template.service';
 import { SecurityAuditService } from './security-audit.service';
 
 const TOKEN_TTL_HOURS = 24;
@@ -23,6 +24,7 @@ export class EmailVerificationService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly audit: SecurityAuditService,
+    private readonly templates: EmailTemplateService,
     @Inject(EMAIL_PROVIDER) private readonly emailProvider: EmailProvider,
   ) {}
 
@@ -68,15 +70,30 @@ export class EmailVerificationService {
     const baseUrl = this.config.get<string>('APP_PUBLIC_URL') ?? 'https://lifeos.example';
     const link = `${baseUrl}/verify-email?token=${encodeURIComponent(raw)}`;
     // The raw URL lives only in the outbound email body; we never log it.
-    await this.emailProvider.send({
-      to: user.email,
-      subject: 'Verify your LifeOS email',
-      text:
-        `Hi ${user.displayName},\n\n` +
-        `Please verify your email by visiting:\n${link}\n\n` +
-        `This link expires in ${TOKEN_TTL_HOURS} hours.\n` +
-        `If you didn't create an account, you can ignore this email.`,
+    const profile = await this.prisma.userProfile.findUnique({
+      where: { userId: user.id },
+      select: { locale: true },
     });
+    const rendered = this.templates.render('verify-email', profile?.locale, {
+      name: user.displayName,
+      link,
+      ttlHours: TOKEN_TTL_HOURS,
+    });
+    try {
+      await this.emailProvider.send({
+        to: user.email,
+        subject: rendered.subject,
+        text: rendered.text,
+        html: rendered.html,
+      });
+    } catch (e) {
+      // Token is already persisted — the user can hit "resend" and try
+      // again. Don't bubble the failure up to the controller (which would
+      // turn into a 5xx and leak the existence-of-account signal). The
+      // SmtpEmailProvider already logged a redacted error.
+      const msg = e instanceof Error ? e.message : String(e);
+      this.logger.warn(`verify email send failed (token persisted): ${msg.split('\n')[0]}`);
+    }
   }
 
   /**

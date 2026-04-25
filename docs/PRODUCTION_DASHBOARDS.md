@@ -50,6 +50,30 @@ itself is a 1-day follow-up.
 Use the official postgres-exporter + redis-exporter sidecars; no custom
 queries required.
 
+## Round-17 alert suggestions (WAL + email + backup)
+
+Round 17 doesn't ship the metrics exporters yet — the data lives in
+Postgres / log files / `wal-archive-healthcheck.sh` exit codes. Below is
+the operator's checklist of alerts to wire into PagerDuty / Slack:
+
+| Alert name | Trigger | Source |
+|--|--|--|
+| `WALArchiveStale` | `scripts/wal-archive-healthcheck.sh` exits 1 (no fresh WAL in N min) | cron stderr → alerting |
+| `WALArchiveBacklog` | healthcheck exits 2 (segments without `.ok` markers) | cron stderr |
+| `WALSpoolDiskPressure` | healthcheck exits 3 (mount above DISK_WARN_PERCENT) | cron stderr |
+| `BackupFailed` | `scripts/backup-db-encrypted.sh` non-zero exit in cron log | `/var/log/lifeos-backup.log` |
+| `RestoreVerifyFailed` | `scripts/restore-verify.sh` exit non-zero on quarterly drill | manual + drill log |
+| `SmtpFailureSpike` | grep `[SmtpEmailProvider] smtp send FAILED` rate > 5/min | docker logs lifeos-api |
+| `EmailQueueBacklog` | (round-18) when notification queue depth grows unbounded | metrics + queue probe |
+| `DBDiskNearFull` | postgres-exporter `pg_database_size_bytes / pg_settings_data_directory_size > 0.85` | postgres-exporter |
+| `RedisDown` | `redis_up == 0` from redis-exporter OR `/api/health/ready` reports redis down | redis-exporter / probe |
+| `AIProviderFailureHigh` | `lifeos_ai_calls_total{outcome="error"} / lifeos_ai_calls_total > 0.2` | already in §AI panel |
+| `NotificationFailureHigh` | `lifeos_notifications_total{outcome!="ok"} / total > 0.1` | round-12 metrics |
+
+Round-18 backlog: ship `lifeos_email_send_failed_total`,
+`lifeos_wal_archive_age_seconds`, `lifeos_backup_age_seconds` so the
+operator stops scraping log files for these.
+
 ## On-call runbook hooks
 
 - A spike in `AI_DAILY_LIMIT_REACHED` errors → suggests a UX bug (looping
@@ -58,3 +82,9 @@ queries required.
   status page; the orchestrator already retries twice.
 - A queue with rising `failed` count → check the BullMQ failed-jobs list
   (`Queue.getFailed()`) for the error message.
+- `[SmtpEmailProvider] smtp send FAILED` log lines → check the SMTP
+  provider's status page; tokens are persisted before send so users can
+  hit "resend" once the transport recovers.
+- `[wal-archive] ERROR …` in `/var/log/lifeos-backup.log` → the WAL
+  healthcheck will already have alerted; investigate `archive_command`
+  exit codes via `pg_stat_archiver` or the Postgres log.

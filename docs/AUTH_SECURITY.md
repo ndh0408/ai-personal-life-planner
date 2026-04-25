@@ -72,20 +72,24 @@ is the transport interface. Two implementations ship today:
 
 - `ConsoleEmailProvider` — default. Logs only the recipient, subject, and
   first 120 chars of the body so even verbose dev logs never leak the link.
-- `SmtpEmailProvider` — skeleton. Throws `not implemented` until a future
-  commit wires `nodemailer`. The factory in `AuthSecurityModule` swaps to
-  this provider when `SMTP_HOST` is set.
+- `SmtpEmailProvider` — production. Round-17 wired the nodemailer transport
+  with pool=1, 10s socket/connect timeout, redacted logs (no body, no
+  password). Selected by env `EMAIL_PROVIDER=smtp`.
 
 Required env to switch to SMTP in production:
 ```
-SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM_ADDRESS
+EMAIL_PROVIDER=smtp
+SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, SMTP_FROM
 APP_PUBLIC_URL              # used to build the verify/reset link
 ```
 
-The current ConsoleEmailProvider is acceptable for pilot launch (the
-verification + reset flow is documented; users on the pilot fleet can ask an
-operator for the link by viewing the server logs). For public launch, wire
-the SMTP provider OR swap to a transactional email API (Postmark, SES).
+Production env validation (`apps/api/src/config/env.validation.ts`)
+**refuses to start** when `EMAIL_PROVIDER=smtp` and any of those are
+missing. Full operational details in `docs/EMAIL_DELIVERY.md`.
+
+The console provider is acceptable for local dev. For staging + production,
+flip to `EMAIL_PROVIDER=smtp` and wire a transactional provider (any SMTP
+endpoint works — Postmark, SES, Mailgun, self-hosted).
 
 ## Mobile UX
 

@@ -236,6 +236,17 @@ other dev's machine). Land it in a follow-up deploy.
 `prisma migrate diff --from-migrations` step to CI so the same shape can't
 land again.
 
+## PITR (point-in-time recovery)
+
+Available **only** when WAL archiving + a physical base backup are both in
+place. See `docs/PITR_RESTORE.md` for the full procedure. Use PITR for:
+
+- Catastrophic write at a known instant (rogue migration, mass DELETE)
+- Compliance request to reconstruct state at end-of-quarter
+
+PITR is destructive on the target — always restore into a SCRATCH
+Postgres, then promote.
+
 ## RPO / RTO targets — see BACKUP_RESTORE_DRILL.md
 
 The numeric targets per tier (MVP / production / enterprise) live in the

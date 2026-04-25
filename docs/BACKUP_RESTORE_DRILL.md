@@ -13,7 +13,7 @@ one**. Schedule with the SRE on-call; capture the result in
 | Tier | RPO (max data loss) | RTO (max downtime) | What it takes |
 |--|--|--|--|
 | **MVP** (≤10k MAU pilot) | 24 h | 60 min | Nightly encrypted dump + manual restore drill quarterly. Today's setup. |
-| **Production** (10k–500k MAU) | 1 h | 15 min | Hourly logical dump OR continuous WAL archiving + automated restore tested weekly + warm standby Postgres. **Round-17 backlog.** |
+| **Production** (10k–500k MAU) | 1 h | 15 min | Continuous WAL archiving (`docs/WAL_ARCHIVING.md`, scripts shipped in round 17) + a **physical** base backup (depends on topology — `pg_basebackup` or managed-Postgres snapshot) + PITR drill (`docs/PITR_RESTORE.md`). |
 | **Enterprise** (500k+ MAU) | 5 min | 5 min | Multi-AZ streaming replication + PITR + automated failover + cross-region async replica. Own program of work. |
 
 The current build is **MVP-tier**. Everything below targets MVP RPO/RTO.
@@ -204,6 +204,10 @@ When the on-call has to choose which tier to restore from:
 | 14-60 d | `weekly/` matching ISO week | Daily evicted; weekly is the closest representative |
 | > 60 d | `monthly/` matching calendar month | Compliance retrieval |
 
-For the **production tier RPO of 1 h**, replace the nightly dump with WAL
-archiving + base-backup + PITR. That's a separate program of work
-(round-17 backlog).
+For the **production tier RPO of 1 h**, switch to the WAL archiving + PITR
+pipeline. The scripts (`scripts/archive-wal.sh`,
+`scripts/wal-archive-healthcheck.sh`) and the procedure
+(`docs/PITR_RESTORE.md`) shipped in round 17. The remaining operational
+piece is the base-backup tool (`pg_basebackup` for self-managed, provider
+snapshots for managed Postgres) — see `docs/WAL_ARCHIVING.md` "Two
+operating modes" for the trade-off.

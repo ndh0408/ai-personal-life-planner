@@ -3,6 +3,7 @@ import { hashAuthToken } from './auth-token.util';
 import type { ConfigService } from '@nestjs/config';
 import type { SecurityAuditService } from './security-audit.service';
 import type { EmailProvider } from './email-provider';
+import { EmailTemplateService } from './email-template.service';
 
 function makePrisma() {
   const users = new Map<string, any>();
@@ -10,6 +11,9 @@ function makePrisma() {
   const api: any = {
     users,
     tokens,
+    userProfile: {
+      findUnique: jest.fn(async () => null),
+    },
     user: {
       findUnique: jest.fn(({ where }: any) => {
         for (const u of users.values()) if (u.email === where.email || u.id === where.id) return Promise.resolve(u);
@@ -74,7 +78,7 @@ describe('EmailVerificationService', () => {
     const prisma = makePrisma();
     prisma.users.set('u1', { id: 'u1', email: 'a@b.co', displayName: 'A', emailVerifiedAt: null });
     const provider = captureProvider();
-    const svc = new EmailVerificationService(prisma as never, stubConfig, stubAudit, provider);
+    const svc = new EmailVerificationService(prisma as never, stubConfig, stubAudit, new EmailTemplateService(), provider);
     await svc.resend('a@b.co');
     expect(prisma.tokens).toHaveLength(1);
     const stored = prisma.tokens[0];
@@ -88,7 +92,7 @@ describe('EmailVerificationService', () => {
     const prisma = makePrisma();
     prisma.users.set('u1', { id: 'u1', email: 'a@b.co', displayName: 'A', emailVerifiedAt: null });
     const provider = captureProvider();
-    const svc = new EmailVerificationService(prisma as never, stubConfig, stubAudit, provider);
+    const svc = new EmailVerificationService(prisma as never, stubConfig, stubAudit, new EmailTemplateService(), provider);
     // Inject a known token rather than relying on the random one from resend().
     const raw = 'a-fake-but-long-enough-token-1234567890';
     prisma.tokens.push({
@@ -108,7 +112,7 @@ describe('EmailVerificationService', () => {
     const prisma = makePrisma();
     prisma.users.set('u1', { id: 'u1', email: 'a@b.co', emailVerifiedAt: null });
     const provider = captureProvider();
-    const svc = new EmailVerificationService(prisma as never, stubConfig, stubAudit, provider);
+    const svc = new EmailVerificationService(prisma as never, stubConfig, stubAudit, new EmailTemplateService(), provider);
     const raw = 'expired-token-1234567890123456';
     prisma.tokens.push({
       id: 't-1',
@@ -127,7 +131,7 @@ describe('EmailVerificationService', () => {
     const prisma = makePrisma();
     prisma.users.set('u1', { id: 'u1', email: 'a@b.co', emailVerifiedAt: null });
     const provider = captureProvider();
-    const svc = new EmailVerificationService(prisma as never, stubConfig, stubAudit, provider);
+    const svc = new EmailVerificationService(prisma as never, stubConfig, stubAudit, new EmailTemplateService(), provider);
     const raw = 'used-token-12345678901234567';
     prisma.tokens.push({
       id: 't-1',
@@ -145,7 +149,7 @@ describe('EmailVerificationService', () => {
   it('resend on unknown email is a silent no-op', async () => {
     const prisma = makePrisma();
     const provider = captureProvider();
-    const svc = new EmailVerificationService(prisma as never, stubConfig, stubAudit, provider);
+    const svc = new EmailVerificationService(prisma as never, stubConfig, stubAudit, new EmailTemplateService(), provider);
     await svc.resend('nobody@b.co');
     expect(prisma.tokens).toHaveLength(0);
     expect(provider.sent).toHaveLength(0);
@@ -155,7 +159,7 @@ describe('EmailVerificationService', () => {
     const prisma = makePrisma();
     prisma.users.set('u1', { id: 'u1', email: 'a@b.co', displayName: 'A', emailVerifiedAt: null });
     const provider = captureProvider();
-    const svc = new EmailVerificationService(prisma as never, stubConfig, stubAudit, provider);
+    const svc = new EmailVerificationService(prisma as never, stubConfig, stubAudit, new EmailTemplateService(), provider);
     await svc.resend('a@b.co');
     await svc.resend('a@b.co');
     expect(prisma.tokens).toHaveLength(1);

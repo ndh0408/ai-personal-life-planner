@@ -4,6 +4,7 @@ import { hashAuthToken } from './auth-token.util';
 import type { ConfigService } from '@nestjs/config';
 import type { SecurityAuditService } from './security-audit.service';
 import type { EmailProvider } from './email-provider';
+import { EmailTemplateService } from './email-template.service';
 
 function makePrisma() {
   const users = new Map<string, any>();
@@ -13,6 +14,9 @@ function makePrisma() {
     users,
     tokens,
     refresh,
+    userProfile: {
+      findUnique: jest.fn(async () => null),
+    },
     user: {
       findUnique: jest.fn(({ where }: any) => {
         for (const u of users.values()) if (u.email === where.email || u.id === where.id) return Promise.resolve(u);
@@ -71,7 +75,7 @@ const stubProvider: EmailProvider = { send: jest.fn(async () => undefined) };
 describe('PasswordResetService', () => {
   it('forgot on unknown email returns silently (no leak)', async () => {
     const prisma = makePrisma();
-    const svc = new PasswordResetService(prisma as never, stubConfig, stubAudit, stubProvider);
+    const svc = new PasswordResetService(prisma as never, stubConfig, stubAudit, new EmailTemplateService(), stubProvider);
     await svc.forgot('nobody@b.co');
     expect(prisma.tokens).toHaveLength(0);
     // Audit DOES record the attempt (with emailHint) for forensics.
@@ -100,7 +104,7 @@ describe('PasswordResetService', () => {
       usedAt: null,
       createdAt: new Date(),
     });
-    const svc = new PasswordResetService(prisma as never, stubConfig, stubAudit, stubProvider);
+    const svc = new PasswordResetService(prisma as never, stubConfig, stubAudit, new EmailTemplateService(), stubProvider);
     await svc.reset(raw, 'newpw1234');
     const after = prisma.users.get(u.id);
     expect(await bcrypt.compare('newpw1234', after.passwordHash)).toBe(true);
@@ -127,7 +131,7 @@ describe('PasswordResetService', () => {
       usedAt: null,
       createdAt: new Date(),
     });
-    const svc = new PasswordResetService(prisma as never, stubConfig, stubAudit, stubProvider);
+    const svc = new PasswordResetService(prisma as never, stubConfig, stubAudit, new EmailTemplateService(), stubProvider);
     await expect(svc.reset(raw, 'newpw1234')).rejects.toMatchObject({
       response: { errorCode: 'AUTH_TOKEN_EXPIRED' },
     });
@@ -145,7 +149,7 @@ describe('PasswordResetService', () => {
       usedAt: null,
       createdAt: new Date(),
     });
-    const svc = new PasswordResetService(prisma as never, stubConfig, stubAudit, stubProvider);
+    const svc = new PasswordResetService(prisma as never, stubConfig, stubAudit, new EmailTemplateService(), stubProvider);
     await expect(svc.reset(raw, 'short')).rejects.toMatchObject({
       response: { errorCode: 'PASSWORD_POLICY_FAILED' },
     });

@@ -4,14 +4,15 @@ This is the on-call cheat sheet for the LifeOS AI backend. Mobile app issues
 without a backend correlation route to the mobile owner; everything else lives
 here.
 
-> **Sister docs (round 16):**
-> - `docs/DISASTER_RECOVERY_RUNBOOK.md` — six failure scenarios (DB/Redis
->   crash, AI/notif provider outage, bad deploy, migration failed) — start here
->   when you're paged at 03:00.
+> **Sister docs:**
+> - `docs/DISASTER_RECOVERY_RUNBOOK.md` — six failure scenarios — start
+>   here when you're paged at 03:00.
 > - `docs/BACKUP_RESTORE_DRILL.md` — quarterly drill checklist + tiered
->   RPO/RTO targets (MVP / production / enterprise).
-> - `docs/ENCRYPTED_BACKUPS.md` — the encryption + storage contract for nightly
->   dumps.
+>   RPO/RTO targets.
+> - `docs/ENCRYPTED_BACKUPS.md` — encrypted nightly dump contract.
+> - `docs/WAL_ARCHIVING.md` — WAL archive_command setup + healthcheck (round 17).
+> - `docs/PITR_RESTORE.md` — point-in-time recovery procedure (round 17).
+> - `docs/EMAIL_DELIVERY.md` — SMTP nodemailer transport (round 17).
 > - `scripts/prod-rollback.md` — image rollback recipes.
 
 ## 0. Topology

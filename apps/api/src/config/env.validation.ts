@@ -58,6 +58,24 @@ const EnvSchema = z
       .default('false')
       .transform((v) => v === 'true' || v === '1'),
     OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),
+
+    // ---- Round 14 + 17: auth-security email transport ---------------------
+    // EMAIL_PROVIDER selects the transport. `console` (default) just logs;
+    // `smtp` uses nodemailer with the SMTP_* vars below. Production with
+    // EMAIL_PROVIDER=smtp REFUSES to start if SMTP_HOST/USER/PASS/FROM are
+    // missing.
+    EMAIL_PROVIDER: z.enum(['console', 'smtp']).default('console'),
+    SMTP_HOST: z.string().optional(),
+    SMTP_PORT: z.coerce.number().int().positive().default(587),
+    SMTP_SECURE: z
+      .string()
+      .default('false')
+      .transform((v) => v === 'true' || v === '1'),
+    SMTP_USER: z.string().optional(),
+    SMTP_PASS: z.string().optional(),
+    SMTP_FROM: z.string().optional(),
+    /** Used to build verify-email + reset-password links emailed to users. */
+    APP_PUBLIC_URL: z.string().url().optional(),
   })
   .superRefine((v, ctx) => {
     if (v.NODE_ENV === 'production') {
@@ -104,6 +122,27 @@ const EnvSchema = z
           path: ['OTEL_EXPORTER_OTLP_ENDPOINT'],
           message: 'OTEL_EXPORTER_OTLP_ENDPOINT is required when OTEL_ENABLED=true.',
         });
+      }
+      // Round 17: SMTP fail-fast. EMAIL_PROVIDER=smtp without the four
+      // required envs means verification + reset emails would silently
+      // fail-open at runtime — refuse boot instead.
+      if (v.EMAIL_PROVIDER === 'smtp') {
+        for (const key of ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM'] as const) {
+          if (!v[key] || String(v[key]).trim() === '') {
+            ctx.addIssue({
+              code: 'custom',
+              path: [key],
+              message: `${key} is required when EMAIL_PROVIDER=smtp in production.`,
+            });
+          }
+        }
+        if (!v.APP_PUBLIC_URL) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['APP_PUBLIC_URL'],
+            message: 'APP_PUBLIC_URL is required when EMAIL_PROVIDER=smtp (used to build verify/reset links).',
+          });
+        }
       }
     }
   });

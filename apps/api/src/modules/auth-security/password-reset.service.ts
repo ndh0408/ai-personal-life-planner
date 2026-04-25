@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { generateAuthToken, hashAuthToken } from './auth-token.util';
 import { EMAIL_PROVIDER, type EmailProvider } from './email-provider';
+import { EmailTemplateService } from './email-template.service';
 import { SecurityAuditService } from './security-audit.service';
 
 const TOKEN_TTL_MINUTES = 30;
@@ -26,6 +27,7 @@ export class PasswordResetService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly audit: SecurityAuditService,
+    private readonly templates: EmailTemplateService,
     @Inject(EMAIL_PROVIDER) private readonly emailProvider: EmailProvider,
   ) {}
 
@@ -65,15 +67,28 @@ export class PasswordResetService {
     });
     const baseUrl = this.config.get<string>('APP_PUBLIC_URL') ?? 'https://lifeos.example';
     const link = `${baseUrl}/reset-password?token=${encodeURIComponent(raw)}`;
-    await this.emailProvider.send({
-      to: user.email,
-      subject: 'Reset your LifeOS password',
-      text:
-        `Hi ${user.displayName},\n\n` +
-        `We received a request to reset your password. Visit:\n${link}\n\n` +
-        `This link expires in ${TOKEN_TTL_MINUTES} minutes.\n` +
-        `If you didn't request this, you can ignore this email.`,
+    const profile = await this.prisma.userProfile.findUnique({
+      where: { userId: user.id },
+      select: { locale: true },
     });
+    const rendered = this.templates.render('reset-password', profile?.locale, {
+      name: user.displayName,
+      link,
+      ttlMinutes: TOKEN_TTL_MINUTES,
+    });
+    try {
+      await this.emailProvider.send({
+        to: user.email,
+        subject: rendered.subject,
+        text: rendered.text,
+        html: rendered.html,
+      });
+    } catch (e) {
+      // Token already persisted; user may retry. Don't surface a 5xx that
+      // would leak account-existence to the caller.
+      const msg = e instanceof Error ? e.message : String(e);
+      this.logger.warn(`reset email send failed (token persisted): ${msg.split('\n')[0]}`);
+    }
   }
 
   /**

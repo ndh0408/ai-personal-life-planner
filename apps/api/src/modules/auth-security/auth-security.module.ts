@@ -9,15 +9,16 @@ import {
   SmtpEmailProvider,
   type EmailProvider,
 } from './email-provider';
+import { EmailTemplateService } from './email-template.service';
 import { AuthSecurityController } from './auth-security.controller';
 
 /**
  * Global so AuthService can inject SecurityAuditService without re-importing.
  *
- * EmailProvider selection: when `SMTP_HOST` is set, swap to the SMTP
- * provider; otherwise stay on the console provider. The SMTP provider is a
- * skeleton today — concrete `nodemailer` wiring is one follow-up commit
- * (see docs/AUTH_SECURITY.md).
+ * EmailProvider selection (round 17): keyed on `EMAIL_PROVIDER` env. The
+ * production env validation (`env.validation.ts`) refuses to start when
+ * `EMAIL_PROVIDER=smtp` and any of SMTP_HOST/USER/PASS/FROM are missing,
+ * so the factory below can trust that the smtp branch is fully configured.
  */
 @Global()
 @Module({
@@ -26,6 +27,7 @@ import { AuthSecurityController } from './auth-security.controller';
     SecurityAuditService,
     EmailVerificationService,
     PasswordResetService,
+    EmailTemplateService,
     ConsoleEmailProvider,
     SmtpEmailProvider,
     {
@@ -36,10 +38,18 @@ import { AuthSecurityController } from './auth-security.controller';
         consoleProvider: ConsoleEmailProvider,
         smtpProvider: SmtpEmailProvider,
       ): EmailProvider => {
-        return config.get<string>('SMTP_HOST') ? smtpProvider : consoleProvider;
+        return config.get<string>('EMAIL_PROVIDER') === 'smtp'
+          ? smtpProvider
+          : consoleProvider;
       },
     },
   ],
-  exports: [SecurityAuditService, EmailVerificationService, PasswordResetService, EMAIL_PROVIDER],
+  exports: [
+    SecurityAuditService,
+    EmailVerificationService,
+    PasswordResetService,
+    EmailTemplateService,
+    EMAIL_PROVIDER,
+  ],
 })
 export class AuthSecurityModule {}
