@@ -115,4 +115,8 @@ fi
 SIZE="$(stat -c %s "$DEST")"
 log "OK ${WAL_NAME} encrypted=${SIZE}B mode=${MODE}"
 
+# Round-18 marker for backup-metrics-exporter.sh: the exporter reads
+# .last-wal-archive-success to emit lifeos_wal_archive_last_success_timestamp.
+date -u +%s > "$WAL_DIR/.last-wal-archive-success"
+
 exit 0

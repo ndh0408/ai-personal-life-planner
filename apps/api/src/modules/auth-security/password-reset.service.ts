@@ -82,6 +82,8 @@ export class PasswordResetService {
         subject: rendered.subject,
         text: rendered.text,
         html: rendered.html,
+        template: 'reset-password',
+        locale: profile?.locale ?? 'vi',
       });
     } catch (e) {
       // Token already persisted; user may retry. Don't surface a 5xx that

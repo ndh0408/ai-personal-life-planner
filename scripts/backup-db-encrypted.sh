@@ -88,11 +88,19 @@ fi
 # independently. Falls back to the simple 14-day delete if the script is
 # unavailable (e.g. on a stripped-down image).
 if [[ -x "$(dirname "$0")/prune-backups.sh" ]]; then
-  BACKUP_DIR="$BACKUP_DIR" "$(dirname "$0")/prune-backups.sh" || \
+  if BACKUP_DIR="$BACKUP_DIR" "$(dirname "$0")/prune-backups.sh"; then
+    # Round-18 marker for backup-metrics-exporter.sh.
+    date -u +%s > "$BACKUP_DIR/.last-prune-success"
+  else
     log "warn: prune-backups.sh exited non-zero — leaving archives in place"
+  fi
 else
   find "$BACKUP_DIR" -maxdepth 1 -name 'lifeos-*.sql.gz.enc' -mtime +14 -delete \
     2>/dev/null || true
 fi
+
+# Round-18 marker for backup-metrics-exporter.sh. Writes the unix epoch of
+# the successful backup. The exporter reads this and emits gauges.
+date -u +%s > "$BACKUP_DIR/.last-backup-success"
 
 log "done"

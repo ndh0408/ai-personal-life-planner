@@ -85,6 +85,8 @@ export class EmailVerificationService {
         subject: rendered.subject,
         text: rendered.text,
         html: rendered.html,
+        template: 'verify-email',
+        locale: profile?.locale ?? 'vi',
       });
     } catch (e) {
       // Token is already persisted — the user can hit "resend" and try

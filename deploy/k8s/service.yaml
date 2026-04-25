@@ -1,0 +1,13 @@
+# Cluster-internal service. Front this with an Ingress + TLS.
+apiVersion: v1
+kind: Service
+metadata:
+  name: lifeos-api
+  namespace: lifeos
+spec:
+  selector: { app: lifeos, tier: api }
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+  type: ClusterIP

@@ -13,6 +13,9 @@ export type Me = {
   avatarUrl: string | null;
   role: 'USER' | 'ADMIN';
   status: 'ACTIVE' | 'DISABLED';
+  /** Round-18: ISO timestamp set when the user clicks the verify-email link.
+   *  null ⇒ unverified, banner is shown. */
+  emailVerifiedAt: string | null;
   profile: {
     fullName: string;
     age: number | null;

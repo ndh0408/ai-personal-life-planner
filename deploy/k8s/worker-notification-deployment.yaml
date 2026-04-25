@@ -1,0 +1,40 @@
+# Worker tier — notification queue.
+#
+# Today the API binary drains EVERY queue when QUEUE_ENABLED=true. This
+# deployment runs the same image with no HTTP listener (PORT=3001, no
+# Service), no Prometheus scrape (METRICS_ENABLED=false), and a
+# notification-heavy concurrency profile. WORKER_ROLE is informational
+# until a future round filters the worker by role.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lifeos-worker-notification
+  namespace: lifeos
+  labels: { app: lifeos, tier: worker, role: notification }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: lifeos, tier: worker, role: notification }
+  template:
+    metadata:
+      labels: { app: lifeos, tier: worker, role: notification }
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/your-org/lifeos-api:CHANGE_ME
+          envFrom:
+            - configMapRef: { name: lifeos-api-config }
+            - secretRef: { name: lifeos-api-secrets }
+          env:
+            - name: PORT
+              value: "3001"
+            - name: METRICS_ENABLED
+              value: "false"
+            - name: WORKER_ROLE
+              value: "notification"
+            - name: WORKER_CONCURRENCY_NOTIFICATION
+              value: "10"
+          resources:
+            requests: { cpu: "100m", memory: "192Mi" }
+            limits:   { cpu: "500m", memory: "512Mi" }
+      terminationGracePeriodSeconds: 60

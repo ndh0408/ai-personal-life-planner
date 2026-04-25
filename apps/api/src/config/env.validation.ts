@@ -58,6 +58,8 @@ const EnvSchema = z
       .default('false')
       .transform((v) => v === 'true' || v === '1'),
     OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),
+    OTEL_SERVICE_NAME: z.string().default('lifeos-api'),
+    OTEL_ENVIRONMENT: z.enum(['development', 'staging', 'production']).default('development'),
 
     // ---- Round 14 + 17: auth-security email transport ---------------------
     // EMAIL_PROVIDER selects the transport. `console` (default) just logs;

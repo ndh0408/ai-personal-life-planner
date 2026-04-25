@@ -637,3 +637,40 @@ round-17 covering EmailTemplateService + SmtpEmailProvider config
 validation + redactAddress).
 
 **End of Round-17 patch.**
+
+---
+
+## Round 18 patch — observability + mobile email-verify + ops references
+
+Full report: `docs/ROUND_18_OBSERVABILITY_MOBILE_COMPLETION.md`. Closes the
+round-17 backlog list (metrics exporter, OTel SDK skeleton, mobile banner,
+GDPR purge, k8s manifests, pgBackRest reference) and adds the cardinality
+discipline + audit-trail required for production observability.
+
+| # | Item | Status |
+|--|--|--|
+| 1 | Email metrics (send/failure/latency/template render) | **DONE** |
+| 2 | WAL/backup age gauges + textfile exporter | **DONE** |
+| 3 | Marker writes from cron-driven backup + WAL scripts | **DONE** |
+| 4 | AI quota refusal counter | **DONE** |
+| 5 | Live queue depth gauge (registered; live setter round-19) | **PARTIAL** |
+| 6 | OTel SDK skeleton (env-gated + runtime-optional + header redaction) | **DONE** |
+| 7 | GDPR purge admin endpoint (dry-run, confirmation, audit, no self-purge, no admin-target) | **DONE** |
+| 8 | Mobile email-verify banner on Dashboard (vi/en) | **DONE** |
+| 9 | K8s reference manifests (api + 4 workers + service + HPA + cron + cm + secret) | **DONE** (reference only) |
+| 10 | pgBackRest reference setup | **DONE** (reference only) |
+
+Tests: 46 suites / **246 tests pass** (229 round-17 baseline + 17 new
+round-18 covering DataPurge + MetricsRegistry + classifyEmailFailure +
+maybeStartOtel).
+
+Cardinality discipline (no userId / email / token / API key on any label)
+audited and documented in the completion doc.
+
+Readiness: **unchanged from Round 17** — production-tier RPO of 5 min is
+still gated on operator base-backup tool choice; enterprise tier still
+requires multi-AZ replication. Round 18 makes the operations + observability
+posture production-grade for the **MVP and pilot tiers**, and lays the
+foundation pgBackRest + SMTP credentials need to lift production-tier.
+
+**End of Round-18 patch.**

@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lifeos-worker-ai
+  namespace: lifeos
+  labels: { app: lifeos, tier: worker, role: ai }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: lifeos, tier: worker, role: ai }
+  template:
+    metadata:
+      labels: { app: lifeos, tier: worker, role: ai }
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/your-org/lifeos-api:CHANGE_ME
+          envFrom:
+            - configMapRef: { name: lifeos-api-config }
+            - secretRef: { name: lifeos-api-secrets }
+          env:
+            - name: PORT
+              value: "3002"
+            - name: METRICS_ENABLED
+              value: "false"
+            - name: WORKER_ROLE
+              value: "ai"
+            - name: WORKER_CONCURRENCY_AI
+              value: "4"
+          resources:
+            requests: { cpu: "200m", memory: "256Mi" }
+            limits:   { cpu: "1000m", memory: "768Mi" }
+      terminationGracePeriodSeconds: 60

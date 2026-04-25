@@ -15,6 +15,8 @@ export class UsersService {
         avatarUrl: true,
         role: true,
         status: true,
+        // Round-18: mobile email-verify banner reads this. Null ⇒ unverified.
+        emailVerifiedAt: true,
         createdAt: true,
         updatedAt: true,
         profile: {

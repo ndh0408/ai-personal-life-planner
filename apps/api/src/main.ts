@@ -7,8 +7,14 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { requestIdMiddleware } from './common/middleware/request-id.middleware';
+import { maybeStartOtel } from './modules/observability/otel.bootstrap';
 
 async function bootstrap() {
+  // Round-18: OTel auto-instrumentations need to monkey-patch Node's HTTP
+  // module BEFORE Nest creates the server. No-ops cleanly when OTEL_ENABLED
+  // is unset OR when the SDK packages aren't installed.
+  await maybeStartOtel();
+
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const config = app.get(ConfigService);
   const logger = new Logger('Bootstrap');

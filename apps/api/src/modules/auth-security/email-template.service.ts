@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
+import { MetricsRegistry } from '../observability/metrics.registry';
 
 export type EmailTemplateKey = 'verify-email' | 'reset-password' | 'security-alert';
 
@@ -111,15 +112,30 @@ const TEMPLATES: Record<EmailTemplateKey, Template> = {
  */
 @Injectable()
 export class EmailTemplateService {
+  // Optional so tests that construct directly don't need a stub.
+  constructor(@Optional() private readonly metrics?: MetricsRegistry) {}
+
   render(
     key: EmailTemplateKey,
     locale: string | undefined,
     vars: Record<string, string | number | undefined | null> = {},
   ): RenderedEmail {
     const tpl = TEMPLATES[key];
-    if (!tpl) throw new Error(`unknown email template: ${key}`);
     const loc: Locale = locale === 'en' ? 'en' : 'vi';
+    if (!tpl) {
+      this.metrics?.emailTemplateRenderTotal.inc({
+        template: 'unknown',
+        locale: loc,
+        status: 'failed',
+      });
+      throw new Error(`unknown email template: ${key}`);
+    }
     const text = interpolate(tpl.text[loc], vars);
+    this.metrics?.emailTemplateRenderTotal.inc({
+      template: key,
+      locale: loc,
+      status: 'ok',
+    });
     return {
       subject: interpolate(tpl.subject[loc], vars),
       text,

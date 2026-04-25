@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lifeos-worker-report
+  namespace: lifeos
+  labels: { app: lifeos, tier: worker, role: report }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: lifeos, tier: worker, role: report }
+  template:
+    metadata:
+      labels: { app: lifeos, tier: worker, role: report }
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/your-org/lifeos-api:CHANGE_ME
+          envFrom:
+            - configMapRef: { name: lifeos-api-config }
+            - secretRef: { name: lifeos-api-secrets }
+          env:
+            - name: PORT
+              value: "3003"
+            - name: METRICS_ENABLED
+              value: "false"
+            - name: WORKER_ROLE
+              value: "report"
+            - name: WORKER_CONCURRENCY_REPORT
+              value: "4"
+          resources:
+            requests: { cpu: "100m", memory: "192Mi" }
+            limits:   { cpu: "500m", memory: "512Mi" }
+      terminationGracePeriodSeconds: 60

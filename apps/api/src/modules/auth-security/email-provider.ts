@@ -1,6 +1,7 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createTransport, type Transporter } from 'nodemailer';
+import { MetricsRegistry, classifyEmailFailure } from '../observability/metrics.registry';
 
 export type Email = {
   to: string;
@@ -8,6 +9,9 @@ export type Email = {
   text: string;
   /** Optional html body. Providers should fall back to text if missing. */
   html?: string;
+  /** Round 18: optional template + locale for metric labels (low cardinality). */
+  template?: string;
+  locale?: string;
 };
 
 /**
@@ -31,11 +35,21 @@ export const EMAIL_PROVIDER = Symbol('EMAIL_PROVIDER');
 export class ConsoleEmailProvider implements EmailProvider {
   private readonly logger = new Logger(ConsoleEmailProvider.name);
 
+  // MetricsRegistry is @Optional so tests that construct the provider
+  // directly (no Nest DI) don't need a stub.
+  constructor(@Optional() private readonly metrics?: MetricsRegistry) {}
+
   async send(email: Email): Promise<void> {
     const preview = email.text.split('\n').slice(0, 2).join(' ').slice(0, 120);
     this.logger.log(
       `[email-console] to=${email.to.slice(0, 4)}…@${email.to.split('@')[1] ?? '?'} subject="${email.subject}" preview="${preview}"`,
     );
+    this.metrics?.emailSendTotal.inc({
+      provider: 'console',
+      status: 'ok',
+      template: email.template ?? 'unknown',
+      locale: email.locale ?? 'unknown',
+    });
   }
 }
 
@@ -61,7 +75,10 @@ export class SmtpEmailProvider implements EmailProvider, OnModuleInit {
   private transporter: Transporter | null = null;
   private from: string | undefined;
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    @Optional() private readonly metrics?: MetricsRegistry,
+  ) {}
 
   onModuleInit(): void {
     // Build the transporter eagerly so a misconfig fails at boot, not on
@@ -103,6 +120,12 @@ export class SmtpEmailProvider implements EmailProvider, OnModuleInit {
     if (!this.from) {
       throw new Error('SmtpEmailProvider: SMTP_FROM is empty');
     }
+    const tplLabel = email.template ?? 'unknown';
+    const localeLabel = email.locale ?? 'unknown';
+    const stop = this.metrics?.emailSendLatency.startTimer({
+      provider: 'smtp',
+      template: tplLabel,
+    });
     try {
       await this.transporter.sendMail({
         from: this.from,
@@ -114,6 +137,12 @@ export class SmtpEmailProvider implements EmailProvider, OnModuleInit {
       this.logger.log(
         `smtp send OK to=${redactAddress(email.to)} subject="${email.subject}"`,
       );
+      this.metrics?.emailSendTotal.inc({
+        provider: 'smtp',
+        status: 'ok',
+        template: tplLabel,
+        locale: localeLabel,
+      });
     } catch (e) {
       const name = e instanceof Error ? e.name : 'Error';
       const msg = e instanceof Error ? e.message : String(e);
@@ -122,7 +151,19 @@ export class SmtpEmailProvider implements EmailProvider, OnModuleInit {
       this.logger.warn(
         `smtp send FAILED to=${redactAddress(email.to)} subject="${email.subject}" error=${name}: ${safe}`,
       );
+      this.metrics?.emailSendTotal.inc({
+        provider: 'smtp',
+        status: 'failed',
+        template: tplLabel,
+        locale: localeLabel,
+      });
+      this.metrics?.emailSendFailureTotal.inc({
+        provider: 'smtp',
+        reason: classifyEmailFailure(e),
+      });
       throw e;
+    } finally {
+      stop?.();
     }
   }
 }

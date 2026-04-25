@@ -29,6 +29,7 @@ import { aiApi } from '../../services/api/ai.api';
 import { useErrorMessage } from '../../i18n/useErrorMessage';
 import { formatDateByLocale, formatMoneyByLocale, todayIso } from '../../utils/format';
 import { useAuthStore } from '../../store/auth.store';
+import { EmailVerifyBanner } from '../../components/auth/EmailVerifyBanner';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -75,6 +76,10 @@ export function DashboardScreen() {
       style={{ flex: 1, backgroundColor: colors.bg }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
+      {/* Round 18 — email verification banner. Renders nothing when the
+          signed-in user is already verified. */}
+      <EmailVerifyBanner />
+
       {/* 1. GREETING */}
       <GreetingCard data={data} userEmail={user?.email} />
 

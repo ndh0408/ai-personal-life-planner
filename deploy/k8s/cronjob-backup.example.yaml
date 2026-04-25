@@ -1,0 +1,39 @@
+# Daily encrypted backup. Mounts a PVC for the spool, drops a marker file
+# the textfile-collector exporter picks up. For off-box upload, set
+# BACKUP_BUCKET in the secret.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: lifeos-backup
+  namespace: lifeos
+spec:
+  schedule: "0 2 * * *"     # 02:00 UTC daily
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: ghcr.io/your-org/lifeos-api:CHANGE_ME
+              command: ["/bin/sh", "-c"]
+              args: ["bash /workspace/scripts/backup-db-encrypted.sh"]
+              env:
+                - name: BACKUP_DIR
+                  value: "/var/lib/lifeos/backups"
+              envFrom:
+                - secretRef: { name: lifeos-api-secrets }
+              volumeMounts:
+                - name: backup-spool
+                  mountPath: /var/lib/lifeos/backups
+              resources:
+                requests: { cpu: "100m", memory: "128Mi" }
+                limits:   { cpu: "500m", memory: "512Mi" }
+          volumes:
+            - name: backup-spool
+              persistentVolumeClaim:
+                claimName: lifeos-backup-spool

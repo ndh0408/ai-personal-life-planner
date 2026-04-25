@@ -68,6 +68,9 @@ import { FinanceCoreModule } from './modules/finance-core/finance-core.module';
 // Round 14: auth security (lockout, email verification, password reset)
 import { AuthSecurityModule } from './modules/auth-security/auth-security.module';
 
+// Round 18: admin-only ops (GDPR purge today)
+import { AdminModule } from './modules/admin/admin.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -95,6 +98,7 @@ import { AuthSecurityModule } from './modules/auth-security/auth-security.module
     AiUsageModule,
     FinanceCoreModule,
     AuthSecurityModule,
+    AdminModule,
 
     // Foundation
     HealthModule,

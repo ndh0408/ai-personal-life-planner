@@ -111,4 +111,13 @@ fi
 
 log "----"
 log "PASS=${PASS}  FAIL=${FAIL}"
+
+# Round-18 marker. The drill operator can pass VERIFY_MARKER_DIR to capture
+# a marker the exporter picks up. Default is no marker (so production reads
+# don't accidentally update the metric).
+if [[ -n "${VERIFY_MARKER_DIR:-}" && "$FAIL" -eq 0 ]]; then
+  mkdir -p "$VERIFY_MARKER_DIR"
+  date -u +%s > "$VERIFY_MARKER_DIR/.last-backup-verify-success"
+fi
+
 [[ "$FAIL" -eq 0 ]]

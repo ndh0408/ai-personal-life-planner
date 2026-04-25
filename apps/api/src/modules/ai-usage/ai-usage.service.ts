@@ -2,10 +2,12 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  Optional,
 } from '@nestjs/common';
 import { AiFeature, type AiUsageQuota, type Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { FEATURE_TO_QUOTA, ADMIN_BYPASS_PLANS } from './ai-usage.constants';
+import { MetricsRegistry } from '../observability/metrics.registry';
 
 type LogEntry = {
   userId: string;
@@ -37,7 +39,10 @@ type LogEntry = {
 export class AiUsageService {
   private readonly logger = new Logger(AiUsageService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly metrics?: MetricsRegistry,
+  ) {}
 
   async getOrCreateQuota(userId: string): Promise<AiUsageQuota> {
     return this.prisma.aiUsageQuota.upsert({
@@ -74,6 +79,7 @@ export class AiUsageService {
       },
     });
     if (count >= limit) {
+      this.metrics?.aiQuotaBlockTotal.inc({ feature });
       throw new ForbiddenException({
         message: 'AI daily limit reached for this feature',
         errorCode: 'AI_DAILY_LIMIT_REACHED',
