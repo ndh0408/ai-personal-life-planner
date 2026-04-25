@@ -6,6 +6,7 @@ import { AiProviderService } from './ai-provider.service';
 import { MockAiProvider } from '../providers/mock.provider';
 import type { UserAiProvider, UserAiPreference } from '@prisma/client';
 import type { AiProvider } from '../providers/ai-provider.interface';
+import { makeStubUsage } from './test-helpers';
 
 function makeConfig(env: Record<string, string | undefined> = {}): ConfigService {
   return {
@@ -65,7 +66,7 @@ const baseRow = (overrides: Partial<UserAiProvider> = {}): UserAiProvider => ({
 describe('AiProviderResolverService.completeForUser', () => {
   it('uses global provider when useOwnApiKey=false', async () => {
     const prisma = makePrisma({ pref: null, providers: [] });
-    const orchestrator = new AiProviderService(new MockAiProvider());
+    const orchestrator = new AiProviderService(new MockAiProvider(), makeStubUsage());
     const globalSpy: AiProvider = { name: 'mock', complete: jest.fn(async () => ({ text: '{}', provider: 'mock', model: 'mock' })) };
     const svc = new AiProviderResolverService(
       prisma as never,
@@ -89,7 +90,7 @@ describe('AiProviderResolverService.completeForUser', () => {
       pref: { userId: 'user-A', useOwnApiKey: true, fallbackToGlobalProvider: true, defaultProviderId: null } as any,
       providers: [row],
     });
-    const orchestrator = new AiProviderService(new MockAiProvider());
+    const orchestrator = new AiProviderService(new MockAiProvider(), makeStubUsage());
     // Spy on orchestrator.complete to verify the override (ephemeral) is passed.
     const spy = jest
       .spyOn(orchestrator, 'complete')
@@ -117,7 +118,7 @@ describe('AiProviderResolverService.completeForUser', () => {
       pref: { userId: 'user-A', useOwnApiKey: true, fallbackToGlobalProvider: true, defaultProviderId: null } as any,
       providers: [row],
     });
-    const orchestrator = new AiProviderService(new MockAiProvider());
+    const orchestrator = new AiProviderService(new MockAiProvider(), makeStubUsage());
     const spy = jest.spyOn(orchestrator, 'complete')
       // First call (user-scope) blows up
       .mockRejectedValueOnce(new Error('upstream 500'))
@@ -145,7 +146,7 @@ describe('AiProviderResolverService.completeForUser', () => {
       pref: { userId: 'user-A', useOwnApiKey: true, fallbackToGlobalProvider: false, defaultProviderId: null } as any,
       providers: [row],
     });
-    const orchestrator = new AiProviderService(new MockAiProvider());
+    const orchestrator = new AiProviderService(new MockAiProvider(), makeStubUsage());
     jest.spyOn(orchestrator, 'complete').mockRejectedValue(new Error('upstream 500'));
 
     const svc = new AiProviderResolverService(
@@ -162,7 +163,7 @@ describe('AiProviderResolverService.completeForUser', () => {
 
   it('throws AI_PROVIDER_NOT_CONFIGURED in production when global is mock', async () => {
     const prisma = makePrisma({ pref: null, providers: [] });
-    const orchestrator = new AiProviderService(new MockAiProvider());
+    const orchestrator = new AiProviderService(new MockAiProvider(), makeStubUsage());
     const svc = new AiProviderResolverService(
       prisma as never,
       makeEncryption(),

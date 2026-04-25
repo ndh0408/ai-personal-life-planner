@@ -1,11 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { I18nModule } from './common/i18n/i18n.module';
 import { EncryptionModule } from './common/crypto/encryption.module';
+import { RedisService } from './modules/queue/redis.service';
+import { RedisThrottlerStorage } from './modules/queue/redis-throttler.storage';
+import { UserAwareThrottlerGuard } from './common/guards/user-aware-throttler.guard';
+import { MetricsInterceptor } from './modules/observability/metrics.interceptor';
 
 // Foundation
 import { HealthModule } from './modules/health/health.module';
@@ -53,6 +57,11 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { ReportsModule } from './modules/reports/reports.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 
+// Round 12: infrastructure
+import { QueueModule } from './modules/queue/queue.module';
+import { ObservabilityModule } from './modules/observability/observability.module';
+import { AiUsageModule } from './modules/ai-usage/ai-usage.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -61,16 +70,23 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
       validate: validateEnv,
     }),
     ThrottlerModule.forRootAsync({
-      useFactory: () => [
-        {
-          ttl: Number(process.env.THROTTLE_TTL ?? 60) * 1000,
-          limit: Number(process.env.THROTTLE_LIMIT ?? 120),
-        },
-      ],
+      inject: [RedisService],
+      useFactory: (redis: RedisService) => ({
+        throttlers: [
+          {
+            ttl: Number(process.env.THROTTLE_TTL ?? 60) * 1000,
+            limit: Number(process.env.THROTTLE_LIMIT ?? 120),
+          },
+        ],
+        storage: new RedisThrottlerStorage(redis),
+      }),
     }),
     PrismaModule,
     I18nModule,
     EncryptionModule,
+    QueueModule,
+    ObservabilityModule,
+    AiUsageModule,
 
     // Foundation
     HealthModule,
@@ -121,7 +137,11 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: UserAwareThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
     },
   ],
 })

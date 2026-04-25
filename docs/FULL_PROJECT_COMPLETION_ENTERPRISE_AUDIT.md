@@ -1,4 +1,11 @@
-# LifeOS AI — Full Project Completion Enterprise Audit (Round 11)
+# LifeOS AI — Full Project Completion Enterprise Audit (Round 11, updated after Round 12)
+
+> **Round 12 update (2026-04-25):** the 5 P0 infrastructure blockers below
+> have been closed. See `docs/ROUND_12_INFRA_P0_COMPLETION.md` for the
+> implementation report. This audit document is preserved as the original
+> Round-11 finding; the **§14 Scalability + Capacity Planning** and **§21
+> Priority Fix Plan** sections have been updated in-place at the bottom to
+> reflect post-Round-12 reality.
 
 **Audit date:** 2026-04-25
 **Branch:** `master` @ `0447efa` + round 11 fixes (request-id middleware, graceful shutdown, refresh-token reuse-breach detection, OAuth state HMAC verification, mobile 401 full teardown, i18n parity restore)
@@ -473,4 +480,59 @@ These five fixes are 4–5 engineering days. After them the app is comfortably e
 
 Land items #1–#5 of §21 as a single "infrastructure round" (BullMQ + dispatcher + throttler-redis + AiUsageLog + Sentry — it's all one Redis dependency away). Then revisit finance-race fixes and email-verification before any public launch.
 
-**End of audit.**
+**End of Round-11 audit.**
+
+---
+
+## Round 12 patch — post-implementation status
+
+The following sections are amended in light of the Round-12 infrastructure
+delivery. Original §14 / §21 wording is intentionally left above for
+historical context.
+
+### §14 (amended) — Scalability + capacity, post-Round-12
+
+| # | Bottleneck | Status after Round 12 |
+|--|--|--|
+| 1 | Notification dispatcher | **CLOSED** — dispatcher → notification-queue → worker → Expo provider; idempotent + quiet-hours-aware. |
+| 2 | No async runner | **CLOSED** — BullMQ + 5 typed queues, retry/backoff, graceful shutdown. |
+| 3 | In-memory throttler | **CLOSED** — Redis-backed storage with safe in-memory fallback; per-user tracker; `RATE_LIMITED` / `AI_RATE_LIMITED` codes; standard headers. |
+| 4 | No observability | **CLOSED (foundation)** — `/metrics` (gated + bearer); structured 5xx logs with request id; `/health/ready` reports DB+Redis+queue depth. OTel SDK wiring deferred. |
+| 5 | Plaintext local backups | **STILL OPEN** — P1 next round. |
+| 6 | Unbounded write-only tables | **STILL OPEN** — partitioning + archival next round. |
+| 7 | No connection-pool side-car | **STILL OPEN** — PgBouncer next round. |
+| 8 | Single Postgres primary | **STILL OPEN** — read-replica + failover next round. |
+| 9 | `pg_dump` not point-in-time | **STILL OPEN** — WAL archiving next round. |
+| 10 | No CDN in front of API | **STILL OPEN** — CDN/edge next round. |
+
+### §21 (amended) — Priority fix plan, post-Round-12
+
+P0 list collapsed. Remaining P1 / P2 plan:
+
+| # | Tier | Fix | Effort |
+|--|--|--|--|
+| 1 | P1 | Per-account login lockout (`User.failedLoginAttempts` + `lockedUntil`) | 0.5 day |
+| 2 | P1 | Email verification + forgot-password (transactional email) | 1 day |
+| 3 | P1 | Encrypted off-box backups (gpg + S3) | 0.5 day |
+| 4 | P1 | Multi-currency aggregation (FX or reject mixed totals) | 1 day |
+| 5 | P1 | Debt + SavingGoal write race fixes ($transaction wrapping) | 0.5 day |
+| 6 | P1 | OTel SDK wiring (`@opentelemetry/sdk-node` + OTLP exporter) | 0.5 day |
+| 7 | P1 | BullMQ Prometheus exporter (or 50-line custom poller) | 0.5 day |
+| 8 | P2 | Worker-only deployment topology | 1 day |
+| 9 | P2 | PgBouncer / Pgpool side-car | 1 day |
+| 10 | P2 | DB partitioning + archival on hot tables | 2 days |
+
+### Updated readiness verdict
+
+| Tier | Verdict |
+|--|--|
+| Pilot (≤10k MAU) | **GO** — was already GO; notifications + queues now actually work end-to-end. |
+| 100k MAU | **GO with P1 backlog** — infra is shaped. The P1 list (auth lockout, email verify, encrypted backups) is the gating bundle. |
+| 500k MAU | **CONDITIONAL** — needs PgBouncer + read replica + worker-only deployment. None are large; ~3-4 dev-days. |
+| 1M+ MAU | **NOT YET** — needs partitioning, archival, multi-region, CDN, load test pass. |
+
+Million-user readiness was deliberately NOT claimed. Round 12 lifts the
+ceiling from ~60-80k DAU to ~500k MAU on a single primary; passing 1M MAU
+is its own program of work.
+
+**End of Round-12 patch.**

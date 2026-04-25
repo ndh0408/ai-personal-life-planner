@@ -1,11 +1,12 @@
 import { AiProviderService } from './ai-provider.service';
 import { MockAiProvider } from '../providers/mock.provider';
 import { AiTimeoutError } from '../providers/ai-provider.interface';
+import { makeStubUsage } from './test-helpers';
 
 describe('AiProviderService', () => {
   it('forwards a request and returns the provider response', async () => {
     const provider = new MockAiProvider();
-    const service = new AiProviderService(provider);
+    const service = new AiProviderService(provider, makeStubUsage());
 
     const res = await service.complete({ system: 'sys', prompt: '[task:chat] hi' });
     expect(JSON.parse(res.text).answer).toMatch(/walk/i);
@@ -15,7 +16,7 @@ describe('AiProviderService', () => {
   it('times out and surfaces AiTimeoutError', async () => {
     const provider = new MockAiProvider();
     provider.setHang(200);
-    const service = new AiProviderService(provider);
+    const service = new AiProviderService(provider, makeStubUsage());
     await expect(
       service.complete(
         { system: 'sys', prompt: 'anything' },
@@ -35,7 +36,7 @@ describe('AiProviderService', () => {
       }
       return original(req);
     };
-    const service = new AiProviderService(provider);
+    const service = new AiProviderService(provider, makeStubUsage());
     const res = await service.complete(
       { system: 'sys', prompt: '[task:chat] retry-me' },
       { timeoutMs: 80, maxAttempts: 2, retryDelayMs: 1 },

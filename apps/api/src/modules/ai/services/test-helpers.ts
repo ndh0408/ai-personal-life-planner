@@ -2,6 +2,22 @@ import type { AiCompletionRequest } from '../providers/ai-provider.interface';
 import type { AiProviderService, OrchestratorOptions } from './ai-provider.service';
 import type { AiProviderResolverService, AiTask } from './ai-provider-resolver.service';
 import type { PrivacyService } from '../../privacy/privacy.service';
+import type { AiUsageService } from '../../ai-usage/ai-usage.service';
+
+/**
+ * No-op AiUsageService for unit tests. Quota is never enforced; logs are
+ * dropped. Tests that want to assert on the ledger should construct the real
+ * service against a Prisma test instance.
+ */
+export function makeStubUsage(): AiUsageService {
+  return {
+    assertWithinQuota: async () => undefined,
+    log: async () => undefined,
+    getOrCreateQuota: async () => ({} as never),
+    getToday: async () => ({} as never),
+    getHistory: async () => [],
+  } as unknown as AiUsageService;
+}
 
 /**
  * Build a thin resolver stub for unit tests — no Prisma, no encryption.

@@ -5,6 +5,7 @@ import { AiJsonValidationService } from './ai-json-validation.service';
 import { PreviewCacheService } from './preview-cache.service';
 import { MockAiProvider } from '../providers/mock.provider';
 import { makeStubResolver, makeStubPrivacy } from './test-helpers';
+import { makeStubUsage } from './test-helpers';
 import type { LocaleService } from '../../../common/i18n/locale.service';
 
 function mockLocaleService(locale: 'vi' | 'en' = 'vi'): LocaleService {
@@ -79,7 +80,7 @@ function makePrisma() {
 describe('AiPlannerService.generate', () => {
   it('uses the mock provider, validates output, and persists items', async () => {
     const prisma = makePrisma();
-    const provider = new AiProviderService(new MockAiProvider());
+    const provider = new AiProviderService(new MockAiProvider(), makeStubUsage());
     const service = new AiPlannerService(
       prisma as never,
       provider,
@@ -103,7 +104,7 @@ describe('AiPlannerService.generate', () => {
     const mock = new MockAiProvider();
     mock.setBroken(true);
     mock.setNextResponse('still garbage'); // repair attempt
-    const provider = new AiProviderService(mock);
+    const provider = new AiProviderService(mock, makeStubUsage());
     const service = new AiPlannerService(
       prisma as never,
       provider,
@@ -124,7 +125,7 @@ describe('AiPlannerService.generate', () => {
     const prisma = makePrisma();
     const mock = new MockAiProvider();
     mock.setHang(500);
-    const provider = new AiProviderService(mock);
+    const provider = new AiProviderService(mock, makeStubUsage());
     const service = new AiPlannerService(
       prisma as never,
       provider,

@@ -4,6 +4,7 @@ import { AiPromptTemplateService } from '../ai/services/ai-prompt-template.servi
 import { AiJsonValidationService } from '../ai/services/ai-json-validation.service';
 import { AiProviderService } from '../ai/services/ai-provider.service';
 import { MockAiProvider } from '../ai/providers/mock.provider';
+import { makeStubUsage } from '../ai/services/test-helpers';
 import type { LocaleService } from '../../common/i18n/locale.service';
 
 function makePrisma() {
@@ -72,7 +73,7 @@ describe('QuickCaptureService', () => {
         ],
       }),
     );
-    const orchestrator = new AiProviderService(new MockAiProvider());
+    const orchestrator = new AiProviderService(new MockAiProvider(), makeStubUsage());
     const json = new AiJsonValidationService(orchestrator);
     const svc = new QuickCaptureService(api as never, resolver, new AiPromptTemplateService(), json, localeStub());
 
@@ -88,7 +89,7 @@ describe('QuickCaptureService', () => {
   it('falls back deterministically + sets usedFallback when AI returns invalid JSON', async () => {
     const { api } = makePrisma();
     const resolver = makeResolverWith('not-json');
-    const orchestrator = new AiProviderService(new MockAiProvider());
+    const orchestrator = new AiProviderService(new MockAiProvider(), makeStubUsage());
     const json = new AiJsonValidationService(orchestrator);
     const svc = new QuickCaptureService(api as never, resolver, new AiPromptTemplateService(), json, localeStub());
 
@@ -113,7 +114,7 @@ describe('QuickCaptureService', () => {
       expiresAt: null,
       createdAt: new Date(),
     });
-    const orchestrator = new AiProviderService(new MockAiProvider());
+    const orchestrator = new AiProviderService(new MockAiProvider(), makeStubUsage());
     const json = new AiJsonValidationService(orchestrator);
     const svc = new QuickCaptureService(
       api as never,

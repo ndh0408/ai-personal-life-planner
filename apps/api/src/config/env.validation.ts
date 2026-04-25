@@ -31,6 +31,33 @@ const EnvSchema = z
     AI_PROVIDER_ENCRYPTION_KEY: z.string().optional(),
     OPENROUTER_HTTP_REFERER: z.string().url().optional(),
     OPENROUTER_X_TITLE: z.string().optional(),
+
+    // ---- Round 12: queue / worker / observability -------------------------
+    // QUEUE_ENABLED gates BullMQ + Redis throttler. When false (default for
+    // local dev + jest), the queue API enqueues no-op and the throttler falls
+    // back to the existing in-memory storage. Production MUST set true.
+    QUEUE_ENABLED: z
+      .string()
+      .default('false')
+      .transform((v) => v === 'true' || v === '1'),
+    REDIS_URL: z.string().optional(),
+    WORKER_CONCURRENCY_NOTIFICATION: z.coerce.number().int().positive().default(5),
+    WORKER_CONCURRENCY_AI: z.coerce.number().int().positive().default(2),
+    WORKER_CONCURRENCY_REPORT: z.coerce.number().int().positive().default(2),
+
+    // Metrics + tracing
+    METRICS_ENABLED: z
+      .string()
+      .default('false')
+      .transform((v) => v === 'true' || v === '1'),
+    METRICS_PATH: z.string().default('/metrics'),
+    METRICS_BEARER_TOKEN: z.string().optional(),
+    LOG_LEVEL: z.enum(['error', 'warn', 'log', 'debug', 'verbose']).default('log'),
+    OTEL_ENABLED: z
+      .string()
+      .default('false')
+      .transform((v) => v === 'true' || v === '1'),
+    OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),
   })
   .superRefine((v, ctx) => {
     if (v.NODE_ENV === 'production') {
@@ -62,6 +89,20 @@ const EnvSchema = z
           path: ['AI_PROVIDER_ENCRYPTION_KEY'],
           message:
             'AI_PROVIDER_ENCRYPTION_KEY must be set in production (64 hex chars recommended; min 32-char passphrase). Generate via `openssl rand -hex 32`.',
+        });
+      }
+      if (v.QUEUE_ENABLED && !v.REDIS_URL) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['REDIS_URL'],
+          message: 'REDIS_URL is required in production when QUEUE_ENABLED=true.',
+        });
+      }
+      if (v.OTEL_ENABLED && !v.OTEL_EXPORTER_OTLP_ENDPOINT) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['OTEL_EXPORTER_OTLP_ENDPOINT'],
+          message: 'OTEL_EXPORTER_OTLP_ENDPOINT is required when OTEL_ENABLED=true.',
         });
       }
     }

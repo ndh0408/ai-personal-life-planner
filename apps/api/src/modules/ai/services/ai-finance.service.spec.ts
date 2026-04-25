@@ -4,6 +4,7 @@ import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import { MockAiProvider } from '../providers/mock.provider';
 import { makeStubResolver, makeStubPrivacy } from './test-helpers';
+import { makeStubUsage } from './test-helpers';
 import type { LocaleService } from '../../../common/i18n/locale.service';
 
 function mockLocale(tag: 'vi' | 'en' = 'vi'): LocaleService {
@@ -61,7 +62,7 @@ function makePrisma() {
 describe('AiFinanceService', () => {
   it('returns analysis with server-computed totals (happy path, vi)', async () => {
     const prisma = makePrisma();
-    const provider = new AiProviderService(new MockAiProvider());
+    const provider = new AiProviderService(new MockAiProvider(), makeStubUsage());
     const svc = new AiFinanceService(
       prisma as never,
       provider,
@@ -85,7 +86,7 @@ describe('AiFinanceService', () => {
     const mock = new MockAiProvider();
     mock.setBroken(true);
     mock.setNextResponse('still garbage'); // repair attempt also broken
-    const provider = new AiProviderService(mock);
+    const provider = new AiProviderService(mock, makeStubUsage());
     const svc = new AiFinanceService(
       prisma as never,
       provider,
@@ -106,7 +107,7 @@ describe('AiFinanceService', () => {
     const prisma = makePrisma();
     const mock = new MockAiProvider();
     mock.setHang(200);
-    const provider = new AiProviderService(mock);
+    const provider = new AiProviderService(mock, makeStubUsage());
     const svc = new AiFinanceService(
       prisma as never,
       provider,

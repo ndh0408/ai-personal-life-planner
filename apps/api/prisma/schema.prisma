@@ -253,58 +253,60 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  profile             UserProfile?
-  refreshTokens       RefreshToken[]
-  schedules           DailySchedule[]
-  scheduleItems       ScheduleItem[]
-  tasks               Task[]
-  habits              Habit[]
-  habitLogs           HabitLog[]
-  mealPlans           MealPlan[]
-  mealSuggestions     MealSuggestion[]
-  mealLogs            MealLog[]
-  sleepLogs           SleepLog[]
-  moodLogs            MoodLog[]
-  healthMetrics       HealthMetric[]
-  wallets             Wallet[]
-  incomes             Income[]
-  expenses            Expense[]
-  budgets             Budget[]
-  debts               Debt[]
-  savingGoals         SavingGoal[]
-  financialSnapshots  FinancialSnapshot[]
-  personalGoals       PersonalGoal[]
-  goalMilestones      GoalMilestone[]
-  aiConversations     AIConversation[]
-  aiMessages          AIMessage[]
-  aiRecommendations   AIRecommendation[]
-  dailyReviews        DailyReview[]
-  weeklyReviews       WeeklyReview[]
-  notificationDevices NotificationDevice[]
-  notificationSetting NotificationSetting?
-  notificationLogs    NotificationLog[]
-  aiProviders             UserAiProvider[]
-  aiPreference            UserAiPreference?
-  privacySetting          PrivacySetting?
-  consents                UserConsent[]
-  sensitiveAccessLogs     SensitiveAccessLog[]
-  recommendationEvidences RecommendationEvidence[]
-  personalizationMemories AiPersonalizationMemory[]
-  communicationSetting    CommunicationSetting?
-  memoryConsent           MemoryConsent?
-  connectedAccounts       ConnectedAccount[]
-  emailItems              EmailItem[]
-  emailReminders          EmailReminder[]
-  messageReminders        MessageReminder[]
-  companionMemories       AICompanionMemory[]
-  smartCheckinSetting     SmartCheckinSetting?
-  voiceCaptures           VoiceCapture[]
-  suggestedActions        SuggestedAction[]
+  profile                  UserProfile?
+  refreshTokens            RefreshToken[]
+  schedules                DailySchedule[]
+  scheduleItems            ScheduleItem[]
+  tasks                    Task[]
+  habits                   Habit[]
+  habitLogs                HabitLog[]
+  mealPlans                MealPlan[]
+  mealSuggestions          MealSuggestion[]
+  mealLogs                 MealLog[]
+  sleepLogs                SleepLog[]
+  moodLogs                 MoodLog[]
+  healthMetrics            HealthMetric[]
+  wallets                  Wallet[]
+  incomes                  Income[]
+  expenses                 Expense[]
+  budgets                  Budget[]
+  debts                    Debt[]
+  savingGoals              SavingGoal[]
+  financialSnapshots       FinancialSnapshot[]
+  personalGoals            PersonalGoal[]
+  goalMilestones           GoalMilestone[]
+  aiConversations          AIConversation[]
+  aiMessages               AIMessage[]
+  aiRecommendations        AIRecommendation[]
+  dailyReviews             DailyReview[]
+  weeklyReviews            WeeklyReview[]
+  notificationDevices      NotificationDevice[]
+  notificationSetting      NotificationSetting?
+  notificationLogs         NotificationLog[]
+  aiProviders              UserAiProvider[]
+  aiPreference             UserAiPreference?
+  privacySetting           PrivacySetting?
+  consents                 UserConsent[]
+  sensitiveAccessLogs      SensitiveAccessLog[]
+  recommendationEvidences  RecommendationEvidence[]
+  personalizationMemories  AiPersonalizationMemory[]
+  communicationSetting     CommunicationSetting?
+  memoryConsent            MemoryConsent?
+  connectedAccounts        ConnectedAccount[]
+  emailItems               EmailItem[]
+  emailReminders           EmailReminder[]
+  messageReminders         MessageReminder[]
+  companionMemories        AICompanionMemory[]
+  smartCheckinSetting      SmartCheckinSetting?
+  voiceCaptures            VoiceCapture[]
+  suggestedActions         SuggestedAction[]
   healthIntegrationSetting HealthIntegrationSetting?
-  contextSignals          ContextSignal[]
-  contextInferences       ContextInference[]
-  userPatterns            UserPattern[]
-  widgetPreferences       WidgetPreferences?
+  contextSignals           ContextSignal[]
+  contextInferences        ContextInference[]
+  userPatterns             UserPattern[]
+  widgetPreferences        WidgetPreferences?
+  aiUsageLogs              AiUsageLog[]
+  aiUsageQuota             AiUsageQuota?
 
   @@index([status])
   @@map("users")
@@ -587,16 +589,16 @@ model MoodLog {
 }
 
 model HealthMetric {
-  id               String   @id @default(uuid())
-  userId           String
-  date             DateTime @db.Date
-  weightKg         Float?
-  waterIntakeMl    Int?
-  steps            Int?
-  exerciseMinutes  Int?
-  note             String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String   @id @default(uuid())
+  userId          String
+  date            DateTime @db.Date
+  weightKg        Float?
+  waterIntakeMl   Int?
+  steps           Int?
+  exerciseMinutes Int?
+  note            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -629,19 +631,19 @@ model Wallet {
 }
 
 model Income {
-  id             String   @id @default(uuid())
-  userId         String
-  walletId       String?
-  title          String
-  amount         Decimal  @db.Decimal(18, 2)
-  category       String?
-  source         String?
-  incomeDate     DateTime @db.Date
-  isRecurring    Boolean  @default(false)
-  recurringRule  String?
-  note           String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            String   @id @default(uuid())
+  userId        String
+  walletId      String?
+  title         String
+  amount        Decimal  @db.Decimal(18, 2)
+  category      String?
+  source        String?
+  incomeDate    DateTime @db.Date
+  isRecurring   Boolean  @default(false)
+  recurringRule String?
+  note          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   wallet Wallet? @relation(fields: [walletId], references: [id], onDelete: SetNull)
@@ -677,16 +679,16 @@ model Expense {
 }
 
 model Budget {
-  id                     String       @id @default(uuid())
-  userId                 String
-  category               String
-  amount                 Decimal      @db.Decimal(18, 2)
-  period                 BudgetPeriod @default(MONTHLY)
-  startDate              DateTime     @db.Date
-  endDate                DateTime     @db.Date
-  alertThresholdPercent  Int          @default(80)
-  createdAt              DateTime     @default(now())
-  updatedAt              DateTime     @updatedAt
+  id                    String       @id @default(uuid())
+  userId                String
+  category              String
+  amount                Decimal      @db.Decimal(18, 2)
+  period                BudgetPeriod @default(MONTHLY)
+  startDate             DateTime     @db.Date
+  endDate               DateTime     @db.Date
+  alertThresholdPercent Int          @default(80)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -738,16 +740,16 @@ model SavingGoal {
 }
 
 model FinancialSnapshot {
-  id                  String   @id @default(uuid())
-  userId              String
-  month               String   // "YYYY-MM" — simpler filter than a date range
-  totalIncome         Decimal  @db.Decimal(18, 2)
-  totalExpense        Decimal  @db.Decimal(18, 2)
-  totalSaving         Decimal  @db.Decimal(18, 2)
-  debtRemaining       Decimal  @db.Decimal(18, 2)
-  budgetUsagePercent  Decimal? @db.Decimal(6, 2)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                 String   @id @default(uuid())
+  userId             String
+  month              String // "YYYY-MM" — simpler filter than a date range
+  totalIncome        Decimal  @db.Decimal(18, 2)
+  totalExpense       Decimal  @db.Decimal(18, 2)
+  totalSaving        Decimal  @db.Decimal(18, 2)
+  debtRemaining      Decimal  @db.Decimal(18, 2)
+  budgetUsagePercent Decimal? @db.Decimal(6, 2)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -773,7 +775,7 @@ model PersonalGoal {
   priority     Priority           @default(MEDIUM)
   status       PersonalGoalStatus @default(ACTIVE)
   createdAt    DateTime           @default(now())
-  updatedAt   DateTime            @updatedAt
+  updatedAt    DateTime           @updatedAt
 
   user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   milestones GoalMilestone[]
@@ -878,20 +880,20 @@ model DailyReview {
 }
 
 model WeeklyReview {
-  id               String   @id @default(uuid())
-  userId           String
-  weekStart        DateTime @db.Date
-  summary          String
-  scheduleInsight  String?
-  taskInsight      String?
-  habitInsight     String?
-  healthInsight    String?
-  mealInsight      String?
-  financeInsight   String?
-  goalInsight      String?
-  suggestions      Json?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String   @id @default(uuid())
+  userId          String
+  weekStart       DateTime @db.Date
+  summary         String
+  scheduleInsight String?
+  taskInsight     String?
+  habitInsight    String?
+  healthInsight   String?
+  mealInsight     String?
+  financeInsight  String?
+  goalInsight     String?
+  suggestions     Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -945,19 +947,24 @@ model NotificationSetting {
 }
 
 model NotificationLog {
-  id          String             @id @default(uuid())
-  userId      String
-  title       String
-  body        String
-  type        String
-  scheduledAt DateTime?
-  sentAt      DateTime?
-  status      NotificationStatus @default(PENDING)
-  error       String?
-  createdAt   DateTime           @default(now())
+  id             String             @id @default(uuid())
+  userId         String
+  title          String
+  body           String
+  type           String
+  // Per-user idempotency key. The dispatcher refuses to enqueue a second
+  // notification with the same key inside DEDUPE_WINDOW_MIN.
+  idempotencyKey String?
+  attempts       Int                @default(0)
+  scheduledAt    DateTime?
+  sentAt         DateTime?
+  status         NotificationStatus @default(PENDING)
+  error          String?
+  createdAt      DateTime           @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, idempotencyKey])
   @@index([userId, status])
   @@index([userId, type])
   @@index([scheduledAt])
@@ -983,15 +990,15 @@ enum UserAiProviderTestStatus {
 }
 
 model UserAiProvider {
-  id                 String                    @id @default(uuid())
-  userId             String
-  provider           UserAiProviderType
-  name               String
-  baseUrl            String?
+  id              String             @id @default(uuid())
+  userId          String
+  provider        UserAiProviderType
+  name            String
+  baseUrl         String?
   // AES-256-GCM ciphertext encoded as `iv:tag:ciphertext` (all base64).
-  encryptedApiKey    String
+  encryptedApiKey String
   // Last 4 chars of the raw key, kept plaintext for masked UI display only.
-  apiKeyLast4        String
+  apiKeyLast4     String
 
   defaultChatModel    String?
   defaultPlannerModel String?
@@ -1000,13 +1007,13 @@ model UserAiProvider {
   defaultHealthModel  String?
   defaultReportModel  String?
 
-  isActive           Boolean                   @default(true)
-  isDefault          Boolean                   @default(false)
-  lastTestedAt       DateTime?
-  lastTestStatus     UserAiProviderTestStatus?
-  lastTestError      String?
-  createdAt          DateTime                  @default(now())
-  updatedAt          DateTime                  @updatedAt
+  isActive       Boolean                   @default(true)
+  isDefault      Boolean                   @default(false)
+  lastTestedAt   DateTime?
+  lastTestStatus UserAiProviderTestStatus?
+  lastTestError  String?
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1050,43 +1057,43 @@ enum UserConsentType {
 }
 
 model PrivacySetting {
-  id                          String   @id @default(uuid())
-  userId                      String   @unique
+  id                     String  @id @default(uuid())
+  userId                 String  @unique
   // Master switch — when false, the AI services revert to bare minimum
   // (locale + timezone) and stop personalising.
-  personalizationEnabled      Boolean  @default(true)
+  personalizationEnabled Boolean @default(true)
 
   // Per-domain "may we send this to AI?" toggles. The resolver/services
   // check these BEFORE attaching that data to a prompt.
-  useScheduleForAI            Boolean  @default(true)
-  useTasksForAI               Boolean  @default(true)
-  useHabitsForAI              Boolean  @default(true)
-  useMealsForAI               Boolean  @default(true)
-  useHealthForAI              Boolean  @default(true)
-  useFinanceForAI             Boolean  @default(true)
-  useGoalsForAI               Boolean  @default(true)
+  useScheduleForAI Boolean @default(true)
+  useTasksForAI    Boolean @default(true)
+  useHabitsForAI   Boolean @default(true)
+  useMealsForAI    Boolean @default(true)
+  useHealthForAI   Boolean @default(true)
+  useFinanceForAI  Boolean @default(true)
+  useGoalsForAI    Boolean @default(true)
   // Legacy alias kept for the v1.1 mobile clients still in flight; the
   // resolver treats it as equivalent to `useMealsForAI`. New code reads
   // the singular form. Safe to drop once mobile pins to >=1.2.
-  useMealForAI                Boolean  @default(true)
+  useMealForAI     Boolean @default(true)
 
   // Per-OS-permission "may we use this device capability?" toggles.
   // These gate BOTH the OS prompt and the AI ingestion of that data.
-  useCalendarContext          Boolean  @default(false)
-  useLocationContext          Boolean  @default(false)
-  useHealthFitnessContext     Boolean  @default(false)
+  useCalendarContext      Boolean @default(false)
+  useLocationContext      Boolean @default(false)
+  useHealthFitnessContext Boolean @default(false)
   // Renamed from voiceInputEnabled in v1.2 — kept the old column name in
   // the table for backwards compatibility (no migration churn for existing
   // rows). The DTO surfaces both `voiceInputEnabled` and `useVoiceInput`.
-  voiceInputEnabled           Boolean  @default(false)
+  voiceInputEnabled       Boolean @default(false)
 
   // Behaviour toggles
-  proactiveRecommendations    Boolean  @default(true)
+  proactiveRecommendations Boolean @default(true)
   // Anonymised app diagnostics — opt-IN by default-off (per privacy spec).
-  anonymizedDiagnostics       Boolean  @default(false)
+  anonymizedDiagnostics    Boolean @default(false)
 
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1277,21 +1284,21 @@ enum AiCompanionMemorySource {
 }
 
 model CommunicationSetting {
-  id                                  String   @id @default(uuid())
-  userId                              String   @unique
-  emailAssistantEnabled               Boolean  @default(false)
+  id                               String   @id @default(uuid())
+  userId                           String   @unique
+  emailAssistantEnabled            Boolean  @default(false)
   // Three escalating data-access tiers; later tiers REQUIRE the previous.
-  emailMetadataSync                   Boolean  @default(true)
-  emailSnippetSync                    Boolean  @default(false)
-  emailFullContentAnalysis            Boolean  @default(false)
-  followUpRemindersEnabled            Boolean  @default(true)
-  messageReminderEnabled              Boolean  @default(true)
+  emailMetadataSync                Boolean  @default(true)
+  emailSnippetSync                 Boolean  @default(false)
+  emailFullContentAnalysis         Boolean  @default(false)
+  followUpRemindersEnabled         Boolean  @default(true)
+  messageReminderEnabled           Boolean  @default(true)
   // OFF by default. Android-only — the Notification Listener flow is in
   // docs/ANDROID_NOTIFICATION_IMPORT_RISK.md, not yet implemented.
-  androidNotificationImportEnabled    Boolean  @default(false)
-  aiMemoryEnabled                     Boolean  @default(true)
-  createdAt                           DateTime @default(now())
-  updatedAt                           DateTime @updatedAt
+  androidNotificationImportEnabled Boolean  @default(false)
+  aiMemoryEnabled                  Boolean  @default(true)
+  createdAt                        DateTime @default(now())
+  updatedAt                        DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1299,14 +1306,14 @@ model CommunicationSetting {
 }
 
 model MemoryConsent {
-  id                              String   @id @default(uuid())
-  userId                          String   @unique
-  allowMemory                     Boolean  @default(true)
-  allowEmailForAI                 Boolean  @default(false)
-  allowCommunicationContextForAI  Boolean  @default(false)
-  allowVoiceNotesForAI            Boolean  @default(false)
-  createdAt                       DateTime @default(now())
-  updatedAt                       DateTime @updatedAt
+  id                             String   @id @default(uuid())
+  userId                         String   @unique
+  allowMemory                    Boolean  @default(true)
+  allowEmailForAI                Boolean  @default(false)
+  allowCommunicationContextForAI Boolean  @default(false)
+  allowVoiceNotesForAI           Boolean  @default(false)
+  createdAt                      DateTime @default(now())
+  updatedAt                      DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1338,27 +1345,27 @@ model ConnectedAccount {
 }
 
 model EmailItem {
-  id                  String         @id @default(uuid())
-  userId              String
-  connectedAccountId  String
-  externalId          String
-  threadId            String?
-  fromName            String?
-  fromEmail           String?
-  subject             String
+  id                 String         @id @default(uuid())
+  userId             String
+  connectedAccountId String
+  externalId         String
+  threadId           String?
+  fromName           String?
+  fromEmail          String?
+  subject            String
   // Snippet only stored when emailSnippetSync is on.
-  snippet             String?
-  receivedAt          DateTime
-  isRead              Boolean        @default(false)
-  isImportant         Boolean        @default(false)
-  needsReply          Boolean        @default(false)
-  hasDeadline         Boolean        @default(false)
-  detectedDeadlineAt  DateTime?
-  category            EmailCategory?
+  snippet            String?
+  receivedAt         DateTime
+  isRead             Boolean        @default(false)
+  isImportant        Boolean        @default(false)
+  needsReply         Boolean        @default(false)
+  hasDeadline        Boolean        @default(false)
+  detectedDeadlineAt DateTime?
+  category           EmailCategory?
   // Short AI-produced summary of WHY the AI flagged it. Never the full body.
-  aiSummary           String?
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  aiSummary          String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 
   user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   connectedAccount ConnectedAccount @relation(fields: [connectedAccountId], references: [id], onDelete: Cascade)
@@ -1374,15 +1381,15 @@ model EmailItem {
 }
 
 model EmailReminder {
-  id           String              @id @default(uuid())
-  userId       String
-  emailItemId  String?
-  title        String
-  note         String?
-  remindAt     DateTime
-  status       EmailReminderStatus @default(PENDING)
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
+  id          String              @id @default(uuid())
+  userId      String
+  emailItemId String?
+  title       String
+  note        String?
+  remindAt    DateTime
+  status      EmailReminderStatus @default(PENDING)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   emailItem EmailItem? @relation(fields: [emailItemId], references: [id], onDelete: SetNull)
@@ -1471,20 +1478,20 @@ enum HealthIntegrationProvider {
 }
 
 model SmartCheckinSetting {
-  id                       String   @id @default(uuid())
-  userId                   String   @unique
-  morningCheckinEnabled    Boolean  @default(true)
-  mealCheckinEnabled       Boolean  @default(true)
-  eveningReviewEnabled     Boolean  @default(true)
-  sleepReminderEnabled     Boolean  @default(true)
-  financeCheckinEnabled    Boolean  @default(true)
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  morningCheckinEnabled Boolean  @default(true)
+  mealCheckinEnabled    Boolean  @default(true)
+  eveningReviewEnabled  Boolean  @default(true)
+  sleepReminderEnabled  Boolean  @default(true)
+  financeCheckinEnabled Boolean  @default(true)
   // Free-form HH:mm strings; the dispatcher adjusts for the user's timezone
   // and quiet hours from NotificationSetting.
-  morningTime              String   @default("07:30")
-  eveningTime              String   @default("21:00")
-  sleepReminderTime        String   @default("22:30")
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  morningTime           String   @default("07:30")
+  eveningTime           String   @default("21:00")
+  sleepReminderTime     String   @default("22:30")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1492,18 +1499,18 @@ model SmartCheckinSetting {
 }
 
 model VoiceCapture {
-  id              String             @id @default(uuid())
-  userId          String
-  source          VoiceCaptureSource @default(PUSH_TO_TALK)
+  id         String             @id @default(uuid())
+  userId     String
+  source     VoiceCaptureSource @default(PUSH_TO_TALK)
   // Locale of the captured input (vi/en).
-  locale          String             @default("vi")
+  locale     String             @default("vi")
   // Transcript ONLY. Raw audio is never persisted server-side.
-  transcript      String
+  transcript String
   /// AI-derived parse of suggested actions, validated against schema.
-  parsedJson      Json?
+  parsedJson Json?
   // Set when the user confirms at least one suggested action.
-  appliedAt       DateTime?
-  createdAt       DateTime           @default(now())
+  appliedAt  DateTime?
+  createdAt  DateTime           @default(now())
 
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   suggestedActions SuggestedAction[]
@@ -1513,27 +1520,27 @@ model VoiceCapture {
 }
 
 model SuggestedAction {
-  id              String                @id @default(uuid())
-  userId          String
-  voiceCaptureId  String?
-  type            SuggestedActionType
+  id             String                @id @default(uuid())
+  userId         String
+  voiceCaptureId String?
+  type           SuggestedActionType
   // Locale-tagged human title shown in the confirm modal.
-  title           String
-  locale          String                @default("vi")
+  title          String
+  locale         String                @default("vi")
   /// AI-supplied 0..1 confidence. Mobile uses < 0.5 to surface a follow-up question.
-  confidence      Float?
+  confidence     Float?
   /// Action-specific payload — the resolver type-checks before applying.
-  payload         Json
-  status          SuggestedActionStatus @default(PENDING)
+  payload        Json
+  status         SuggestedActionStatus @default(PENDING)
   // Set on first creation; user has 24h to confirm before EXPIRED.
-  expiresAt       DateTime?
-  appliedRefId    String?               // id of the row created on confirm (e.g. expenseId)
-  appliedRefKind  String?               // table name of the applied row
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  expiresAt      DateTime?
+  appliedRefId   String? // id of the row created on confirm (e.g. expenseId)
+  appliedRefKind String? // table name of the applied row
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
 
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  voiceCapture  VoiceCapture?  @relation(fields: [voiceCaptureId], references: [id], onDelete: SetNull)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  voiceCapture VoiceCapture? @relation(fields: [voiceCaptureId], references: [id], onDelete: SetNull)
 
   @@index([userId, status])
   @@index([userId, createdAt])
@@ -1541,18 +1548,18 @@ model SuggestedAction {
 }
 
 model HealthIntegrationSetting {
-  id                String                    @id @default(uuid())
-  userId            String                    @unique
-  provider          HealthIntegrationProvider @default(NONE)
+  id            String                    @id @default(uuid())
+  userId        String                    @unique
+  provider      HealthIntegrationProvider @default(NONE)
   // Per-data-type opt-in. NONE writes here without an explicit user toggle.
-  readSleep         Boolean                   @default(false)
-  readSteps         Boolean                   @default(false)
-  readExercise      Boolean                   @default(false)
-  readHeartRate     Boolean                   @default(false)
-  readWeight        Boolean                   @default(false)
-  lastSyncedAt      DateTime?
-  createdAt         DateTime                  @default(now())
-  updatedAt         DateTime                  @updatedAt
+  readSleep     Boolean                   @default(false)
+  readSteps     Boolean                   @default(false)
+  readExercise  Boolean                   @default(false)
+  readHeartRate Boolean                   @default(false)
+  readWeight    Boolean                   @default(false)
+  lastSyncedAt  DateTime?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1614,16 +1621,16 @@ enum UserPatternType {
 }
 
 model ContextSignal {
-  id          String              @id @default(uuid())
-  userId      String
-  type        ContextSignalType
+  id         String            @id @default(uuid())
+  userId     String
+  type       ContextSignalType
   /// Safe-summary payload — never raw notes / amounts. Examples:
   /// { minutes: 320 }, { hoursSinceUsual: 2.5 }, { count: 4 }.
-  value       Json
-  source      String
-  confidence  Float?
-  occurredAt  DateTime
-  createdAt   DateTime            @default(now())
+  value      Json
+  source     String
+  confidence Float?
+  occurredAt DateTime
+  createdAt  DateTime          @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1633,7 +1640,7 @@ model ContextSignal {
 }
 
 model ContextInference {
-  id              String                  @id @default(uuid())
+  id              String                 @id @default(uuid())
   userId          String
   type            ContextInferenceType
   confidence      Float
@@ -1643,9 +1650,9 @@ model ContextInference {
   /// Optional structured action the mobile UI can wire as Quick Action,
   /// eg. { type: "RESCHEDULE_LIGHT", count: 2 }.
   suggestedAction Json?
-  status          ContextInferenceStatus  @default(NEW)
-  createdAt       DateTime                @default(now())
-  updatedAt       DateTime                @updatedAt
+  status          ContextInferenceStatus @default(NEW)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1655,17 +1662,17 @@ model ContextInference {
 }
 
 model UserPattern {
-  id              String          @id @default(uuid())
-  userId          String
-  patternType     UserPatternType
+  id             String          @id @default(uuid())
+  userId         String
+  patternType    UserPatternType
   /// Pattern shape varies by type. Examples:
   /// USUAL_SLEEP_TIME: { hour: 23, minute: 30 }
   /// AVG_DAILY_EXPENSE: { amount: 200000, currency: "VND" }
-  value           Json
-  confidence      Float
-  lastObservedAt  DateTime
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  value          Json
+  confidence     Float
+  lastObservedAt DateTime
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1690,22 +1697,89 @@ enum WidgetPrivacyMode {
 }
 
 model WidgetPreferences {
-  id                    String            @id @default(uuid())
-  userId                String            @unique
+  id                  String            @id @default(uuid())
+  userId              String            @unique
   /// Master master — when false, mobile clears the cached snapshot and
   /// stops calling the summary endpoint.
-  enabled               Boolean           @default(true)
-  showTasks             Boolean           @default(true)
-  showRecommendations   Boolean           @default(true)
-  showHealthData        Boolean           @default(true)
-  showFinance           Boolean           @default(true)
+  enabled             Boolean           @default(true)
+  showTasks           Boolean           @default(true)
+  showRecommendations Boolean           @default(true)
+  showHealthData      Boolean           @default(true)
+  showFinance         Boolean           @default(true)
   /// When false, finance widget shows "—" / percent only — never raw amount.
-  showFinanceAmounts    Boolean           @default(false)
-  privacyMode           WidgetPrivacyMode @default(HIDE_SENSITIVE)
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  showFinanceAmounts  Boolean           @default(false)
+  privacyMode         WidgetPrivacyMode @default(HIDE_SENSITIVE)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("widget_preferences")
+}
+
+// =============================================================================
+// L. AI usage ledger + quota (round 12 — P0)
+// =============================================================================
+
+enum AiUsagePlan {
+  FREE
+  PRO
+  ADMIN
+}
+
+enum AiFeature {
+  CHAT
+  GENERATE_SCHEDULE
+  RESCHEDULE
+  SUGGEST_MEALS
+  ANALYZE_FINANCE
+  DAILY_REVIEW
+  WEEKLY_INSIGHT
+  ASSISTANT_MONITOR
+  QUICK_CAPTURE
+  HEALTH_SCREEN
+}
+
+model AiUsageLog {
+  id                    String    @id @default(uuid())
+  userId                String
+  feature               AiFeature
+  provider              String
+  model                 String
+  requestId             String?
+  inputTokens           Int?
+  outputTokens          Int?
+  totalTokens           Int?
+  /// Estimated cost in millionths-of-a-USD (cents × 10000) so we can store as
+  /// integer math without losing pennies on cheap models.
+  estimatedCostMicroUsd Int?
+  success               Boolean
+  errorCode             String?
+  latencyMs             Int?
+  createdAt             DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, feature, createdAt])
+  @@index([createdAt])
+  @@map("ai_usage_logs")
+}
+
+model AiUsageQuota {
+  id                            String      @id @default(uuid())
+  userId                        String      @unique
+  plan                          AiUsagePlan @default(FREE)
+  dailyChatLimit                Int         @default(40)
+  dailyScheduleLimit            Int         @default(10)
+  dailyFinanceAnalysisLimit     Int         @default(10)
+  dailyMealSuggestionLimit      Int         @default(10)
+  dailyAssistantMonitoringLimit Int         @default(20)
+  dailyReportLimit              Int         @default(20)
+  createdAt                     DateTime    @default(now())
+  updatedAt                     DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_usage_quotas")
 }

@@ -6,6 +6,7 @@ import { AiHealthService } from './ai-health.service';
 import { AiGoalService } from './ai-goal.service';
 import { MockAiProvider } from '../providers/mock.provider';
 import { makeStubResolver, makeStubPrivacy } from './test-helpers';
+import { makeStubUsage } from './test-helpers';
 import type { LocaleService } from '../../../common/i18n/locale.service';
 
 function mockLocale(tag: 'vi' | 'en' = 'vi'): LocaleService {
@@ -43,7 +44,7 @@ function makePrisma() {
 describe('AiDailyReviewService', () => {
   it('writes a DailyReview row on happy path', async () => {
     const { api, upsertSpy } = makePrisma();
-    const provider = new AiProviderService(new MockAiProvider());
+    const provider = new AiProviderService(new MockAiProvider(), makeStubUsage());
     const svc = new AiDailyReviewService(
       api as never,
       provider,
@@ -75,7 +76,7 @@ describe('AiDailyReviewService', () => {
         productivityAdvice: 'ok',
       }),
     );
-    const provider = new AiProviderService(mock);
+    const provider = new AiProviderService(mock, makeStubUsage());
     const svc = new AiDailyReviewService(
       api as never,
       provider,
@@ -96,7 +97,7 @@ describe('AiDailyReviewService', () => {
     const mock = new MockAiProvider();
     mock.setBroken(true);
     mock.setNextResponse('still garbage');
-    const provider = new AiProviderService(mock);
+    const provider = new AiProviderService(mock, makeStubUsage());
     const svc = new AiDailyReviewService(
       api as never,
       provider,
