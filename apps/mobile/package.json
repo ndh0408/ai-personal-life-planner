@@ -6,12 +6,21 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "start:tunnel": "expo start --tunnel",
+    "start:lan": "expo start --lan",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "prebuild": "expo prebuild",
-    "build:android": "eas build --platform android",
-    "build:ios": "eas build --platform ios",
+    "prebuild:clean": "expo prebuild --clean --no-install",
+    "build:android:preview": "eas build --platform android --profile preview --non-interactive",
+    "build:android:staging": "eas build --platform android --profile staging --non-interactive",
+    "build:android:production": "eas build --platform android --profile production --non-interactive",
+    "build:ios:simulator": "eas build --platform ios --profile ios-simulator --non-interactive",
+    "build:ios:production": "eas build --platform ios --profile production --non-interactive",
+    "submit:android": "eas submit --platform android --profile production --latest",
+    "submit:ios": "eas submit --platform ios --profile production --latest",
+    "verify:prod-config": "EXPO_PUBLIC_APP_ENV=production EXPO_PUBLIC_API_BASE_URL=https://api.tothanhthuy.cloud/api expo config --type public > /dev/null && echo 'OK: production config resolves'",
     "lint": "eslint \"src/**/*.{ts,tsx}\" --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "echo \"(no mobile tests yet)\" && exit 0"
@@ -32,9 +41,9 @@
     "expo-secure-store": "~13.0.2",
     "expo-status-bar": "~1.12.1",
     "i18next": "^23.15.1",
-    "react-i18next": "^15.0.2",
     "react": "18.2.0",
     "react-hook-form": "^7.53.0",
+    "react-i18next": "^15.0.2",
     "react-native": "0.74.5",
     "react-native-gesture-handler": "~2.16.1",
     "react-native-reanimated": "~3.10.1",
@@ -47,6 +56,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~18.2.79",
+    "eas-cli": "^18.8.1",
     "typescript": "^5.5.4"
   }
 }
