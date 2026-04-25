@@ -77,6 +77,12 @@ export type RootStackParamList = {
   PersonalizationConsent: undefined;
   ClearAIMemory: undefined;
   RecommendationEvidence: { recommendationId: string };
+  CommunicationSettings: undefined;
+  ConnectedAccounts: undefined;
+  EmailAssistant: undefined;
+  FollowUpReminders: undefined;
+  AddMessageReminder: undefined;
+  AICompanionMemory: undefined;
 };
 
 export type AuthScreenProps<T extends keyof AuthStackParamList> = NativeStackScreenProps<

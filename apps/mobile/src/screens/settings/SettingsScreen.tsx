@@ -105,6 +105,20 @@ export function SettingsScreen() {
         />
       </Card>
 
+      <Card style={{ marginBottom: spacing.md }}>
+        <Text style={{ color: colors.text, fontWeight: '600', marginBottom: spacing.sm }}>
+          {t('settings.communication.title')}
+        </Text>
+        <Text style={{ color: colors.textMuted, marginBottom: spacing.md }}>
+          {t('settings.communication.subtitle')}
+        </Text>
+        <Button
+          title={t('settings.communication.menu')}
+          variant="secondary"
+          onPress={() => nav.navigate('CommunicationSettings')}
+        />
+      </Card>
+
       <Button title={t('auth.logout')} variant="danger" onPress={logout} />
     </Screen>
   );

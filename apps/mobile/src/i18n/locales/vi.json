@@ -1298,6 +1298,101 @@
         "enable": "Bật",
         "later": "Để sau"
       }
+    },
+    "communication": {
+      "menu": "Trợ lý liên lạc",
+      "title": "Trợ lý liên lạc",
+      "subtitle": "Phân loại email, nhắc follow-up, AI memory. Không có thứ nào chạy nếu bạn không bật.",
+      "promise": "Chúng tôi không bao giờ đọc tin nhắn app khác. Không nghe nền. Không tự gửi gì.",
+      "section": {
+        "email": "Trợ lý email",
+        "reminders": "Nhắc nhở",
+        "memory": "AI memory",
+        "android": "Tính năng Android"
+      },
+      "toggles": {
+        "emailAssistantEnabled": { "label": "Bật trợ lý email", "hint": "Cho phép kết nối Gmail / Outlook để AI nhận diện email cần trả lời / có deadline." },
+        "emailMetadataSync": { "label": "Sync metadata email", "hint": "From, subject, thời gian nhận. Mức tối thiểu để phân loại." },
+        "emailSnippetSync": { "label": "Sync thêm snippet", "hint": "Đoạn xem trước ngắn. Cần để phát hiện deadline tin cậy." },
+        "emailFullContentAnalysis": { "label": "Phân tích full nội dung khi bạn yêu cầu", "hint": "Chỉ gửi toàn bộ body email vào AI khi bạn bấm Analyze trên email cụ thể." },
+        "followUpRemindersEnabled": { "label": "Nhắc follow-up", "hint": "Để trợ lý nhắc các email đã chờ lâu." },
+        "messageReminderEnabled": { "label": "Nhắc tin nhắn", "hint": "Nhắc thủ công cho tin nhắn ở bất kỳ app — chúng tôi không đọc nội dung." },
+        "androidNotificationImportEnabled": { "label": "Import notification (Android)", "hint": "Mặc định tắt. Khi bật, các thông báo banking / OTP / 2FA được lọc bỏ. iOS không hỗ trợ — đây là lựa chọn thiết kế." },
+        "aiMemoryEnabled": { "label": "AI memory", "hint": "Cho AI nhớ một số sở thích/pattern nhỏ để tư vấn tốt hơn. Bạn luôn có thể xem + xoá." }
+      },
+      "accounts": {
+        "title": "Tài khoản đã kết nối",
+        "empty": "Chưa kết nối tài khoản nào.",
+        "connectGmail": "Kết nối Gmail",
+        "connectOutlook": "Kết nối Outlook",
+        "lastSynced": "Lần đồng bộ gần nhất",
+        "neverSynced": "Chưa đồng bộ",
+        "disconnect": "Ngắt kết nối",
+        "disconnectConfirm": "Ngắt kết nối hộp thư này?",
+        "disconnectBody": "Mọi email đã cache từ tài khoản này sẽ bị xoá. Token OAuth sẽ bị thu hồi.",
+        "oauthNotConfigured": "OAuth email chưa bật ở bản này. Hãy thử lại sau khi v1.3 phát hành."
+      },
+      "email": {
+        "title": "Phân loại email",
+        "filterImportant": "Quan trọng",
+        "filterNeedsReply": "Cần trả lời",
+        "filterDeadline": "Có deadline",
+        "filterBills": "Hoá đơn",
+        "filterWork": "Công việc",
+        "noResults": "Chưa có email nào phù hợp bộ lọc.",
+        "actions": {
+          "analyze": "Phân tích",
+          "createReminder": "Tạo nhắc",
+          "markDone": "Đã xử lý",
+          "askAi": "Hỏi AI"
+        },
+        "syncCta": "Đồng bộ ngay",
+        "syncStub": "Đồng bộ chưa được wired ở bản này. Sẽ có ở v1.3."
+      },
+      "followUps": {
+        "title": "Nhắc follow-up",
+        "tab": { "email": "Email", "message": "Tin nhắn" },
+        "today": "Hôm nay",
+        "upcoming": "Sắp tới",
+        "done": "Đã xong",
+        "addManual": "Thêm nhắc thủ công",
+        "empty": "Hiện không có gì cần xử lý."
+      },
+      "addMessageReminder": {
+        "title": "Thêm nhắc tin nhắn",
+        "contactName": "Tên liên hệ",
+        "platform": "Nền tảng (vd. Messenger / Zalo / SMS)",
+        "reminderTitle": "Tiêu đề",
+        "note": "Ghi chú (tuỳ chọn)",
+        "remindAt": "Nhắc lúc (ISO date-time)",
+        "save": "Lưu nhắc nhở"
+      },
+      "memory": {
+        "title": "AI memory",
+        "subtitle": "Những điều AI được phép nhớ về bạn. Bấm để xem, sửa hoặc xoá.",
+        "filterAll": "Tất cả",
+        "clearAll": "Xoá tất cả",
+        "clearAllConfirm": "Xoá mọi memory đã lưu?",
+        "empty": "Chưa có memory nào.",
+        "consentSection": "Đồng ý cho memory",
+        "consent": {
+          "allowMemory": { "label": "Cho phép AI memory", "hint": "Công tắc tổng cho các mục bên dưới." },
+          "allowEmailForAI": { "label": "Cho phép tín hiệu email là nguồn memory", "hint": "Cho AI ghi nhớ pattern từ email (không gửi body)." },
+          "allowCommunicationContextForAI": { "label": "Cho phép context liên lạc", "hint": "Đếm follow-up + nhắc nhở, không bao giờ là nội dung." },
+          "allowVoiceNotesForAI": { "label": "Cho phép transcript voice note", "hint": "Voice note bạn ghi sẽ được chuyển thành text và có thể tạo memory." }
+        },
+        "type": {
+          "PREFERENCE": "Sở thích",
+          "HABIT": "Thói quen",
+          "GOAL": "Mục tiêu",
+          "RELATIONSHIP": "Quan hệ",
+          "WORK_STYLE": "Phong cách làm việc",
+          "COMMUNICATION": "Giao tiếp",
+          "HEALTH_CONTEXT": "Sức khoẻ",
+          "FINANCE_CONTEXT": "Tài chính",
+          "OTHER": "Khác"
+        }
+      }
     }
   },
   "aiChat": {

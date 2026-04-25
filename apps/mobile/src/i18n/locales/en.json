@@ -1298,6 +1298,101 @@
         "enable": "Enable",
         "later": "Maybe later"
       }
+    },
+    "communication": {
+      "menu": "Communication assistant",
+      "title": "Communication assistant",
+      "subtitle": "Email triage, follow-up reminders, AI memory. None of it runs without your explicit toggle.",
+      "promise": "We never read messages in other apps. We never listen in the background. We never auto-send anything.",
+      "section": {
+        "email": "Email assistant",
+        "reminders": "Reminders",
+        "memory": "AI memory",
+        "android": "Android extras"
+      },
+      "toggles": {
+        "emailAssistantEnabled": { "label": "Enable email assistant", "hint": "Lets you connect Gmail / Outlook so AI can flag what needs a reply or has a deadline." },
+        "emailMetadataSync": { "label": "Sync email metadata", "hint": "From, subject, received-at. The minimum needed to triage." },
+        "emailSnippetSync": { "label": "Also sync snippets", "hint": "Short preview text. Required to detect deadlines reliably." },
+        "emailFullContentAnalysis": { "label": "Analyze full content on demand", "hint": "Sends the full email body to AI ONLY when you tap Analyze on a specific email." },
+        "followUpRemindersEnabled": { "label": "Follow-up reminders", "hint": "Lets the assistant ping you about emails that have been waiting." },
+        "messageReminderEnabled": { "label": "Message reminders", "hint": "Manual reminders for messages in any app — we never read them." },
+        "androidNotificationImportEnabled": { "label": "Android notification import", "hint": "Off by default. Even when on, banking / OTP / 2FA notifications are filtered out. iOS does not support this — by design." },
+        "aiMemoryEnabled": { "label": "AI memory", "hint": "Let AI remember a small set of preferences and patterns to give better advice. You can always view + clear." }
+      },
+      "accounts": {
+        "title": "Connected accounts",
+        "empty": "No accounts connected yet.",
+        "connectGmail": "Connect Gmail",
+        "connectOutlook": "Connect Outlook",
+        "lastSynced": "Last synced",
+        "neverSynced": "Never synced",
+        "disconnect": "Disconnect",
+        "disconnectConfirm": "Disconnect this mailbox?",
+        "disconnectBody": "We will delete every cached email from this account. The OAuth token will be revoked.",
+        "oauthNotConfigured": "Email OAuth isn't enabled in this build yet. Connect again once the v1.3 update ships."
+      },
+      "email": {
+        "title": "Email triage",
+        "filterImportant": "Important",
+        "filterNeedsReply": "Needs reply",
+        "filterDeadline": "Deadline",
+        "filterBills": "Bills",
+        "filterWork": "Work",
+        "noResults": "No emails match your filters yet.",
+        "actions": {
+          "analyze": "Analyze",
+          "createReminder": "Create reminder",
+          "markDone": "Mark done",
+          "askAi": "Ask AI"
+        },
+        "syncCta": "Sync now",
+        "syncStub": "Sync isn't wired in this build. Coming in v1.3."
+      },
+      "followUps": {
+        "title": "Follow-up reminders",
+        "tab": { "email": "Email", "message": "Message" },
+        "today": "Today",
+        "upcoming": "Upcoming",
+        "done": "Done",
+        "addManual": "Add manual reminder",
+        "empty": "Nothing waiting on you right now."
+      },
+      "addMessageReminder": {
+        "title": "Add message reminder",
+        "contactName": "Contact name",
+        "platform": "Platform (e.g. Messenger / Zalo / SMS)",
+        "reminderTitle": "Title",
+        "note": "Note (optional)",
+        "remindAt": "Remind me at (ISO date-time)",
+        "save": "Save reminder"
+      },
+      "memory": {
+        "title": "AI memory",
+        "subtitle": "Things AI is allowed to remember about you. Tap any to view, edit, or remove.",
+        "filterAll": "All",
+        "clearAll": "Clear all",
+        "clearAllConfirm": "Clear every saved memory?",
+        "empty": "No memories yet.",
+        "consentSection": "Memory consent",
+        "consent": {
+          "allowMemory": { "label": "Allow AI memory", "hint": "Master switch for the items below." },
+          "allowEmailForAI": { "label": "Allow email signals as memory source", "hint": "Lets AI remember patterns from your email triage (no body shipped)." },
+          "allowCommunicationContextForAI": { "label": "Allow communication context", "hint": "Counts of follow-ups + reminders, never the body." },
+          "allowVoiceNotesForAI": { "label": "Allow voice-note transcripts", "hint": "Voice notes you record are transcribed to text and may seed memory." }
+        },
+        "type": {
+          "PREFERENCE": "Preference",
+          "HABIT": "Habit",
+          "GOAL": "Goal",
+          "RELATIONSHIP": "Relationship",
+          "WORK_STYLE": "Work style",
+          "COMMUNICATION": "Communication",
+          "HEALTH_CONTEXT": "Health context",
+          "FINANCE_CONTEXT": "Finance context",
+          "OTHER": "Other"
+        }
+      }
     }
   },
   "aiChat": {

@@ -43,6 +43,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { AssistantModule } from './modules/assistant/assistant.module';
 import { UserAiProvidersModule } from './modules/user-ai-providers/user-ai-providers.module';
 import { PrivacyModule } from './modules/privacy/privacy.module';
+import { CommunicationModule } from './modules/communication/communication.module';
 
 // Cross-cutting
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -104,6 +105,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     AssistantModule,
     UserAiProvidersModule,
     PrivacyModule,
+    CommunicationModule,
 
     // Cross-cutting
     NotificationsModule,

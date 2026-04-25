@@ -24,4 +24,11 @@ export const QUERY_KEYS = {
   privacySettings: ['privacy', 'settings'] as const,
   privacyConsents: ['privacy', 'consents'] as const,
   dataUsageSummary: ['privacy', 'data-usage-summary'] as const,
+  communicationSettings: ['communication', 'settings'] as const,
+  connectedAccounts: ['communication', 'connected-accounts'] as const,
+  emails: (params?: Record<string, unknown>) => ['communication', 'emails', params] as const,
+  emailReminders: ['communication', 'email-reminders'] as const,
+  messageReminders: ['communication', 'message-reminders'] as const,
+  companionMemory: ['communication', 'ai-memory'] as const,
+  memoryConsent: ['communication', 'ai-memory', 'consent'] as const,
 };

@@ -9,3 +9,4 @@ export * from './sleep.schema';
 export * from './mood.schema';
 export * from './user-ai-provider.schema';
 export * from './privacy.schema';
+export * from './communication.schema';

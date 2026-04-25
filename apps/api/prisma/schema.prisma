@@ -290,6 +290,13 @@ model User {
   sensitiveAccessLogs     SensitiveAccessLog[]
   recommendationEvidences RecommendationEvidence[]
   personalizationMemories AiPersonalizationMemory[]
+  communicationSetting    CommunicationSetting?
+  memoryConsent           MemoryConsent?
+  connectedAccounts       ConnectedAccount[]
+  emailItems              EmailItem[]
+  emailReminders          EmailReminder[]
+  messageReminders        MessageReminder[]
+  companionMemories       AICompanionMemory[]
 
   @@index([status])
   @@map("users")
@@ -1197,4 +1204,221 @@ model AiPersonalizationMemory {
   @@index([userId, isActive])
   @@index([userId, memoryType])
   @@map("ai_personalization_memories")
+}
+
+// =============================================================================
+// M. Communication Assistant — email integration, reminders, AI memory.
+//    Privacy-first: every model gates on the matching CommunicationSetting
+//    + MemoryConsent toggle.
+// =============================================================================
+
+enum ConnectedAccountProvider {
+  GMAIL
+  OUTLOOK
+  IMAP
+}
+
+enum EmailCategory {
+  PERSONAL
+  WORK
+  FINANCE
+  BILL
+  EVENT
+  PROMOTION
+  OTHER
+}
+
+enum EmailReminderStatus {
+  PENDING
+  SENT
+  DISMISSED
+  DONE
+}
+
+enum MessageReminderStatus {
+  PENDING
+  SENT
+  DISMISSED
+  DONE
+}
+
+enum MessageReminderSource {
+  MANUAL
+  AI_SUGGESTED
+  NOTIFICATION_IMPORT
+}
+
+enum AiCompanionMemoryType {
+  PREFERENCE
+  HABIT
+  GOAL
+  RELATIONSHIP
+  WORK_STYLE
+  COMMUNICATION
+  HEALTH_CONTEXT
+  FINANCE_CONTEXT
+  OTHER
+}
+
+enum AiCompanionMemorySource {
+  CHAT
+  VOICE_NOTE
+  EMAIL
+  MANUAL_CHECKIN
+  USER_CONFIRMATION
+}
+
+model CommunicationSetting {
+  id                                  String   @id @default(uuid())
+  userId                              String   @unique
+  emailAssistantEnabled               Boolean  @default(false)
+  // Three escalating data-access tiers; later tiers REQUIRE the previous.
+  emailMetadataSync                   Boolean  @default(true)
+  emailSnippetSync                    Boolean  @default(false)
+  emailFullContentAnalysis            Boolean  @default(false)
+  followUpRemindersEnabled            Boolean  @default(true)
+  messageReminderEnabled              Boolean  @default(true)
+  // OFF by default. Android-only — the Notification Listener flow is in
+  // docs/ANDROID_NOTIFICATION_IMPORT_RISK.md, not yet implemented.
+  androidNotificationImportEnabled    Boolean  @default(false)
+  aiMemoryEnabled                     Boolean  @default(true)
+  createdAt                           DateTime @default(now())
+  updatedAt                           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("communication_settings")
+}
+
+model MemoryConsent {
+  id                              String   @id @default(uuid())
+  userId                          String   @unique
+  allowMemory                     Boolean  @default(true)
+  allowEmailForAI                 Boolean  @default(false)
+  allowCommunicationContextForAI  Boolean  @default(false)
+  allowVoiceNotesForAI            Boolean  @default(false)
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("memory_consents")
+}
+
+model ConnectedAccount {
+  id                    String                   @id @default(uuid())
+  userId                String
+  provider              ConnectedAccountProvider
+  email                 String
+  displayName           String?
+  // OAuth tokens — AES-256-GCM via EncryptionService.
+  encryptedAccessToken  String
+  encryptedRefreshToken String?
+  tokenExpiresAt        DateTime?
+  scopes                Json
+  isActive              Boolean                  @default(true)
+  lastSyncedAt          DateTime?
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emails EmailItem[]
+
+  @@unique([userId, provider, email])
+  @@index([userId])
+  @@map("connected_accounts")
+}
+
+model EmailItem {
+  id                  String         @id @default(uuid())
+  userId              String
+  connectedAccountId  String
+  externalId          String
+  threadId            String?
+  fromName            String?
+  fromEmail           String?
+  subject             String
+  // Snippet only stored when emailSnippetSync is on.
+  snippet             String?
+  receivedAt          DateTime
+  isRead              Boolean        @default(false)
+  isImportant         Boolean        @default(false)
+  needsReply          Boolean        @default(false)
+  hasDeadline         Boolean        @default(false)
+  detectedDeadlineAt  DateTime?
+  category            EmailCategory?
+  // Short AI-produced summary of WHY the AI flagged it. Never the full body.
+  aiSummary           String?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connectedAccount ConnectedAccount @relation(fields: [connectedAccountId], references: [id], onDelete: Cascade)
+  reminders        EmailReminder[]
+
+  @@unique([connectedAccountId, externalId])
+  @@index([userId, receivedAt])
+  @@index([userId, isImportant])
+  @@index([userId, needsReply])
+  @@index([userId, hasDeadline])
+  @@index([userId, category])
+  @@map("email_items")
+}
+
+model EmailReminder {
+  id           String              @id @default(uuid())
+  userId       String
+  emailItemId  String?
+  title        String
+  note         String?
+  remindAt     DateTime
+  status       EmailReminderStatus @default(PENDING)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailItem EmailItem? @relation(fields: [emailItemId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([userId, remindAt])
+  @@map("email_reminders")
+}
+
+model MessageReminder {
+  id          String                @id @default(uuid())
+  userId      String
+  contactName String?
+  platform    String?
+  title       String
+  note        String?
+  remindAt    DateTime
+  status      MessageReminderStatus @default(PENDING)
+  source      MessageReminderSource @default(MANUAL)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([userId, remindAt])
+  @@map("message_reminders")
+}
+
+model AICompanionMemory {
+  id         String                  @id @default(uuid())
+  userId     String
+  memoryType AiCompanionMemoryType
+  content    String
+  source     AiCompanionMemorySource
+  confidence Float?
+  isActive   Boolean                 @default(true)
+  lastUsedAt DateTime?
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@index([userId, memoryType])
+  @@map("ai_companion_memories")
 }

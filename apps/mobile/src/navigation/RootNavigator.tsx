@@ -51,6 +51,12 @@ import { DataUsageSummaryScreen } from '../screens/privacy/DataUsageSummaryScree
 import { PersonalizationConsentScreen } from '../screens/privacy/PersonalizationConsentScreen';
 import { ClearAIMemoryScreen } from '../screens/privacy/ClearAIMemoryScreen';
 import { RecommendationEvidenceScreen } from '../screens/privacy/RecommendationEvidenceScreen';
+import { CommunicationSettingsScreen } from '../screens/communication/CommunicationSettingsScreen';
+import { ConnectedAccountsScreen } from '../screens/communication/ConnectedAccountsScreen';
+import { EmailAssistantScreen } from '../screens/communication/EmailAssistantScreen';
+import { FollowUpRemindersScreen } from '../screens/communication/FollowUpRemindersScreen';
+import { AddMessageReminderScreen } from '../screens/communication/AddMessageReminderScreen';
+import { AICompanionMemoryScreen } from '../screens/communication/AICompanionMemoryScreen';
 import { AIChatScreen } from '../screens/ai/AIChatScreen';
 import type { RootStackParamList } from './types';
 
@@ -180,6 +186,36 @@ export function RootNavigator() {
                 name="RecommendationEvidence"
                 component={RecommendationEvidenceScreen}
                 options={{ title: 'Why am I seeing this?' }}
+              />
+              <Stack.Screen
+                name="CommunicationSettings"
+                component={CommunicationSettingsScreen}
+                options={{ title: 'Communication assistant' }}
+              />
+              <Stack.Screen
+                name="ConnectedAccounts"
+                component={ConnectedAccountsScreen}
+                options={{ title: 'Connected accounts' }}
+              />
+              <Stack.Screen
+                name="EmailAssistant"
+                component={EmailAssistantScreen}
+                options={{ title: 'Email triage' }}
+              />
+              <Stack.Screen
+                name="FollowUpReminders"
+                component={FollowUpRemindersScreen}
+                options={{ title: 'Follow-ups' }}
+              />
+              <Stack.Screen
+                name="AddMessageReminder"
+                component={AddMessageReminderScreen}
+                options={{ title: 'Add reminder' }}
+              />
+              <Stack.Screen
+                name="AICompanionMemory"
+                component={AICompanionMemoryScreen}
+                options={{ title: 'AI memory' }}
               />
             </Stack.Group>
           </>
