@@ -12,6 +12,10 @@ import {
   AiProviderResolverService,
 } from '../ai/services/ai-provider-resolver.service';
 import { briefAiError } from '../ai/services/ai-provider.service';
+import {
+  InvalidUserProviderConfigError,
+  validateUserBaseUrl,
+} from '../ai/providers/user-provider.builder';
 import type {
   CreateUserAiProviderInput,
   UpdateUserAiProviderInput,
@@ -59,6 +63,17 @@ export class UserAiProviderService {
         message: 'apiKey required',
         errorCode: 'INVALID_PROVIDER_CONFIG',
       });
+    }
+
+    if (input.baseUrl?.trim()) {
+      try {
+        validateUserBaseUrl(input.baseUrl.trim());
+      } catch (e) {
+        throw new ConflictException({
+          message: e instanceof InvalidUserProviderConfigError ? e.message : 'Invalid baseUrl',
+          errorCode: 'INVALID_PROVIDER_CONFIG',
+        });
+      }
     }
 
     const apiKey = input.apiKey.trim();
@@ -114,7 +129,20 @@ export class UserAiProviderService {
 
     const data: Prisma.UserAiProviderUpdateInput = {};
     if (input.name !== undefined) data.name = input.name.trim();
-    if (input.baseUrl !== undefined) data.baseUrl = input.baseUrl?.trim() || null;
+    if (input.baseUrl !== undefined) {
+      const candidate = input.baseUrl?.trim() || null;
+      if (candidate) {
+        try {
+          validateUserBaseUrl(candidate);
+        } catch (e) {
+          throw new ConflictException({
+            message: e instanceof InvalidUserProviderConfigError ? e.message : 'Invalid baseUrl',
+            errorCode: 'INVALID_PROVIDER_CONFIG',
+          });
+        }
+      }
+      data.baseUrl = candidate;
+    }
     if (input.defaultChatModel !== undefined) data.defaultChatModel = input.defaultChatModel;
     if (input.defaultPlannerModel !== undefined) data.defaultPlannerModel = input.defaultPlannerModel;
     if (input.defaultFinanceModel !== undefined) data.defaultFinanceModel = input.defaultFinanceModel;

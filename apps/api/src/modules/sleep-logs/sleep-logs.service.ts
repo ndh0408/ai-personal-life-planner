@@ -75,7 +75,12 @@ export class SleepLogsService {
       if (query.from) (where.date as Prisma.DateTimeFilter).gte = dateOnly(query.from);
       if (query.to) (where.date as Prisma.DateTimeFilter).lte = dateOnly(query.to);
     }
-    return this.prisma.sleepLog.findMany({ where, orderBy: { date: 'desc' } });
+    return this.prisma.sleepLog.findMany({
+      where,
+      orderBy: { date: 'desc' },
+      // Defensive cap — see incomes.service for rationale.
+      take: 366,
+    });
   }
 
   async update(userId: string, id: string, input: UpdateSleepLogInput) {

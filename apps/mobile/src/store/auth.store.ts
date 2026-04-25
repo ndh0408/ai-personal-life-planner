@@ -3,6 +3,7 @@ import { tokenStore } from '../services/auth/token-store';
 import { authApi, type AuthTokens, type Me } from '../services/api/auth.api';
 import { profileApi, type ProfilePayload } from '../services/api/profile.api';
 import { registerUnauthorizedHandler } from '../services/api/client';
+import { queryClient } from '../services/query-client';
 import { setLocale, type SupportedLocale } from '../i18n';
 
 type Status = 'loading' | 'unauthenticated' | 'authenticated';
@@ -100,6 +101,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       // Best-effort — never block logout on cache purge.
     }
+    // Wipe React Query's in-memory cache so the next login doesn't see the
+    // previous user's data. cancelQueries() first to avoid in-flight handlers
+    // writing back into the cleared cache.
+    try {
+      await queryClient.cancelQueries();
+      queryClient.clear();
+    } catch {
+      // Best-effort.
+    }
     set({ status: 'unauthenticated', user: null, profile: null, needsOnboarding: false });
   },
 
@@ -118,7 +128,10 @@ async function applyTokens(tokens: AuthTokens) {
   await tokenStore.set(tokens.accessToken, tokens.refreshToken);
 }
 
-// Wire 401-from-anywhere → log out
+// Wire 401-from-anywhere → log out + wipe caches.
 registerUnauthorizedHandler(() => {
+  // Best-effort: cancel in-flight queries before clearing.
+  queryClient.cancelQueries().catch(() => undefined);
+  queryClient.clear();
   useAuthStore.setState({ status: 'unauthenticated', user: null, profile: null, needsOnboarding: false });
 });

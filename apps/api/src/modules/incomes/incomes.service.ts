@@ -42,6 +42,9 @@ export class IncomesService {
     return this.prisma.income.findMany({
       where,
       orderBy: [{ incomeDate: 'desc' }, { createdAt: 'desc' }],
+      // Defensive cap — the controller schema doesn't enforce a from/to
+      // window, so on multi-year history this would otherwise OOM.
+      take: 366,
     });
   }
 

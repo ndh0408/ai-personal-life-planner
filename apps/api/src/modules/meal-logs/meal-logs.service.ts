@@ -32,6 +32,9 @@ export class MealLogsService {
     return this.prisma.mealLog.findMany({
       where,
       orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+      // Defensive cap — see incomes.service for rationale. Bumped to 1500
+      // to allow ~4 logs/day × 365 days plus headroom.
+      take: 1500,
     });
   }
 

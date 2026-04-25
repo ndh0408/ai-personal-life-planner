@@ -15,3 +15,4 @@ export { RecommendationCard } from './RecommendationCard';
 export { StepProgress } from './StepProgress';
 export { BarChart } from './BarChart';
 export { OfflineBanner } from './OfflineBanner';
+export { ErrorBoundary } from './ErrorBoundary';

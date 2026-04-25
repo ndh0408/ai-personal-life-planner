@@ -25,8 +25,8 @@ const StatusSchema = z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED']);
 const CreateSchema = z
   .object({
     title: z.string().min(1).max(200),
-    targetAmount: z.number().positive(),
-    currentAmount: z.number().nonnegative().optional(),
+    targetAmount: z.number().positive().max(1e13),
+    currentAmount: z.number().nonnegative().max(1e13).optional(),
     targetDate: DateStr.optional(),
     priority: PrioritySchema.optional(),
     note: z.string().max(1000).optional(),
@@ -37,7 +37,7 @@ const UpdateSchema = CreateSchema.partial().extend({
   status: StatusSchema.optional(),
 });
 
-const ContributeSchema = z.object({ amount: z.number().positive() }).strict();
+const ContributeSchema = z.object({ amount: z.number().positive().max(1e13) }).strict();
 
 @Controller('saving-goals')
 @UseGuards(JwtAuthGuard)

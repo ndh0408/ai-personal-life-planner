@@ -27,8 +27,8 @@ const CreateDebtSchema = z
     type: DebtTypeSchema,
     personName: z.string().max(120).optional(),
     title: z.string().min(1).max(200),
-    totalAmount: z.number().positive(),
-    paidAmount: z.number().nonnegative().optional(),
+    totalAmount: z.number().positive().max(1e13),
+    paidAmount: z.number().nonnegative().max(1e13).optional(),
     dueDate: DateStr.optional(),
     note: z.string().max(1000).optional(),
   })
@@ -40,7 +40,7 @@ const UpdateDebtSchema = CreateDebtSchema.partial().extend({
 
 const PaymentSchema = z
   .object({
-    amount: z.number().positive(),
+    amount: z.number().positive().max(1e13),
     markPaid: z.boolean().optional(),
   })
   .strict();

@@ -75,10 +75,24 @@ describe('WalletsService', () => {
     await expect(svc.getById('u1', 'missing')).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('update: changes balance + isActive for owner', async () => {
-    const w = await svc.create('u1', { name: 'Cash', type: WalletType.CASH });
-    const after = await svc.update('u1', w.id, { balance: 500_000, isActive: false });
-    expect(Number(after.balance)).toBe(500_000);
+  it('update: refuses to change balance — race-prone direct write blocked', async () => {
+    // Wallet balance is no longer mutable via PUT /wallets/:id — see comment
+    // in wallets.controller. The update path silently ignores balance even if
+    // the (now-removed) field is passed by an old client.
+    const w = await svc.create('u1', {
+      name: 'Cash',
+      type: WalletType.CASH,
+      balance: 100_000,
+    });
+    // Cast through `unknown` so we can intentionally pass a `balance` field
+    // that isn't part of the new UpdateWalletInput shape. The service must
+    // ignore it.
+    const after = await svc.update(
+      'u1',
+      w.id,
+      { balance: 500_000, isActive: false } as unknown as Parameters<typeof svc.update>[2],
+    );
+    expect(Number(after.balance)).toBe(100_000);
     expect(after.isActive).toBe(false);
   });
 });

@@ -37,6 +37,102 @@ function trimSlash(s: string): string {
 }
 
 /**
+ * SSRF guard for user-supplied AI baseUrl.
+ *
+ * The CUSTOM_OPENAI_COMPATIBLE provider lets a user point the resolver at any
+ * `http(s)://...` endpoint — that is exactly the surface an attacker would
+ * use to make our backend fetch internal services or cloud-metadata IPs from
+ * inside the VPC.
+ *
+ * Validation runs at TWO points:
+ *   1. CRUD time (when the user submits the URL) — fast UX feedback.
+ *   2. Just before the actual fetch in {@link buildUserProvider} — closes
+ *      DNS-rebinding (the URL resolves to a public IP at validation time and
+ *      a private IP at fetch time).
+ *
+ * The blocklist covers loopback, link-local (incl. cloud metadata
+ * 169.254.169.254), RFC1918 private space, IPv6 equivalents, and the
+ * unspecified address. Hostnames `localhost`, `metadata`, `metadata.google.
+ * internal` are also rejected by name (some platforms resolve them without
+ * touching DNS).
+ *
+ * Throws {@link InvalidUserProviderConfigError} on any violation.
+ */
+export function validateUserBaseUrl(rawUrl: string): URL {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    throw new InvalidUserProviderConfigError('baseUrl must be a valid URL');
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new InvalidUserProviderConfigError(
+      `baseUrl scheme "${url.protocol}" is not allowed (use http or https)`,
+    );
+  }
+  // hostname comes without surrounding [] for IPv6
+  const host = url.hostname.toLowerCase();
+
+  // Hostname-based blocklist — catches values that may not resolve via the
+  // platform's DNS at all.
+  const HOST_BLOCKLIST = new Set([
+    'localhost',
+    'localhost.localdomain',
+    'ip6-localhost',
+    'ip6-loopback',
+    'metadata',
+    'metadata.google.internal',
+  ]);
+  if (HOST_BLOCKLIST.has(host)) {
+    throw new InvalidUserProviderConfigError(
+      `baseUrl host "${host}" is not allowed`,
+    );
+  }
+
+  // IP literal checks (covers DNS-resolution-at-fetch-time path too when the
+  // attacker supplies an IP directly).
+  if (isPrivateOrLoopbackHost(host)) {
+    throw new InvalidUserProviderConfigError(
+      `baseUrl host "${host}" resolves to a non-public address`,
+    );
+  }
+
+  return url;
+}
+
+function isPrivateOrLoopbackHost(host: string): boolean {
+  // IPv4 literal?
+  const ipv4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
+  if (ipv4) {
+    const [, a, b] = ipv4.map((s) => Number(s)) as number[];
+    if (a === 0) return true;                     // 0.0.0.0/8
+    if (a === 10) return true;                    // RFC1918
+    if (a === 127) return true;                   // loopback
+    if (a === 169 && b === 254) return true;      // link-local + cloud metadata
+    if (a === 172 && b >= 16 && b <= 31) return true; // RFC1918
+    if (a === 192 && b === 168) return true;      // RFC1918
+    if (a >= 224) return true;                    // multicast / reserved
+    return false;
+  }
+  // IPv6 literal?
+  const v6 = host.replace(/^\[|\]$/g, '');
+  if (v6.includes(':')) {
+    const norm = v6.toLowerCase();
+    if (norm === '::' || norm === '::1') return true;
+    if (norm.startsWith('fe80:') || norm.startsWith('fe8') || norm.startsWith('fc') || norm.startsWith('fd')) {
+      return true; // link-local + ULA
+    }
+    if (norm.startsWith('::ffff:')) {
+      // IPv4-mapped — recurse on the embedded IPv4
+      const embedded = norm.slice(7);
+      return isPrivateOrLoopbackHost(embedded);
+    }
+    return false;
+  }
+  return false;
+}
+
+/**
  * Build a one-shot AiProvider client from a user-stored config. The returned
  * client is ephemeral — created per request, holds the decrypted key in
  * closure, and is discarded after the call so we never cache plaintext keys.
@@ -81,9 +177,9 @@ export function buildUserProvider(
           'baseUrl is required for CUSTOM_OPENAI_COMPATIBLE',
         );
       }
-      if (!/^https?:\/\//i.test(baseUrl)) {
-        throw new InvalidUserProviderConfigError('baseUrl must be a full http(s) URL');
-      }
+      // SSRF guard: validate at fetch time too, not just CRUD time, so a
+      // DNS-rebinding attack (public at create, private at use) is caught.
+      validateUserBaseUrl(baseUrl);
       const base = trimSlash(baseUrl);
       return new OpenAiProvider(input.decryptedApiKey, input.model, {
         name: 'custom',

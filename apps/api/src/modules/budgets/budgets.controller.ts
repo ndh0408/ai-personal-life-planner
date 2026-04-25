@@ -23,7 +23,7 @@ const BudgetPeriodSchema = z.enum(['WEEKLY', 'MONTHLY']);
 const CreateBudgetSchema = z
   .object({
     category: z.string().min(1).max(60),
-    amount: z.number().positive(),
+    amount: z.number().positive().max(1e13),
     period: BudgetPeriodSchema,
     startDate: DateStr,
     endDate: DateStr,

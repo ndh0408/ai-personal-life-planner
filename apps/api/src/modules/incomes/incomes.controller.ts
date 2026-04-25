@@ -24,7 +24,7 @@ const CreateIncomeSchema = z
   .object({
     walletId: z.string().uuid().nullable().optional(),
     title: z.string().min(1).max(200),
-    amount: z.number().positive(),
+    amount: z.number().positive().max(1e13),
     category: z.string().max(60).optional(),
     source: z.string().max(120).optional(),
     incomeDate: DateStr,

@@ -28,7 +28,12 @@ export class HealthMetricsService {
       if (from) (where.date as Prisma.DateTimeFilter).gte = toDate(from);
       if (to) (where.date as Prisma.DateTimeFilter).lte = toDate(to);
     }
-    return this.prisma.healthMetric.findMany({ where, orderBy: { date: 'desc' } });
+    return this.prisma.healthMetric.findMany({
+      where,
+      orderBy: { date: 'desc' },
+      // Defensive cap — see incomes.service for rationale.
+      take: 366,
+    });
   }
 
   async getById(userId: string, id: string) {

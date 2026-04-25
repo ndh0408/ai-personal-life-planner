@@ -10,6 +10,7 @@ import { bootOfflineServices } from './src/services/offline';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { initI18n } from './src/i18n';
+import { ErrorBoundary } from './src/components/ui';
 
 export default function App() {
   const [ready, setReady] = useState(false);
@@ -38,7 +39,9 @@ export default function App() {
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <StatusBar style="auto" />
-          <RootNavigator />
+          <ErrorBoundary>
+            <RootNavigator />
+          </ErrorBoundary>
         </QueryClientProvider>
       </ThemeProvider>
     </SafeAreaProvider>

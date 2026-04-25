@@ -46,9 +46,9 @@ export class WalletsService {
     const data: Prisma.WalletUpdateInput = {};
     if (input.name !== undefined) data.name = input.name;
     if (input.type !== undefined) data.type = input.type;
-    if (input.balance !== undefined) data.balance = input.balance;
-    if (input.currency !== undefined) data.currency = input.currency;
     if (input.isActive !== undefined) data.isActive = input.isActive;
+    // balance + currency are intentionally NOT settable here — see schema
+    // comment in wallets.controller.ts.
     return this.prisma.wallet.update({ where: { id }, data });
   }
 

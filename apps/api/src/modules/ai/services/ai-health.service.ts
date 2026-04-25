@@ -22,10 +22,17 @@ export class AiHealthService {
   /**
    * Classic red-flag detector — extend as needed. Returns a non-null reason
    * when the caller should short-circuit to {@link safeFallback}.
+   *
+   * The keyword list covers BOTH English and Vietnamese, because the
+   * upstream model's response is in the user's locale (see
+   * `prompts/system.ts buildLanguageDirective`). An English-only screen
+   * would miss "tự tử" / "kê đơn" / "liều dùng" in Vietnamese output.
+   * Lowercase comparison after Unicode normalisation so accent variants
+   * still match.
    */
   screenForUnsafeContent(text: string): string | null {
-    const t = text.toLowerCase();
-    const unsafe = [
+    const t = text.normalize('NFC').toLowerCase();
+    const unsafeEn = [
       'self-harm',
       'suicide',
       'overdose',
@@ -33,7 +40,20 @@ export class AiHealthService {
       'dosage',
       'diagnose',
     ];
-    for (const keyword of unsafe) {
+    const unsafeVi = [
+      'tự tử',
+      'tự sát',
+      'tự làm hại',
+      'tự gây thương tích',
+      'kê đơn',
+      'liều dùng',
+      'liều cao',
+      'quá liều',
+      'chẩn đoán',
+      'thuốc kê đơn',
+      'tự ý dùng thuốc',
+    ];
+    for (const keyword of [...unsafeEn, ...unsafeVi]) {
       if (t.includes(keyword)) return `contains-unsafe-keyword:${keyword}`;
     }
     return null;

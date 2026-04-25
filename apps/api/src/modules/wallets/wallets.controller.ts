@@ -22,17 +22,23 @@ const CreateWalletSchema = z
   .object({
     name: z.string().min(1).max(80),
     type: WalletTypeSchema,
-    balance: z.number().finite().optional(),
+    // Bound the opening balance to a sane range. The lower bound -1e13
+    // accounts for credit-card / loan wallets recorded as negatives.
+    balance: z.number().finite().min(-1e13).max(1e13).optional(),
     currency: z.string().min(1).max(10).optional(),
   })
   .strict();
 
+// Wallet `balance` is intentionally NOT editable here. Editing it raw races
+// with concurrent Income/Expense atomic decrement/increment in transactions
+// and corrupts user money. Set the opening balance at create time, then
+// adjust via /api/incomes (top-up) or /api/expenses (deduct) which are
+// transactional. `currency` is also not editable post-create — flipping
+// VND→USD without rebalance silently corrupts dashboard totals.
 const UpdateWalletSchema = z
   .object({
     name: z.string().min(1).max(80).optional(),
     type: WalletTypeSchema.optional(),
-    balance: z.number().finite().optional(),
-    currency: z.string().min(1).max(10).optional(),
     isActive: z.boolean().optional(),
   })
   .strict();

@@ -25,7 +25,7 @@ const CreateExpenseSchema = z
   .object({
     walletId: z.string().uuid().nullable().optional(),
     title: z.string().min(1).max(200),
-    amount: z.number().positive(),
+    amount: z.number().positive().max(1e13),
     category: z.string().min(1).max(60),
     expenseDate: DateStr,
     paymentMethod: z.string().max(60).optional(),

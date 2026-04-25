@@ -84,7 +84,10 @@ export class UserAiProvidersController {
   }
 
   @Post('user-ai-providers/:id/test')
-  @Throttle({ default: { limit: 6, ttl: 60_000 } })
+  // Each call costs upstream AI tokens. Tightened from 6/min in the
+  // enterprise audit. Mobile UX must surface "test in cooldown" instead of
+  // letting users hammer.
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   async test(
     @CurrentUser() user: AuthUser,
     @Param('id', new ParseUUIDPipe()) id: string,
