@@ -3,6 +3,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { LocaleService } from '../../../common/i18n/locale.service';
 import { AiProviderService, briefAiError } from './ai-provider.service';
 import { AiProviderResolverService } from './ai-provider-resolver.service';
+import { PrivacyService } from '../../privacy/privacy.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import {
@@ -76,10 +77,24 @@ export class AiFinanceService {
     private readonly json: AiJsonValidationService,
     private readonly locale: LocaleService,
     private readonly resolver: AiProviderResolverService,
+    private readonly privacy: PrivacyService,
   ) {}
 
   async analyze(userId: string, input: AnalyzeFinanceInput, req: RequestLike) {
     const locale = await this.locale.forUser(userId, req);
+    const gates = await this.privacy.aiGates(userId);
+    if (!gates.finance) {
+      // Privacy: user has opted OUT of sending finance data to AI. Return
+      // the deterministic safe template — no AI call, no upstream cost.
+      const analysis = fallback(locale);
+      return {
+        analysis,
+        context: null,
+        locale,
+        usedFallback: true,
+        disabledByPrivacy: true,
+      };
+    }
     const ctx = await this.collect(userId, input.month);
 
     const system = buildFinanceAnalysisSystem(locale);

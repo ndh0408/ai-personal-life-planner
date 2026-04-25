@@ -45,6 +45,9 @@ import { LanguageSettingsScreen } from '../screens/settings/LanguageSettingsScre
 import { AiProviderSettingsScreen } from '../screens/settings/AiProviderSettingsScreen';
 import { AddAiProviderScreen } from '../screens/settings/AddAiProviderScreen';
 import { EditAiProviderScreen } from '../screens/settings/EditAiProviderScreen';
+import { PrivacySettingsScreen } from '../screens/privacy/PrivacySettingsScreen';
+import { PermissionCenterScreen } from '../screens/privacy/PermissionCenterScreen';
+import { DataUsageSummaryScreen } from '../screens/privacy/DataUsageSummaryScreen';
 import { AIChatScreen } from '../screens/ai/AIChatScreen';
 import type { RootStackParamList } from './types';
 
@@ -144,6 +147,21 @@ export function RootNavigator() {
                 name="EditAiProvider"
                 component={EditAiProviderScreen}
                 options={{ title: 'Edit provider' }}
+              />
+              <Stack.Screen
+                name="PrivacySettings"
+                component={PrivacySettingsScreen}
+                options={{ title: 'Privacy' }}
+              />
+              <Stack.Screen
+                name="PermissionCenter"
+                component={PermissionCenterScreen}
+                options={{ title: 'Permissions' }}
+              />
+              <Stack.Screen
+                name="DataUsageSummary"
+                component={DataUsageSummaryScreen}
+                options={{ title: 'Data usage' }}
               />
             </Stack.Group>
           </>

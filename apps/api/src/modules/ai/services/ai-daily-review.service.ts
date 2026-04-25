@@ -3,6 +3,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { LocaleService } from '../../../common/i18n/locale.service';
 import { AiProviderService, briefAiError } from './ai-provider.service';
 import { AiProviderResolverService } from './ai-provider-resolver.service';
+import { PrivacyService } from '../../privacy/privacy.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import { AiHealthService } from './ai-health.service';
@@ -62,11 +63,30 @@ export class AiDailyReviewService {
     private readonly health: AiHealthService,
     private readonly goal: AiGoalService,
     private readonly resolver: AiProviderResolverService,
+    private readonly privacy: PrivacyService,
   ) {}
 
   async review(userId: string, input: DailyReviewInput, req: RequestLike) {
     const locale = await this.locale.forUser(userId, req);
+    const gates = await this.privacy.aiGates(userId);
+    if (!gates.personalization) {
+      // Personalisation off — skip AI entirely and emit a generic review.
+      const review = fallback(locale);
+      return { review, saved: null, locale, usedFallback: true, disabledByPrivacy: true };
+    }
     const ctx = await this.collect(userId, input.date);
+    // Domain-level redaction on the assembled context — what we already
+    // queried stays in DB, but we zero it out before AI sees it.
+    if (!gates.finance) {
+      ctx.expenses = { total: 0, count: 0, byNeed: [] };
+    }
+    if (!gates.health) {
+      ctx.sleep = null;
+      ctx.mood = null;
+    }
+    if (!gates.meal) {
+      ctx.meals = { planCount: 0, logCount: 0, estimatedCaloriesSum: null, cost: null };
+    }
 
     const system = buildDailyReviewSystem(locale);
     const prompt = buildDailyReviewPrompt(this.tpl, ctx);

@@ -21,4 +21,7 @@ export const QUERY_KEYS = {
   aiProviders: ['user-ai-providers'] as const,
   aiProvider: (id: string) => ['user-ai-providers', id] as const,
   aiPreference: ['user-ai-preferences'] as const,
+  privacySettings: ['privacy', 'settings'] as const,
+  privacyConsents: ['privacy', 'consents'] as const,
+  dataUsageSummary: ['privacy', 'data-usage-summary'] as const,
 };

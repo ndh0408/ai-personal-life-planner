@@ -5,7 +5,7 @@ import { AiJsonValidationService } from './ai-json-validation.service';
 import { AiHealthService } from './ai-health.service';
 import { AiGoalService } from './ai-goal.service';
 import { MockAiProvider } from '../providers/mock.provider';
-import { makeStubResolver } from './test-helpers';
+import { makeStubResolver, makeStubPrivacy } from './test-helpers';
 import type { LocaleService } from '../../../common/i18n/locale.service';
 
 function mockLocale(tag: 'vi' | 'en' = 'vi'): LocaleService {
@@ -53,6 +53,7 @@ describe('AiDailyReviewService', () => {
       new AiHealthService(),
       new AiGoalService(api as never),
       makeStubResolver(provider),
+      makeStubPrivacy(),
     );
     const result = await svc.review('u1', { date: '2026-04-24' }, {});
     expect(result.usedFallback).toBe(false);
@@ -84,6 +85,7 @@ describe('AiDailyReviewService', () => {
       new AiHealthService(),
       new AiGoalService(api as never),
       makeStubResolver(provider),
+      makeStubPrivacy(),
     );
     const result = await svc.review('u1', { date: '2026-04-24' }, {});
     expect(result.review.healthAdvice).toContain('qualified professional');
@@ -104,6 +106,7 @@ describe('AiDailyReviewService', () => {
       new AiHealthService(),
       new AiGoalService(api as never),
       makeStubResolver(provider),
+      makeStubPrivacy(),
     );
     const result = await svc.review('u1', { date: '2026-04-24' }, {});
     expect(result.usedFallback).toBe(true);

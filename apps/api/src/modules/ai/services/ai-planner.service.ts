@@ -3,6 +3,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { LocaleService } from '../../../common/i18n/locale.service';
 import { AiProviderService } from './ai-provider.service';
 import { AiProviderResolverService } from './ai-provider-resolver.service';
+import { PrivacyService } from '../../privacy/privacy.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiInvalidJsonError, AiJsonValidationService } from './ai-json-validation.service';
 import { PreviewCacheService } from './preview-cache.service';
@@ -70,12 +71,25 @@ export class AiPlannerService {
     private readonly previews: PreviewCacheService,
     private readonly locale: LocaleService,
     private readonly resolver: AiProviderResolverService,
+    private readonly privacy: PrivacyService,
   ) {}
 
   // ---- 1) generate-schedule -------------------------------------------------
 
   async generate(userId: string, input: GenerateScheduleInput, req: RequestLike = {}) {
     const localeTag = await this.locale.forUser(userId, req);
+    const gates = await this.privacy.aiGates(userId);
+    if (!gates.schedule) {
+      // Privacy: schedule data may not be sent to AI. Persist a safe
+      // fallback plan instead of calling AI at all.
+      const saved = await this.persistPlan(userId, input.date, FALLBACK_PLAN, false, input);
+      return {
+        plan: FALLBACK_PLAN,
+        saved,
+        usedFallback: true,
+        disabledByPrivacy: true,
+      };
+    }
     const ctx = await this.collectGenerateContext(userId, input);
     const system = buildGenerateScheduleSystem(localeTag);
     const prompt = buildGenerateSchedulePrompt(this.tpl, ctx);

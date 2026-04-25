@@ -3,6 +3,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { LocaleService } from '../../../common/i18n/locale.service';
 import { AiProviderService, briefAiError } from './ai-provider.service';
 import { AiProviderResolverService } from './ai-provider-resolver.service';
+import { PrivacyService } from '../../privacy/privacy.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import { dateOnly } from '../../../common/utils/time.util';
@@ -44,11 +45,20 @@ export class AiMealService {
     private readonly json: AiJsonValidationService,
     private readonly locale: LocaleService,
     private readonly resolver: AiProviderResolverService,
+    private readonly privacy: PrivacyService,
   ) {}
 
   async suggest(userId: string, input: SuggestMealsInput, req: RequestLike = {}) {
     const localeTag = await this.locale.forUser(userId, req);
-    const profile = await this.prisma.userProfile.findUnique({ where: { userId } });
+    const gates = await this.privacy.aiGates(userId);
+    if (!gates.meal) {
+      // Privacy: meal/dietary data may not be sent to AI.
+      return { suggestions: FALLBACK, saved: null, usedFallback: true, disabledByPrivacy: true };
+    }
+    // Only fetch dietary preference / health profile when health gate is on.
+    const profile = gates.health
+      ? await this.prisma.userProfile.findUnique({ where: { userId } })
+      : null;
     const ctx: MealContext = {
       date: input.date,
       goal: input.goal,

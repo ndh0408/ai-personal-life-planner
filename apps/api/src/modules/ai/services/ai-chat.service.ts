@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { LocaleService } from '../../../common/i18n/locale.service';
+import { PrivacyService } from '../../privacy/privacy.service';
 import { AiProviderService, briefAiError } from './ai-provider.service';
 import { AiProviderResolverService } from './ai-provider-resolver.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
@@ -38,11 +39,18 @@ export class AiChatService {
     private readonly json: AiJsonValidationService,
     private readonly locale: LocaleService,
     private readonly resolver: AiProviderResolverService,
+    private readonly privacy: PrivacyService,
   ) {}
 
   async chat(userId: string, input: AiChatInput, req: RequestLike = {}) {
     const localeTag = await this.locale.forUser(userId, req);
-    const profile = await this.prisma.userProfile.findUnique({ where: { userId } });
+    const gates = await this.privacy.aiGates(userId);
+    // When personalisation is off the user explicitly told us not to send
+    // their snapshot fields. Read it for `userId` resolution but DON'T use
+    // any field in the prompt.
+    const profile = gates.personalization
+      ? await this.prisma.userProfile.findUnique({ where: { userId } })
+      : null;
 
     let conversation = input.conversationId
       ? await this.prisma.aIConversation.findUnique({ where: { id: input.conversationId } })
@@ -71,9 +79,13 @@ export class AiChatService {
       message: input.message,
       contextType: input.contextType ?? conversation.contextType ?? undefined,
       history: history.map((m) => ({ role: m.role, content: m.content })),
+      // Profile snapshot is gated on the personalization toggle. When off,
+      // the user gets generic responses with no profile leakage to AI.
       userSnapshot: {
-        mainGoal: profile?.mainGoal ?? null,
-        activityLevel: profile?.activityLevel ?? null,
+        mainGoal: gates.personalization ? profile?.mainGoal ?? null : null,
+        activityLevel: gates.personalization ? profile?.activityLevel ?? null : null,
+        // Timezone is non-PII and required for time-sensitive chat advice;
+        // keep it even when personalisation is off.
         timezone: profile?.timezone ?? null,
       },
     };

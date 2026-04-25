@@ -8,3 +8,4 @@ export * from './meal.schema';
 export * from './sleep.schema';
 export * from './mood.schema';
 export * from './user-ai-provider.schema';
+export * from './privacy.schema';

@@ -1086,6 +1086,123 @@
         "OPENROUTER": "OpenRouter định tuyến nhiều mô hình — key bắt đầu bằng sk-or-. Tên mô hình dạng provider/model.",
         "CUSTOM_OPENAI_COMPATIBLE": "Bất kỳ endpoint OpenAI-compatible. Bắt buộc nhập base URL (vd. https://my-llm.example.com/v1)."
       }
+    },
+    "privacy": {
+      "menu": "Quyền riêng tư & quyền hệ thống",
+      "title": "Quyền riêng tư",
+      "subtitle": "Bạn quyết định những gì chúng tôi thu thập và những gì AI nhìn thấy. Bật/tắt áp dụng cho request kế tiếp — không có sync ngầm.",
+      "save": "Lưu",
+      "saved": "Đã lưu",
+      "lastUpdated": "Cập nhật lần cuối",
+      "policyVersion": "Phiên bản chính sách",
+      "section": {
+        "personalization": "Cá nhân hoá",
+        "aiData": "Dữ liệu AI được phép xem",
+        "deviceContext": "Dữ liệu từ thiết bị",
+        "behavior": "Hành vi"
+      },
+      "personalizationEnabled": {
+        "label": "Cá nhân hoá trải nghiệm của tôi",
+        "hint": "Công tắc tổng. Khi tắt, AI sẽ trả lời chung chung, trợ lý ngừng dùng hồ sơ/múi giờ của bạn, các toggle bên dưới không có tác dụng."
+      },
+      "useScheduleForAI": {
+        "label": "Dùng lịch + task + thói quen cho AI",
+        "hint": "Gửi lịch trình hôm nay, task và tiến độ thói quen vào AI khi tạo lịch, daily review, weekly insight."
+      },
+      "useFinanceForAI": {
+        "label": "Dùng tài chính cho AI",
+        "hint": "Gửi tổng thu/chi/ngân sách (đã tổng hợp) vào AI để phân tích tài chính. Khi tắt, AI trả về template chung — dữ liệu của bạn vẫn ở trong app."
+      },
+      "useHealthForAI": {
+        "label": "Dùng giấc ngủ / tâm trạng / sức khoẻ cho AI",
+        "hint": "Gửi thời lượng ngủ gần đây, mood chủ đạo, các chỉ số sức khoẻ cơ bản để AI review và insight."
+      },
+      "useMealForAI": {
+        "label": "Dùng bữa ăn + sở thích ăn uống cho AI",
+        "hint": "Gửi log bữa ăn và sở thích ăn uống vào AI để gợi ý món."
+      },
+      "useCalendarContext": {
+        "label": "Dùng lịch điện thoại (đọc event bạn chọn)",
+        "hint": "Chúng tôi không bao giờ đọc lịch nếu bạn không chọn event cụ thể. Hệ điều hành sẽ hỏi bạn từng lần."
+      },
+      "useLocationContext": {
+        "label": "Dùng vị trí khi mở app",
+        "hint": "Chỉ dùng khi app đang mở, chỉ để ước tính thời gian di chuyển. Không bao giờ xin background location."
+      },
+      "useHealthFitnessContext": {
+        "label": "Dùng dữ liệu Health / Fitness của điện thoại",
+        "hint": "Giấc ngủ + bước chân + hoạt động khi hệ điều hành cho phép. Bạn chọn từng nhóm cụ thể trong Cài đặt."
+      },
+      "voiceInputEnabled": {
+        "label": "Bật ghi âm bằng giọng nói",
+        "hint": "Mic chỉ hoạt động khi bạn giữ nút ghi âm. Không bao giờ ghi âm nền."
+      },
+      "proactiveRecommendations": {
+        "label": "Gợi ý chủ động",
+        "hint": "Cho phép trợ lý nhắc bạn các gợi ý dựa trên dữ liệu của chính bạn (rule-based, không gọi AI nếu tắt)."
+      },
+      "anonymizedDiagnostics": {
+        "label": "Gửi dữ liệu chẩn đoán ẩn danh",
+        "hint": "Crash + chỉ số hiệu năng, không có PII. Mặc định tắt."
+      },
+      "summary": {
+        "title": "AI hiện đang nhìn thấy gì",
+        "off": "Tắt",
+        "on": "Bật",
+        "aiSeesSchedule": "Lịch + task + thói quen",
+        "aiSeesFinance": "Tài chính",
+        "aiSeesHealth": "Giấc ngủ / tâm trạng / sức khoẻ",
+        "aiSeesMeal": "Bữa ăn",
+        "storedTitle": "Dữ liệu bạn đang sở hữu (lưu ở server đến khi bạn xoá)",
+        "stored": {
+          "schedules": "Lịch",
+          "tasks": "Task",
+          "expenses": "Chi tiêu",
+          "incomes": "Thu nhập",
+          "sleepLogs": "Bản ghi giấc ngủ",
+          "moodLogs": "Bản ghi tâm trạng",
+          "healthMetrics": "Chỉ số sức khoẻ",
+          "aiMessages": "Tin nhắn AI"
+        },
+        "consentTitle": "Hoạt động đồng ý gần đây",
+        "noConsents": "Chưa có sự kiện đồng ý nào."
+      },
+      "permissions": {
+        "title": "Trung tâm quyền hệ thống",
+        "subtitle": "Các quyền hệ thống chỉ được xin khi tính năng tương ứng được bật.",
+        "openSystemSettings": "Mở Cài đặt hệ thống",
+        "notGranted": "Chưa cấp",
+        "granted": "Đã cấp",
+        "denied": "Đã từ chối",
+        "notRequested": "Chưa yêu cầu",
+        "items": {
+          "notifications": {
+            "title": "Thông báo",
+            "purpose": "Nhắc nhở task, lịch, ngủ, ăn, ngân sách, mục tiêu và assistant nudge. Xin khi bạn bật trong Cài đặt hoặc lúc onboarding."
+          },
+          "calendar": {
+            "title": "Lịch điện thoại",
+            "purpose": "Đọc event bạn chọn để AI tránh trùng giờ. Chỉ xin khi bạn bật \"Dùng lịch điện thoại\" trong Quyền riêng tư."
+          },
+          "healthFitness": {
+            "title": "Sức khoẻ / Vận động",
+            "purpose": "Đọc giấc ngủ, bước chân, hoạt động nếu điện thoại của bạn cho phép. Chỉ tư vấn lifestyle — không bao giờ chẩn đoán bệnh."
+          },
+          "location": {
+            "title": "Vị trí khi mở app",
+            "purpose": "Ước tính thời gian di chuyển khi app đang mở. Không bao giờ dùng background location."
+          },
+          "microphone": {
+            "title": "Microphone",
+            "purpose": "Ghi voice note khi bạn giữ nút ghi âm. Mic TẮT mọi giây phút khác."
+          },
+          "camera": {
+            "title": "Camera & ảnh",
+            "purpose": "Avatar + chụp hoá đơn. Chỉ xin khi bạn bấm vào tính năng cần."
+          }
+        },
+        "noBackground": "Không ghi âm nền. Không tracking. Không đọc app khác."
+      }
     }
   },
   "aiChat": {

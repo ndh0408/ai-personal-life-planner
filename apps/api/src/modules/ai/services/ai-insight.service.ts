@@ -3,6 +3,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { LocaleService } from '../../../common/i18n/locale.service';
 import { AiProviderService, briefAiError } from './ai-provider.service';
 import { AiProviderResolverService } from './ai-provider-resolver.service';
+import { PrivacyService } from '../../privacy/privacy.service';
 import { AiPromptTemplateService } from './ai-prompt-template.service';
 import { AiJsonValidationService } from './ai-json-validation.service';
 import { dateOnly } from '../../../common/utils/time.util';
@@ -45,40 +46,62 @@ export class AiInsightService {
     private readonly json: AiJsonValidationService,
     private readonly locale: LocaleService,
     private readonly resolver: AiProviderResolverService,
+    private readonly privacy: PrivacyService,
   ) {}
 
   async weekly(userId: string, input: WeeklyInsightInput, req: RequestLike = {}) {
     const localeTag = await this.locale.forUser(userId, req);
+    const gates = await this.privacy.aiGates(userId);
     const start = dateOnly(input.weekStart);
     const end = new Date(start.getTime() + 7 * 86_400_000);
     const weekEnd = end.toISOString().slice(0, 10);
 
-    const [tasks, habits, sleep, moods] = await this.prisma.$transaction([
-      this.prisma.task.findMany({
-        where: { userId, updatedAt: { gte: start, lt: end } },
-        select: { status: true },
-      }),
-      this.prisma.habit.findMany({
-        where: { userId, isActive: true },
-        select: {
-          id: true,
-          name: true,
-          targetCount: true,
-          frequency: true,
-          logs: {
-            where: { date: { gte: start, lt: end }, completed: true },
-            select: { id: true },
-          },
-        },
-      }),
-      this.prisma.sleepLog.findMany({
-        where: { userId, date: { gte: start, lt: end } },
-        select: { durationMinutes: true, quality: true },
-      }),
-      this.prisma.moodLog.findMany({
-        where: { userId, date: { gte: start, lt: end } },
-        select: { mood: true },
-      }),
+    // Per-domain privacy gates: skip whole findMany when the user opted out.
+    // Promise.all (not $transaction) because the queries are read-only and
+    // mixing conditional Promise.resolve sentinels would defeat the
+    // transaction overload's typing.
+    const [tasks, habits, sleep, moods] = await Promise.all([
+      gates.schedule
+        ? this.prisma.task.findMany({
+            where: { userId, updatedAt: { gte: start, lt: end } },
+            select: { status: true },
+          })
+        : Promise.resolve([] as Array<{ status: string }>),
+      gates.schedule
+        ? this.prisma.habit.findMany({
+            where: { userId, isActive: true },
+            select: {
+              id: true,
+              name: true,
+              targetCount: true,
+              frequency: true,
+              logs: {
+                where: { date: { gte: start, lt: end }, completed: true },
+                select: { id: true },
+              },
+            },
+          })
+        : Promise.resolve(
+            [] as Array<{
+              id: string;
+              name: string;
+              targetCount: number;
+              frequency: string;
+              logs: Array<{ id: string }>;
+            }>,
+          ),
+      gates.health
+        ? this.prisma.sleepLog.findMany({
+            where: { userId, date: { gte: start, lt: end } },
+            select: { durationMinutes: true, quality: true },
+          })
+        : Promise.resolve([] as Array<{ durationMinutes: number; quality: string }>),
+      gates.health
+        ? this.prisma.moodLog.findMany({
+            where: { userId, date: { gte: start, lt: end } },
+            select: { mood: true },
+          })
+        : Promise.resolve([] as Array<{ mood: string }>),
     ]);
 
     const taskStats = {

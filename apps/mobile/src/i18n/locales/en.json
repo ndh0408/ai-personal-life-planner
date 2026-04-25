@@ -1086,6 +1086,123 @@
         "OPENROUTER": "OpenRouter routes to many models — keys start with sk-or-. The model id is provider/model.",
         "CUSTOM_OPENAI_COMPATIBLE": "Any OpenAI-compatible endpoint. You must enter the base URL (e.g. https://my-llm.example.com/v1)."
       }
+    },
+    "privacy": {
+      "menu": "Privacy & permissions",
+      "title": "Privacy",
+      "subtitle": "You control what we collect and what AI sees. Toggles take effect on the next request — no background sync.",
+      "save": "Save",
+      "saved": "Saved",
+      "lastUpdated": "Last updated",
+      "policyVersion": "Policy version",
+      "section": {
+        "personalization": "Personalisation",
+        "aiData": "What AI may see",
+        "deviceContext": "Device context",
+        "behavior": "Behaviour"
+      },
+      "personalizationEnabled": {
+        "label": "Personalise my experience",
+        "hint": "Master switch. When off, AI returns generic responses, the assistant stops using your profile/timezone, and the gates below have no effect."
+      },
+      "useScheduleForAI": {
+        "label": "Use schedule + tasks + habits for AI",
+        "hint": "Sends today's plan, tasks and habit progress to AI when generating your schedule, daily review or weekly insight."
+      },
+      "useFinanceForAI": {
+        "label": "Use finance for AI",
+        "hint": "Sends income, expense and budget aggregates to AI for finance analysis. When off, AI finance analysis returns a generic template — your data stays in the app."
+      },
+      "useHealthForAI": {
+        "label": "Use sleep / mood / health for AI",
+        "hint": "Sends recent sleep duration, dominant mood, basic health metrics to AI for review and insights."
+      },
+      "useMealForAI": {
+        "label": "Use meals + dietary profile for AI",
+        "hint": "Sends meal logs and dietary preferences to AI for meal suggestions."
+      },
+      "useCalendarContext": {
+        "label": "Use phone calendar (read events you choose)",
+        "hint": "We never read your calendar without an explicit per-event pick. The OS asks you each time."
+      },
+      "useLocationContext": {
+        "label": "Use foreground location",
+        "hint": "Used only while the app is open, only to estimate travel time. We never request background location."
+      },
+      "useHealthFitnessContext": {
+        "label": "Use phone Health / Fitness data",
+        "hint": "Sleep + steps + activity, when the OS exposes them. You authorise specific categories in Settings."
+      },
+      "voiceInputEnabled": {
+        "label": "Enable voice input",
+        "hint": "Microphone is used only while you hold a record button. We never record in the background."
+      },
+      "proactiveRecommendations": {
+        "label": "Proactive recommendations",
+        "hint": "Lets the assistant nudge you with rule-based recommendations from your own data. No AI calls when off."
+      },
+      "anonymizedDiagnostics": {
+        "label": "Send anonymous diagnostics",
+        "hint": "Crash + perf metrics with no PII. Off by default."
+      },
+      "summary": {
+        "title": "What we send to AI right now",
+        "off": "Off",
+        "on": "On",
+        "aiSeesSchedule": "Schedule + tasks + habits",
+        "aiSeesFinance": "Finance",
+        "aiSeesHealth": "Sleep / mood / health",
+        "aiSeesMeal": "Meals",
+        "storedTitle": "Data you own (stays on the server until you delete)",
+        "stored": {
+          "schedules": "Schedules",
+          "tasks": "Tasks",
+          "expenses": "Expenses",
+          "incomes": "Incomes",
+          "sleepLogs": "Sleep logs",
+          "moodLogs": "Mood logs",
+          "healthMetrics": "Health metrics",
+          "aiMessages": "AI chat messages"
+        },
+        "consentTitle": "Recent consent activity",
+        "noConsents": "No consent events yet."
+      },
+      "permissions": {
+        "title": "Permission Center",
+        "subtitle": "These OS permissions are requested only when the matching feature is turned on.",
+        "openSystemSettings": "Open system settings",
+        "notGranted": "Not granted",
+        "granted": "Granted",
+        "denied": "Denied",
+        "notRequested": "Not requested",
+        "items": {
+          "notifications": {
+            "title": "Notifications",
+            "purpose": "Reminders for tasks, schedule, sleep, meals, budget, goals and assistant nudges. Asked when you tap Enable in Settings or during onboarding."
+          },
+          "calendar": {
+            "title": "Calendar",
+            "purpose": "Read events you pick so AI can avoid clashes. Only requested when you turn on \"Use phone calendar\" in Privacy."
+          },
+          "healthFitness": {
+            "title": "Health / Fitness",
+            "purpose": "Read sleep, steps and activity if your phone exposes them. Lifestyle advice only — never a diagnosis."
+          },
+          "location": {
+            "title": "Foreground location",
+            "purpose": "Estimate travel time while the app is open. We never use background location."
+          },
+          "microphone": {
+            "title": "Microphone",
+            "purpose": "Voice notes while you hold record. The mic is OFF every other second."
+          },
+          "camera": {
+            "title": "Camera & photos",
+            "purpose": "Avatar + receipt scanning. Asked only when you tap a feature that needs it."
+          }
+        },
+        "noBackground": "No background recording. No tracking. No reading other apps."
+      }
     }
   },
   "aiChat": {

@@ -91,6 +91,20 @@ export function SettingsScreen() {
         />
       </Card>
 
+      <Card style={{ marginBottom: spacing.md }}>
+        <Text style={{ color: colors.text, fontWeight: '600', marginBottom: spacing.sm }}>
+          {t('settings.privacy.title')}
+        </Text>
+        <Text style={{ color: colors.textMuted, marginBottom: spacing.md }}>
+          {t('settings.privacy.subtitle')}
+        </Text>
+        <Button
+          title={t('settings.privacy.menu')}
+          variant="secondary"
+          onPress={() => nav.navigate('PrivacySettings')}
+        />
+      </Card>
+
       <Button title={t('auth.logout')} variant="danger" onPress={logout} />
     </Screen>
   );
