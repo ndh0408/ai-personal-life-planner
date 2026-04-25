@@ -92,6 +92,20 @@ function mondayOfCurrentWeek(): Date {
 // ---- main ------------------------------------------------------------------
 
 async function main() {
+  // Round-15 production guard. The demo seed wipes the demo user's graph and
+  // creates throwaway data — never something we want to run by accident
+  // against a production DB. Operators that genuinely need to seed a fresh
+  // production env (e.g. for a smoke test on a brand-new staging) can opt
+  // in by setting ALLOW_SEED_IN_PRODUCTION=true.
+  if (
+    process.env.NODE_ENV === 'production' &&
+    process.env.ALLOW_SEED_IN_PRODUCTION !== 'true'
+  ) {
+    console.error(
+      '[seed] Refusing to run in production. Set ALLOW_SEED_IN_PRODUCTION=true to override.',
+    );
+    process.exit(2);
+  }
   console.log('Seeding LifeOS AI demo data...');
 
   // Idempotent: wipe the demo user's entire graph (cascade FKs handle the rest).

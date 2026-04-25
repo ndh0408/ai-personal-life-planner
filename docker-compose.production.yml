@@ -85,11 +85,87 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN}
       DEFAULT_LOCALE: ${DEFAULT_LOCALE:-vi}
       SUPPORTED_LOCALES: ${SUPPORTED_LOCALES:-vi,en}
+      # Round 12 — queue + observability
+      QUEUE_ENABLED: ${QUEUE_ENABLED:-true}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      WORKER_CONCURRENCY_NOTIFICATION: ${WORKER_CONCURRENCY_NOTIFICATION:-5}
+      WORKER_CONCURRENCY_AI: ${WORKER_CONCURRENCY_AI:-2}
+      WORKER_CONCURRENCY_REPORT: ${WORKER_CONCURRENCY_REPORT:-2}
+      METRICS_ENABLED: ${METRICS_ENABLED:-true}
+      METRICS_PATH: ${METRICS_PATH:-/metrics}
+      METRICS_BEARER_TOKEN: ${METRICS_BEARER_TOKEN:-}
+      LOG_LEVEL: ${LOG_LEVEL:-log}
+      OTEL_ENABLED: ${OTEL_ENABLED:-false}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      # Round 14 — auth-security
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS:-}
     ports:
       - "127.0.0.1:3000:3000"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  # Optional dedicated worker container (compose profile: worker).
+  # The API process also drains BullMQ queues by default — for ≤500k MAU one
+  # container is enough. Switch to a dedicated worker when API CPU is
+  # saturated by HTTP load. Same image, no port mapping, /metrics off.
+  #
+  # Enable via:
+  #   docker compose --profile worker -f docker-compose.production.yml \
+  #     --env-file .env.production up -d worker
+  worker:
+    profiles: ["worker"]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: lifeos-api:${LIFEOS_API_TAG:-latest}
+    container_name: lifeos-worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_PROVIDER_ENCRYPTION_KEY: ${AI_PROVIDER_ENCRYPTION_KEY}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      QUEUE_ENABLED: 'true'
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      WORKER_CONCURRENCY_NOTIFICATION: ${WORKER_CONCURRENCY_NOTIFICATION:-10}
+      WORKER_CONCURRENCY_AI: ${WORKER_CONCURRENCY_AI:-4}
+      WORKER_CONCURRENCY_REPORT: ${WORKER_CONCURRENCY_REPORT:-4}
+      METRICS_ENABLED: 'false'
+      LOG_LEVEL: ${LOG_LEVEL:-log}
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS:-}
+    # No port mapping — worker is internal-only.
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"process.exit(0)\""]
       interval: 30s
       timeout: 5s
       retries: 3
