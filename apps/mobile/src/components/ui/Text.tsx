@@ -11,6 +11,7 @@ const VARIANTS = {
   caption: { ...typography.caption, color: colors.text.muted },
   kicker: { ...typography.kicker, color: colors.accent.base },
   link: { ...typography.bodyEm, color: colors.accent.base },
+  number: { ...typography.number, color: colors.text.primary },
 } as const;
 
 interface Props extends TextProps {

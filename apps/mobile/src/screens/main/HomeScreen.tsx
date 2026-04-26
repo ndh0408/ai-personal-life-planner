@@ -6,9 +6,16 @@ import { spacing, colors } from '../../theme';
 import { useAuthStore } from '../../store/auth.store';
 import { useHealth } from '../../hooks/useHealth';
 import { useCaptureConfirm, useCaptureParse } from '../../hooks/useCapture';
+import {
+  useExpensesSummary,
+  useFeedInvalidator,
+  useLatestSleep,
+  useTodayTasks,
+} from '../../hooks/useFeed';
 import { QuickCaptureBar } from '../../components/quick-capture/QuickCaptureBar';
 import { CapturePreviewSheet } from '../../components/quick-capture/CapturePreviewSheet';
 import type { CaptureParseResponse } from '../../services/api/capture.service';
+import { formatMoney } from '../../utils/format';
 
 export function HomeScreen() {
   const { t } = useTranslation();
@@ -21,6 +28,11 @@ export function HomeScreen() {
 
   const parse = useCaptureParse();
   const confirm = useCaptureConfirm();
+  const invalidateFeed = useFeedInvalidator();
+
+  const tasks = useTodayTasks();
+  const summary = useExpensesSummary();
+  const sleep = useLatestSleep();
 
   const handleSend = (text: string) => {
     parse.mutate(text, {
@@ -40,6 +52,7 @@ export function HomeScreen() {
         setSheetOpen(false);
         setParsed(null);
         toast.show(t('capture.saved'), 'success');
+        invalidateFeed();
       },
       onError: () => {
         toast.show(t('capture.errors.network'), 'danger');
@@ -56,6 +69,14 @@ export function HomeScreen() {
       ? colors.status.danger
       : colors.status.warning;
 
+  const tasksTodo = tasks.data ? tasks.data.total - tasks.data.doneCount : 0;
+  const sleepHint =
+    sleep.data != null
+      ? `${Math.floor(sleep.data.durationMinutes / 60)}h${String(
+          sleep.data.durationMinutes % 60,
+        ).padStart(2, '0')}m`
+      : '—';
+
   return (
     <>
       <AppScreen
@@ -69,8 +90,16 @@ export function HomeScreen() {
         <Text style={{ marginTop: spacing.sm, marginBottom: spacing.xl }}>{t('home.ready')}</Text>
 
         <View style={{ flexDirection: 'row', gap: spacing.md, marginBottom: spacing.xl }}>
-          <StatCard label={t('home.stats.tasksToday')} value="0" hint="—" />
-          <StatCard label={t('home.stats.spendToday')} value="0₫" hint="—" />
+          <StatCard
+            label={t('home.stats.tasksToday')}
+            value={String(tasksTodo)}
+            hint={tasks.data ? `${tasks.data.doneCount}/${tasks.data.total}` : '—'}
+          />
+          <StatCard
+            label={t('home.stats.spendToday')}
+            value={formatMoney(summary.data?.todayTotal ?? 0)}
+            hint={summary.data ? `tuần ${formatMoney(summary.data.weekTotal)}` : '—'}
+          />
         </View>
 
         <Card style={{ marginBottom: spacing.xl }}>
@@ -89,6 +118,12 @@ export function HomeScreen() {
           {health ? (
             <Text variant="caption">{`${health.baseUrl} · ${health.latencyMs}ms`}</Text>
           ) : null}
+        </Card>
+
+        <Card style={{ marginBottom: spacing.xl }}>
+          <Text variant="kicker">{t('home.stats.sleepLastNight')}</Text>
+          <Text variant="number">{sleepHint}</Text>
+          {sleep.data?.quality ? <Text variant="caption">{sleep.data.quality}</Text> : null}
         </Card>
 
         <Text variant="kicker" style={{ marginBottom: spacing.md }}>
