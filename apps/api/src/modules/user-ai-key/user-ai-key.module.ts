@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
+import { UserAiKeyController } from './user-ai-key.controller';
+import { UserAiKeyService } from './user-ai-key.service';
 
-/**
- * Round 1 will add: set/get/test/delete OpenAI key (encrypted via EncryptionService).
- */
-@Module({})
+@Module({
+  controllers: [UserAiKeyController],
+  providers: [UserAiKeyService],
+  exports: [UserAiKeyService],
+})
 export class UserAiKeyModule {}

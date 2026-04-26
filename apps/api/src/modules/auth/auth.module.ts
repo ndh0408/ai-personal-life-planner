@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { AuthController, MeController } from './auth.controller';
+import { AuthService } from './auth.service';
 
-/**
- * Round 1 will add: register/login/refresh/logout/me, JWT strategy, bcrypt.
- * Foundation only — no controllers/providers yet.
- */
-@Module({})
+@Module({
+  controllers: [AuthController, MeController],
+  providers: [AuthService],
+  exports: [AuthService],
+})
 export class AuthModule {}

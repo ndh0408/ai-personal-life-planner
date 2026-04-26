@@ -11,6 +11,7 @@ import { EncryptionModule } from './common/crypto/encryption.module';
 import { ResponseEnvelopeInterceptor } from './common/http/response.interceptor';
 import { AllExceptionsFilter } from './common/http/all-exceptions.filter';
 import { RequestIdMiddleware } from './common/http/request-id.middleware';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 import { HealthController } from './health/health.controller';
 import { VersionController } from './health/version.controller';
@@ -66,7 +67,9 @@ import { PrivacyModule } from './modules/privacy/privacy.module';
   ],
   controllers: [HealthController, VersionController],
   providers: [
+    // Order matters: throttler runs first (cheapest gate), then auth.
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_INTERCEPTOR, useClass: ResponseEnvelopeInterceptor },
     {
       provide: APP_FILTER,
