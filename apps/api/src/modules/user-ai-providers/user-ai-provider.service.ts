@@ -5,6 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, type UserAiProvider } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EncryptionService } from '../../common/crypto/encryption.service';
@@ -18,6 +19,7 @@ import {
 } from '../ai/providers/user-provider.builder';
 import type {
   CreateUserAiProviderInput,
+  QuickOpenAiSetupInput,
   UpdateUserAiProviderInput,
 } from '@planner/shared';
 
@@ -41,6 +43,7 @@ export class UserAiProviderService {
     private readonly prisma: PrismaService,
     private readonly encryption: EncryptionService,
     private readonly resolver: AiProviderResolverService,
+    private readonly config: ConfigService,
   ) {}
 
   list(userId: string): Promise<UserAiProvider[]> {
@@ -185,6 +188,170 @@ export class UserAiProviderService {
         });
       }
       throw e;
+    }
+  }
+
+  /**
+   * Consumer-grade fast path used by the mobile `AISetupScreen`.
+   *
+   * Accepts only an apiKey; provider/name/baseUrl/default model are filled
+   * from server defaults. After insert the row is immediately tested
+   * (in-process — does not double-charge throttle, since the consumer
+   * controller route is throttled separately). On test failure the row
+   * is deleted so the user can retry without orphaned providers.
+   *
+   * If this is the user's first provider it also flips
+   * `useOwnApiKey=true` in the same transaction so AI features unlock
+   * immediately.
+   */
+  async createOpenAiSimple(
+    userId: string,
+    input: QuickOpenAiSetupInput,
+  ): Promise<{
+    record: UserAiProvider;
+    test: {
+      ok: boolean;
+      provider: string;
+      model: string | null;
+      errorCode: string | null;
+      errorMessage: string | null;
+      testedAt: Date;
+    };
+  }> {
+    const apiKey = input.apiKey.trim();
+    if (!apiKey) {
+      throw new ConflictException({
+        message: 'apiKey required',
+        errorCode: 'INVALID_PROVIDER_CONFIG',
+      });
+    }
+    const defaultModel =
+      this.config.get<string>('OPENAI_DEFAULT_MODEL') ??
+      this.config.get<string>('AI_MODEL') ??
+      'gpt-4o-mini';
+
+    const encryptedApiKey = this.encryption.encrypt(apiKey);
+    const apiKeyLast4 = EncryptionService.last4(apiKey);
+
+    // Generate a unique name — `OpenAI` may already exist if user retries.
+    const baseName = 'OpenAI';
+    let name = baseName;
+    for (let i = 1; i < 10; i++) {
+      const exists = await this.prisma.userAiProvider.findFirst({
+        where: { userId, name },
+        select: { id: true },
+      });
+      if (!exists) break;
+      name = `${baseName} ${i + 1}`;
+    }
+
+    const created = await this.prisma.$transaction(async (tx) => {
+      // Demote prior defaults; the new key becomes the active default.
+      await tx.userAiProvider.updateMany({
+        where: { userId, isDefault: true },
+        data: { isDefault: false },
+      });
+      const row = await tx.userAiProvider.create({
+        data: {
+          user: { connect: { id: userId } },
+          provider: 'OPENAI',
+          name,
+          baseUrl: null, // builder defaults to https://api.openai.com/v1
+          encryptedApiKey,
+          apiKeyLast4,
+          defaultChatModel: defaultModel,
+          defaultPlannerModel: null,
+          defaultFinanceModel: null,
+          defaultMealModel: null,
+          defaultHealthModel: null,
+          defaultReportModel: null,
+          isDefault: true,
+          isActive: true,
+        },
+      });
+      // First-provider quality-of-life: flip the user-level toggle so AI
+      // features actually use the key. Power users can still toggle off.
+      const priorCount = await tx.userAiProvider.count({
+        where: { userId, NOT: { id: row.id } },
+      });
+      if (priorCount === 0) {
+        await tx.userAiPreference.upsert({
+          where: { userId },
+          create: {
+            userId,
+            useOwnApiKey: true,
+            fallbackToGlobalProvider: true,
+            defaultProviderId: row.id,
+          },
+          update: { useOwnApiKey: true, defaultProviderId: row.id },
+        });
+      } else {
+        // Subsequent OpenAI keys still become the default pointer.
+        await tx.userAiPreference.upsert({
+          where: { userId },
+          create: {
+            userId,
+            useOwnApiKey: true,
+            fallbackToGlobalProvider: true,
+            defaultProviderId: row.id,
+          },
+          update: { defaultProviderId: row.id },
+        });
+      }
+      return row;
+    });
+
+    const startedAt = new Date();
+    try {
+      const res = await this.resolver.testProvider(created);
+      const updated = await this.prisma.userAiProvider.update({
+        where: { id: created.id },
+        data: {
+          lastTestedAt: startedAt,
+          lastTestStatus: 'SUCCESS',
+          lastTestError: null,
+        },
+      });
+      return {
+        record: updated,
+        test: {
+          ok: true,
+          provider: res.provider,
+          model: res.model,
+          errorCode: null,
+          errorMessage: null,
+          testedAt: startedAt,
+        },
+      };
+    } catch (err) {
+      const message = briefAiError(err, 240);
+      this.logger.warn(
+        `quick-openai test failed userId=${userId}: ${message}`,
+      );
+      // Roll back so the user doesn't end up with a broken default
+      // provider that silently shadows the global key.
+      await this.prisma.$transaction(async (tx) => {
+        await tx.userAiPreference.updateMany({
+          where: { userId, defaultProviderId: created.id },
+          data: { defaultProviderId: null, useOwnApiKey: false },
+        });
+        await tx.userAiProvider.delete({ where: { id: created.id } });
+      });
+      // Translate common upstream signals into a user-friendly code.
+      const code = /401|invalid_api_key|incorrect API key/i.test(message)
+        ? 'OPENAI_KEY_INVALID'
+        : 'AI_PROVIDER_TEST_FAILED';
+      return {
+        record: created,
+        test: {
+          ok: false,
+          provider: 'OPENAI',
+          model: defaultModel,
+          errorCode: code,
+          errorMessage: message,
+          testedAt: startedAt,
+        },
+      };
     }
   }
 

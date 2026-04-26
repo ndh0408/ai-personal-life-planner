@@ -71,6 +71,7 @@ export type RootStackParamList = {
   LanguageSettings: undefined;
   AIChat: undefined;
   AiProviderSettings: undefined;
+  AISetup: undefined;
   AddAiProvider: undefined;
   EditAiProvider: { providerId: string };
   PrivacySettings: undefined;

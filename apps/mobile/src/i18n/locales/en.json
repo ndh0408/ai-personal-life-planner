@@ -222,12 +222,23 @@
     },
     "quickActions": {
       "title": "Quick actions",
+      "quickCapture": "Quick capture",
       "addExpense": "Add expense",
       "addIncome": "Add income",
       "addTask": "Add task",
       "checkinMood": "Check-in mood",
       "generateSchedule": "AI schedule",
       "askAI": "Ask AI"
+    },
+    "aiCta": {
+      "title": "Enable AI to get started",
+      "body": "Add your OpenAI API key so LifeOS can generate plans, analyse spending, and answer questions.",
+      "cta": "Add API key"
+    },
+    "captureCta": {
+      "title": "Capture in one line",
+      "body": "Type things like “coffee 30k” or “tomorrow 9am call client” — we’ll route it.",
+      "cta": "Open quick capture"
     }
   },
   "today": {
@@ -322,6 +333,12 @@
       "description": "Description",
       "descriptionPlaceholder": "Notes, checklist, links…",
       "dueDate": "Due (YYYY-MM-DD HH:mm)",
+      "dueChips": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "weekend": "This weekend",
+        "clear": "No due"
+      },
       "estimatedMinutes": "Estimate (min)",
       "category": "Category",
       "categoryPlaceholder": "work, personal, finance…",
@@ -1110,7 +1127,37 @@
         "ANTHROPIC": "Get an API key from console.anthropic.com. Use a model id like claude-opus-4-7.",
         "OPENROUTER": "OpenRouter routes to many models — keys start with sk-or-. The model id is provider/model.",
         "CUSTOM_OPENAI_COMPATIBLE": "Any OpenAI-compatible endpoint. You must enter the base URL (e.g. https://my-llm.example.com/v1)."
-      }
+      },
+      "advanced": "Advanced (other providers)",
+      "advancedHint": "Use NVIDIA, Gemini, Anthropic, OpenRouter, or any OpenAI-compatible endpoint."
+    },
+    "aiSetup": {
+      "title": "Enable AI for LifeOS",
+      "subtitle": "Paste your OpenAI API key. Your key is encrypted and only used for your account.",
+      "fieldLabel": "OpenAI API key",
+      "fieldPlaceholder": "sk-…",
+      "showKey": "Show key",
+      "hideKey": "Hide key",
+      "testAndSave": "Test and save",
+      "testing": "Testing…",
+      "skipForNow": "Skip for now",
+      "linkWhatIs": "What is an API key?",
+      "linkWhereGet": "Where do I get a key?",
+      "encryptedNoticeTitle": "Your key stays private",
+      "encryptedNotice": "Your key is encrypted at rest. We never display the full key after you save.",
+      "successTitle": "AI is enabled",
+      "successBody": "You can now generate plans, ask AI, and use Quick Capture.",
+      "rolledBack": "We didn't save the key because the connection failed. Please try again.",
+      "noKeyTitle": "AI is not enabled yet",
+      "noKeyBody": "Add your OpenAI API key to use Generate Plan, Ask AI, and smart Quick Capture.",
+      "addKey": "Add OpenAI key",
+      "manageKey": "Manage key",
+      "keyPresent": "OpenAI key configured",
+      "lastTestedAgo": "Tested {{ago}}",
+      "replaceKey": "Replace key",
+      "removeKey": "Remove",
+      "removeConfirmTitle": "Remove your AI key?",
+      "removeConfirmBody": "AI features will stop working until you add a key again. Your conversation history is kept."
     },
     "privacy": {
       "menu": "Privacy & permissions",
@@ -1477,14 +1524,33 @@
       },
       "quickCapture": {
         "title": "Quick capture",
-        "subtitle": "Type or talk. We'll suggest actions — you confirm.",
-        "placeholder": "What just happened? (e.g. \"I ate pho 50k\", \"Slept at 1am, woke at 7\")",
+        "subtitle": "Type one line. We'll suggest an action — you confirm.",
+        "placeholder": "e.g. \"coffee 30k\", \"taxi 50000\", \"tomorrow 9am call client\"",
+        "examplesHeading": "Try one of these",
+        "examples": [
+          "coffee 30k",
+          "lunch 45k",
+          "tomorrow 9am call client",
+          "remind me to reply email at 8pm"
+        ],
+        "parse": "Parse",
         "send": "Parse",
-        "voiceCta": "Hold to talk",
+        "useAi": "Use AI for richer parsing",
+        "aiBusy": "Asking AI…",
+        "voiceCta": "Voice (coming soon)",
+        "voiceComingSoon": "Voice transcription is coming in a later release. For now, please type.",
         "recording": "Recording…",
         "stop": "Stop",
-        "transcribeStub": "Voice transcription isn't wired in this build. Use text for now.",
-        "errorTitle": "Couldn't parse"
+        "transcribeStub": "Voice transcription is coming in a later release. For now, please type.",
+        "errorTitle": "Couldn't parse",
+        "noDraft": "I couldn't recognise an action in that. Try a shorter phrase like \"coffee 30k\" or \"tomorrow 9am call client\".",
+        "draftExpense": "New expense",
+        "draftTask": "New task",
+        "saved": "Saved",
+        "savedExpense": "Expense saved",
+        "savedTask": "Task created",
+        "confirm": "Confirm",
+        "discard": "Discard"
       },
       "suggestedActions": {
         "title": "Review suggestions",
@@ -1619,9 +1685,13 @@
     "AUTH_TOKEN_EXPIRED": "This link has expired. Request a new one.",
     "AUTH_TOKEN_USED": "This link has already been used.",
     "PASSWORD_POLICY_FAILED": "Password must be at least 8 characters and contain a letter and a digit.",
-    "AI_PROVIDER_NOT_CONFIGURED": "No AI provider configured. Add one in Settings → AI provider.",
+    "AI_PROVIDER_NOT_CONFIGURED": "AI is not enabled yet. Add your OpenAI API key to use AI features.",
     "USER_AI_PROVIDER_FAILED": "Your AI provider returned an error. Try again or enable fallback to the app provider.",
-    "AI_PROVIDER_TEST_FAILED": "Could not reach the AI provider with that key.",
+    "AI_PROVIDER_TEST_FAILED": "Could not connect to AI. Please try again or check your key.",
+    "OPENAI_KEY_INVALID": "This API key is invalid. Please check your OpenAI key.",
+    "AI_DAILY_LIMIT_REACHED": "You have reached today’s AI usage limit.",
+    "EMAIL_VERIFICATION_RESEND_RATE_LIMITED": "Verification email was sent recently. Please try again later.",
+    "CONCURRENT_WRITE": "This data changed recently. We’ll refresh it to keep things accurate.",
     "INVALID_PROVIDER_CONFIG": "This provider configuration is incomplete. Please check the fields and try again."
   },
   "offline": {

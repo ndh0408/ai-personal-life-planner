@@ -70,6 +70,24 @@ export const UpdateUserAiPreferenceSchema = z
 
 export type UpdateUserAiPreferenceInput = z.infer<typeof UpdateUserAiPreferenceSchema>;
 
+/**
+ * Consumer-grade fast path: paste an OpenAI key, get a working provider.
+ *
+ * Backend fills name/baseUrl/default model from server config, sets
+ * `provider=OPENAI` + `isDefault=true` + `isActive=true`, and (when this
+ * is the user's first provider) flips `useOwnApiKey=true` so the AI
+ * features unlock immediately. Used by the mobile `AISetupScreen` (Round
+ * 20.5). Does NOT replace the full schema — power users can still hit
+ * `POST /user-ai-providers` directly.
+ */
+export const QuickOpenAiSetupSchema = z
+  .object({
+    apiKey: z.string().min(8).max(512),
+  })
+  .strict();
+
+export type QuickOpenAiSetupInput = z.infer<typeof QuickOpenAiSetupSchema>;
+
 export interface UserAiProviderDto {
   id: string;
   provider: UserAiProviderTypeDto;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -42,6 +42,15 @@ export function AddExpenseScreen() {
   const [category, setCategory] = useState('food');
   const [needLevel, setNeedLevel] = useState<NeedLevel | undefined>();
   const [walletId, setWalletId] = useState<string | null>(null);
+  const [walletTouched, setWalletTouched] = useState(false);
+  // Auto-pick the user's first wallet so expenses always land on a real
+  // wallet (and wallet balances stay correct). User can still override
+  // by tapping a different chip — we set `walletTouched` then.
+  useEffect(() => {
+    if (!walletTouched && walletId === null && walletsQ.data && walletsQ.data.length > 0) {
+      setWalletId(walletsQ.data[0].id);
+    }
+  }, [walletsQ.data, walletId, walletTouched]);
   const [date, setDate] = useState(todayIso());
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
@@ -154,14 +163,20 @@ export function AddExpenseScreen() {
               <Chip
                 label={t('expenses.noWallet')}
                 selected={walletId === null}
-                onPress={() => setWalletId(null)}
+                onPress={() => {
+                  setWalletTouched(true);
+                  setWalletId(null);
+                }}
               />
               {(walletsQ.data ?? []).map((w) => (
                 <Chip
                   key={w.id}
                   label={w.name}
                   selected={walletId === w.id}
-                  onPress={() => setWalletId(w.id)}
+                  onPress={() => {
+                    setWalletTouched(true);
+                    setWalletId(w.id);
+                  }}
                 />
               ))}
             </View>

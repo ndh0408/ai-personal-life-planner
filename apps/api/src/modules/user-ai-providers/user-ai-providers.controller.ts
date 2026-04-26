@@ -13,9 +13,11 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import {
   CreateUserAiProviderSchema,
+  QuickOpenAiSetupSchema,
   UpdateUserAiProviderSchema,
   UpdateUserAiPreferenceSchema,
   type CreateUserAiProviderInput,
+  type QuickOpenAiSetupInput,
   type UpdateUserAiProviderInput,
   type UpdateUserAiPreferenceInput,
 } from '@planner/shared';
@@ -62,6 +64,28 @@ export class UserAiProvidersController {
   ) {
     const row = await this.providers.create(user.id, body);
     return ok(toUserAiProviderDto(row), 'Provider created');
+  }
+
+  /**
+   * Consumer-grade fast path: paste an OpenAI key, get a working
+   * provider. Performs an in-process upstream probe and rolls the row
+   * back if the test fails (so users can retry without orphaned rows).
+   * Same throttle as `/test` since it costs upstream tokens.
+   */
+  @Post('user-ai-providers/openai-simple')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async createOpenAiSimple(
+    @CurrentUser() user: AuthUser,
+    @Body(new ZodValidationPipe(QuickOpenAiSetupSchema)) body: QuickOpenAiSetupInput,
+  ) {
+    const result = await this.providers.createOpenAiSimple(user.id, body);
+    return ok(
+      {
+        provider: result.test.ok ? toUserAiProviderDto(result.record) : null,
+        test: toTestResultDto(result.test),
+      },
+      result.test.ok ? 'OpenAI connected' : 'Connection failed',
+    );
   }
 
   @Put('user-ai-providers/:id')

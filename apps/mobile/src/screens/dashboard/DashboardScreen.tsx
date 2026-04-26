@@ -26,10 +26,12 @@ import {
 } from '../../components/ui';
 import { dashboardApi, type DashboardSummary } from '../../services/api/dashboard.api';
 import { aiApi } from '../../services/api/ai.api';
+import { userAiProvidersApi } from '../../services/api/user-ai-providers.api';
 import { useErrorMessage } from '../../i18n/useErrorMessage';
 import { formatDateByLocale, formatMoneyByLocale, todayIso } from '../../utils/format';
 import { useAuthStore } from '../../store/auth.store';
 import { EmailVerifyBanner } from '../../components/auth/EmailVerifyBanner';
+import { QUERY_KEYS } from '../../constants';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -45,6 +47,15 @@ export function DashboardScreen() {
   const q = useQuery({
     queryKey: ['dashboard', 'summary'],
     queryFn: () => dashboardApi.summary(),
+  });
+
+  // Drives the "Enable AI" hero card — when the user has zero providers
+  // we surface the consumer-grade fast path instead of waiting for them
+  // to discover Settings → AI provider on their own.
+  const providersQ = useQuery({
+    queryKey: QUERY_KEYS.aiProviders,
+    queryFn: userAiProvidersApi.list,
+    staleTime: 60_000,
   });
 
   const [refreshing, setRefreshing] = useState(false);
@@ -82,6 +93,34 @@ export function DashboardScreen() {
 
       {/* 1. GREETING */}
       <GreetingCard data={data} userEmail={user?.email} />
+
+      {/* 1a. AI-NOT-CONFIGURED CTA — only when user has zero providers.
+          Surfacing the consumer-grade fast path on Home means non-
+          technical users discover it without digging through Settings. */}
+      {providersQ.data && providersQ.data.length === 0 ? (
+        <View style={{ marginTop: spacing.lg }}>
+          <HeroCta
+            title={t('dashboard.aiCta.title')}
+            body={t('dashboard.aiCta.body')}
+            cta={t('dashboard.aiCta.cta')}
+            tone="primary"
+            onPress={() => nav.navigate('AISetup')}
+          />
+        </View>
+      ) : null}
+
+      {/* 1b. QUICK CAPTURE ENTRY — universal "type one line, app routes
+          it" surface. Works without an AI key thanks to the rule-based
+          parser fallback (services/quickCapture/ruleParser.ts). */}
+      <View style={{ marginTop: spacing.lg }}>
+        <HeroCta
+          title={t('dashboard.captureCta.title')}
+          body={t('dashboard.captureCta.body')}
+          cta={t('dashboard.captureCta.cta')}
+          tone="surface"
+          onPress={() => nav.navigate('QuickCapture')}
+        />
+      </View>
 
       {/* 2. ASSISTANT HIGHLIGHT */}
       <View style={{ marginTop: spacing.lg }}>
@@ -323,8 +362,8 @@ export function DashboardScreen() {
       {/* 8. QUICK ACTIONS */}
       <SectionHeader title={t('dashboard.quickActions.title')} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-        <QuickAction icon="💸" label={t('dashboard.quickActions.addExpense')} onPress={() => nav.navigate('Expense')} />
-        <QuickAction icon="💰" label={t('dashboard.quickActions.addIncome')} onPress={() => nav.navigate('Income')} />
+        <QuickAction icon="⚡" label={t('dashboard.quickActions.quickCapture')} onPress={() => nav.navigate('QuickCapture')} />
+        <QuickAction icon="💸" label={t('dashboard.quickActions.addExpense')} onPress={() => nav.navigate('AddExpense')} />
         <QuickAction icon="✅" label={t('dashboard.quickActions.addTask')} onPress={() => nav.navigate('CreateTask')} />
         <QuickAction icon="🙂" label={t('dashboard.quickActions.checkinMood')} onPress={() => nav.navigate('SleepMoodCheckin')} />
         <QuickAction
@@ -431,6 +470,53 @@ function QuickButton({
       }}
     >
       <Text style={[typography.bodyStrong, { color: fg }]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function HeroCta({
+  title,
+  body,
+  cta,
+  tone,
+  onPress,
+}: {
+  title: string;
+  body: string;
+  cta: string;
+  tone: 'primary' | 'surface';
+  onPress: () => void;
+}) {
+  const { colors, spacing, radius, typography } = useTheme();
+  const isPrimary = tone === 'primary';
+  const bg = isPrimary ? colors.primary : colors.surface;
+  const fg = isPrimary ? colors.textInverse : colors.text;
+  const sub = isPrimary ? colors.textInverse : colors.textMuted;
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      style={{
+        backgroundColor: bg,
+        padding: spacing.lg,
+        borderRadius: radius.lg,
+        borderWidth: isPrimary ? 0 : 1,
+        borderColor: colors.border,
+      }}
+    >
+      <Text style={[typography.h3, { color: fg }]}>{title}</Text>
+      <Text style={[typography.body, { color: sub, marginTop: spacing.xs }]}>{body}</Text>
+      <Text
+        style={[
+          typography.bodyStrong,
+          {
+            color: isPrimary ? colors.textInverse : colors.primary,
+            marginTop: spacing.md,
+          },
+        ]}
+      >
+        {cta} →
+      </Text>
     </TouchableOpacity>
   );
 }

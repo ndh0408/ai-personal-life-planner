@@ -222,12 +222,23 @@
     },
     "quickActions": {
       "title": "Hành động nhanh",
+      "quickCapture": "Ghi nhanh",
       "addExpense": "Thêm chi tiêu",
       "addIncome": "Thêm thu nhập",
       "addTask": "Thêm task",
       "checkinMood": "Check-in mood",
       "generateSchedule": "Lên lịch AI",
       "askAI": "Hỏi AI"
+    },
+    "aiCta": {
+      "title": "Bật AI để bắt đầu",
+      "body": "Nhập OpenAI API key để LifeOS có thể tạo lịch, phân tích chi tiêu và nhắc bạn thông minh hơn.",
+      "cta": "Nhập API key"
+    },
+    "captureCta": {
+      "title": "Ghi nhanh một dòng",
+      "body": "Gõ kiểu “cà phê 30k” hoặc “mai 9h gọi khách” — app sẽ tự hiểu.",
+      "cta": "Mở ghi nhanh"
     }
   },
   "today": {
@@ -322,6 +333,12 @@
       "description": "Mô tả",
       "descriptionPlaceholder": "Thêm ghi chú, checklist…",
       "dueDate": "Hạn (YYYY-MM-DD HH:mm)",
+      "dueChips": {
+        "today": "Hôm nay",
+        "tomorrow": "Ngày mai",
+        "weekend": "Cuối tuần",
+        "clear": "Không hạn"
+      },
       "estimatedMinutes": "Ước tính (phút)",
       "category": "Hạng mục",
       "categoryPlaceholder": "work, personal, finance…",
@@ -1110,7 +1127,37 @@
         "ANTHROPIC": "Lấy API key tại console.anthropic.com. Dùng id mô hình như claude-opus-4-7.",
         "OPENROUTER": "OpenRouter định tuyến nhiều mô hình — key bắt đầu bằng sk-or-. Tên mô hình dạng provider/model.",
         "CUSTOM_OPENAI_COMPATIBLE": "Bất kỳ endpoint OpenAI-compatible. Bắt buộc nhập base URL (vd. https://my-llm.example.com/v1)."
-      }
+      },
+      "advanced": "Nâng cao (nhà cung cấp khác)",
+      "advancedHint": "Dùng NVIDIA, Gemini, Anthropic, OpenRouter, hoặc endpoint OpenAI-compatible bất kỳ."
+    },
+    "aiSetup": {
+      "title": "Bật AI cho LifeOS",
+      "subtitle": "Nhập OpenAI API key của bạn. Key sẽ được mã hóa và chỉ dùng cho tài khoản của bạn.",
+      "fieldLabel": "OpenAI API key",
+      "fieldPlaceholder": "sk-…",
+      "showKey": "Hiển thị key",
+      "hideKey": "Ẩn key",
+      "testAndSave": "Kiểm tra và lưu",
+      "testing": "Đang kiểm tra…",
+      "skipForNow": "Bỏ qua, thiết lập sau",
+      "linkWhatIs": "API key là gì?",
+      "linkWhereGet": "Tôi lấy key ở đâu?",
+      "encryptedNoticeTitle": "Key của bạn được bảo mật",
+      "encryptedNotice": "Key được mã hóa và không hiển thị lại sau khi lưu.",
+      "successTitle": "Đã bật AI",
+      "successBody": "Bây giờ bạn có thể tạo lịch, hỏi AI và dùng Ghi nhanh.",
+      "rolledBack": "Chưa lưu key vì kết nối thất bại. Hãy thử lại.",
+      "noKeyTitle": "Bạn chưa bật AI",
+      "noKeyBody": "Nhập OpenAI API key để dùng Tạo lịch, Hỏi AI và Ghi nhanh thông minh.",
+      "addKey": "Nhập OpenAI key",
+      "manageKey": "Quản lý key",
+      "keyPresent": "Đã cấu hình OpenAI key",
+      "lastTestedAgo": "Đã kiểm tra {{ago}}",
+      "replaceKey": "Thay key",
+      "removeKey": "Xóa",
+      "removeConfirmTitle": "Xóa AI key?",
+      "removeConfirmBody": "Tính năng AI sẽ tạm dừng đến khi bạn nhập key mới. Lịch sử trò chuyện vẫn được giữ."
     },
     "privacy": {
       "menu": "Quyền riêng tư & quyền hệ thống",
@@ -1477,14 +1524,33 @@
       },
       "quickCapture": {
         "title": "Ghi nhanh",
-        "subtitle": "Gõ hoặc nói. Chúng tôi sẽ gợi ý hành động — bạn xác nhận.",
-        "placeholder": "Vừa xảy ra gì? (vd. \"Tôi vừa ăn phở 50k\", \"Tôi ngủ 1h, dậy 7h\")",
+        "subtitle": "Gõ một câu. App sẽ gợi ý hành động — bạn xác nhận.",
+        "placeholder": "vd. \"cà phê 30k\", \"taxi 50000\", \"mai 9h gọi khách\"",
+        "examplesHeading": "Thử ngay",
+        "examples": [
+          "cà phê 30k",
+          "ăn cơm gà 45k",
+          "mai 9h gọi khách",
+          "nhắc tôi trả lời email lúc 8h"
+        ],
+        "parse": "Phân tích",
         "send": "Phân tích",
-        "voiceCta": "Giữ để nói",
+        "useAi": "Dùng AI để phân tích sâu hơn",
+        "aiBusy": "Đang hỏi AI…",
+        "voiceCta": "Giọng nói (sắp ra mắt)",
+        "voiceComingSoon": "Tính năng chuyển giọng nói thành văn bản sẽ có ở bản sau. Hiện tại hãy gõ tạm.",
         "recording": "Đang ghi âm…",
         "stop": "Dừng",
-        "transcribeStub": "Chuyển giọng nói thành văn bản chưa wired ở bản này. Hãy gõ tạm.",
-        "errorTitle": "Không phân tích được"
+        "transcribeStub": "Tính năng chuyển giọng nói thành văn bản sẽ có ở bản sau. Hiện tại hãy gõ tạm.",
+        "errorTitle": "Không phân tích được",
+        "noDraft": "Tôi chưa nhận ra hành động trong câu đó. Thử ngắn hơn như “cà phê 30k” hoặc “mai 9h gọi khách”.",
+        "draftExpense": "Chi tiêu mới",
+        "draftTask": "Task mới",
+        "saved": "Đã lưu",
+        "savedExpense": "Đã lưu chi tiêu",
+        "savedTask": "Đã tạo task",
+        "confirm": "Xác nhận",
+        "discard": "Bỏ"
       },
       "suggestedActions": {
         "title": "Xem lại gợi ý",
@@ -1619,9 +1685,13 @@
     "AUTH_TOKEN_EXPIRED": "Liên kết đã hết hạn. Vui lòng yêu cầu liên kết mới.",
     "AUTH_TOKEN_USED": "Liên kết này đã được sử dụng.",
     "PASSWORD_POLICY_FAILED": "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ và số.",
-    "AI_PROVIDER_NOT_CONFIGURED": "Chưa cấu hình nhà cung cấp AI. Thêm trong Cài đặt → Nhà cung cấp AI.",
+    "AI_PROVIDER_NOT_CONFIGURED": "Bạn chưa bật AI. Nhập OpenAI API key để dùng các tính năng AI.",
     "USER_AI_PROVIDER_FAILED": "Nhà cung cấp AI của bạn báo lỗi. Hãy thử lại hoặc bật fallback về nhà cung cấp ứng dụng.",
-    "AI_PROVIDER_TEST_FAILED": "Không thể kết nối đến nhà cung cấp AI với key đã nhập.",
+    "AI_PROVIDER_TEST_FAILED": "Không thể kết nối AI. Hãy thử lại hoặc kiểm tra key.",
+    "OPENAI_KEY_INVALID": "API key không hợp lệ. Hãy kiểm tra lại key từ OpenAI.",
+    "AI_DAILY_LIMIT_REACHED": "Hôm nay bạn đã dùng hết lượt AI.",
+    "EMAIL_VERIFICATION_RESEND_RATE_LIMITED": "Bạn vừa gửi email xác minh. Hãy thử lại sau ít phút.",
+    "CONCURRENT_WRITE": "Dữ liệu vừa thay đổi. Tôi sẽ tải lại để tránh sai lệch.",
     "INVALID_PROVIDER_CONFIG": "Cấu hình nhà cung cấp chưa đủ. Vui lòng kiểm tra lại các trường."
   },
   "offline": {

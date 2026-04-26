@@ -31,6 +31,39 @@ function iso(v?: string | null): string | undefined {
   return d.toISOString();
 }
 
+/**
+ * Build a sensible default due-date for the chip row. Hour pinned to
+ * 18:00 local — most "Today/Tomorrow" tasks are end-of-day reminders.
+ */
+function dueChipIso(daysAhead: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  d.setHours(18, 0, 0, 0);
+  return d.toISOString();
+}
+
+/** "This weekend" — coming Saturday at 09:00 local. */
+function weekendIso(): string {
+  const d = new Date();
+  const day = d.getDay(); // 0 Sun..6 Sat
+  const delta = (6 - day + 7) % 7 || 7; // always >0, target next Sat
+  d.setDate(d.getDate() + delta);
+  d.setHours(9, 0, 0, 0);
+  return d.toISOString();
+}
+
+function isSameDay(a: string | undefined, b: string): boolean {
+  if (!a) return false;
+  const da = new Date(a);
+  const db = new Date(b);
+  if (Number.isNaN(da.getTime())) return false;
+  return (
+    da.getFullYear() === db.getFullYear() &&
+    da.getMonth() === db.getMonth() &&
+    da.getDate() === db.getDate()
+  );
+}
+
 export function CreateTaskScreen() {
   const { colors, spacing, radius, typography } = useTheme();
   const { t } = useTranslation();
@@ -230,13 +263,45 @@ export function CreateTaskScreen() {
             control={control}
             name="dueDate"
             render={({ field: { value, onChange } }) => (
-              <Input
-                label={t('tasks.form.dueDate')}
-                placeholder="2026-05-01 18:00"
-                value={(value as string) ?? ''}
-                onChangeText={onChange}
-                autoCapitalize="none"
-              />
+              <View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    gap: spacing.xs,
+                    marginBottom: spacing.xs,
+                  }}
+                >
+                  <Chip
+                    label={t('tasks.form.dueChips.today')}
+                    selected={isSameDay(value as string | undefined, dueChipIso(0))}
+                    onPress={() => onChange(dueChipIso(0))}
+                  />
+                  <Chip
+                    label={t('tasks.form.dueChips.tomorrow')}
+                    selected={isSameDay(value as string | undefined, dueChipIso(1))}
+                    onPress={() => onChange(dueChipIso(1))}
+                  />
+                  <Chip
+                    label={t('tasks.form.dueChips.weekend')}
+                    selected={isSameDay(value as string | undefined, weekendIso())}
+                    onPress={() => onChange(weekendIso())}
+                  />
+                  {value ? (
+                    <Chip
+                      label={t('tasks.form.dueChips.clear')}
+                      onPress={() => onChange(undefined)}
+                    />
+                  ) : null}
+                </View>
+                <Input
+                  label={t('tasks.form.dueDate')}
+                  placeholder="2026-05-01 18:00"
+                  value={(value as string) ?? ''}
+                  onChangeText={onChange}
+                  autoCapitalize="none"
+                />
+              </View>
             )}
           />
           <Controller

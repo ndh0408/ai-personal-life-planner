@@ -45,6 +45,7 @@ import { LanguageSettingsScreen } from '../screens/settings/LanguageSettingsScre
 import { AiProviderSettingsScreen } from '../screens/settings/AiProviderSettingsScreen';
 import { AddAiProviderScreen } from '../screens/settings/AddAiProviderScreen';
 import { EditAiProviderScreen } from '../screens/settings/EditAiProviderScreen';
+import { AISetupScreen } from '../screens/settings/AISetupScreen';
 import { PrivacySettingsScreen } from '../screens/privacy/PrivacySettingsScreen';
 import { PermissionCenterScreen } from '../screens/privacy/PermissionCenterScreen';
 import { DataUsageSummaryScreen } from '../screens/privacy/DataUsageSummaryScreen';
@@ -104,6 +105,7 @@ export function RootNavigator() {
         Auth: 'auth',
         Main: 'today',
         AIChat: 'ai-chat',
+        AISetup: 'ai-setup',
         CreateTask: 'tasks/add',
         AddExpense: 'finance/add-expense',
         AddIncome: 'finance/add-income',
@@ -181,9 +183,14 @@ export function RootNavigator() {
                 options={{ title: 'AI provider' }}
               />
               <Stack.Screen
+                name="AISetup"
+                component={AISetupScreen}
+                options={{ title: 'Enable AI' }}
+              />
+              <Stack.Screen
                 name="AddAiProvider"
                 component={AddAiProviderScreen}
-                options={{ title: 'Add provider' }}
+                options={{ title: 'Advanced provider' }}
               />
               <Stack.Screen
                 name="EditAiProvider"

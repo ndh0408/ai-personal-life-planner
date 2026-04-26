@@ -24,6 +24,10 @@ const EnvSchema = z
     AI_PROVIDER: z.enum(['anthropic', 'openai', 'mock']).default('mock'),
     AI_API_KEY: z.string().optional(),
     AI_MODEL: z.string().default('claude-sonnet-4-6'),
+    // Default model the consumer-grade `POST /user-ai-providers/openai-simple`
+    // endpoint stamps on new OpenAI rows. Lets ops bump the recommended
+    // model without a mobile release. Falls back to AI_MODEL.
+    OPENAI_DEFAULT_MODEL: z.string().default('gpt-4o-mini'),
 
     // BYOK (Bring-Your-Own-Key) — symmetric key for encrypting user-supplied
     // AI provider API keys at rest. Production builds REFUSE to start without

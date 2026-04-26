@@ -101,6 +101,14 @@ const stubResolver: AiProviderResolverService = {
   })),
 } as unknown as AiProviderResolverService;
 
+// Round 20.5 — `UserAiProviderService` gained a `ConfigService` dep so the
+// new `createOpenAiSimple` path can read `OPENAI_DEFAULT_MODEL`. Tests
+// only need a typed stub that returns env defaults.
+const stubConfig = {
+  get: (key: string) =>
+    key === 'OPENAI_DEFAULT_MODEL' ? 'gpt-4o-mini' : undefined,
+} as unknown as import('@nestjs/config').ConfigService;
+
 function baseInput(name = 'OAI'): CreateUserAiProviderInput {
   return {
     provider: 'OPENAI',
@@ -114,7 +122,7 @@ describe('UserAiProviderService', () => {
   it('encrypts the apiKey before persisting and stores last4', async () => {
     const { api } = makePrisma();
     const enc = makeEncryption();
-    const svc = new UserAiProviderService(api as never, enc, stubResolver);
+    const svc = new UserAiProviderService(api as never, enc, stubResolver, stubConfig);
 
     const created = await svc.create('user-A', baseInput());
     expect(created.encryptedApiKey).not.toContain('sk-1234567890abcdef');
@@ -125,7 +133,7 @@ describe('UserAiProviderService', () => {
 
   it('refuses cross-user reads (IDOR)', async () => {
     const { api } = makePrisma();
-    const svc = new UserAiProviderService(api as never, makeEncryption(), stubResolver);
+    const svc = new UserAiProviderService(api as never, makeEncryption(), stubResolver, stubConfig);
 
     const created = await svc.create('user-A', baseInput());
     await expect(svc.get('user-B', created.id)).rejects.toBeInstanceOf(ForbiddenException);
@@ -137,13 +145,13 @@ describe('UserAiProviderService', () => {
 
   it('returns NotFound for unknown ids', async () => {
     const { api } = makePrisma();
-    const svc = new UserAiProviderService(api as never, makeEncryption(), stubResolver);
+    const svc = new UserAiProviderService(api as never, makeEncryption(), stubResolver, stubConfig);
     await expect(svc.get('user-A', 'does-not-exist')).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('updating apiKey rotates last4 and clears lastTested* fields', async () => {
     const { api } = makePrisma();
-    const svc = new UserAiProviderService(api as never, makeEncryption(), stubResolver);
+    const svc = new UserAiProviderService(api as never, makeEncryption(), stubResolver, stubConfig);
 
     const created = await svc.create('user-A', baseInput());
     // Simulate a successful prior test.
@@ -160,7 +168,7 @@ describe('UserAiProviderService', () => {
 
   it('records SUCCESS in lastTested* on a passing connectivity test', async () => {
     const { api } = makePrisma();
-    const svc = new UserAiProviderService(api as never, makeEncryption(), stubResolver);
+    const svc = new UserAiProviderService(api as never, makeEncryption(), stubResolver, stubConfig);
     const created = await svc.create('user-A', baseInput());
 
     const result = await svc.test('user-A', created.id);
@@ -176,7 +184,7 @@ describe('UserAiProviderService', () => {
         throw new Error('Unauthorized: invalid api key {"trace":"x".repeat(1000)}');
       }),
     } as unknown as AiProviderResolverService;
-    const svc = new UserAiProviderService(api as never, makeEncryption(), failingResolver);
+    const svc = new UserAiProviderService(api as never, makeEncryption(), failingResolver, stubConfig);
     const created = await svc.create('user-A', baseInput());
 
     const result = await svc.test('user-A', created.id);
