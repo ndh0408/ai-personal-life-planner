@@ -102,6 +102,17 @@
       "pickLanguage": "Chọn ngôn ngữ",
       "cta": "Bắt đầu"
     },
+    "basics": {
+      "title": "Cho LifeOS biết một chút về bạn",
+      "subtitle": "Chỉ hai câu hỏi — chi tiết khác bạn có thể chỉnh sau trong Hồ sơ.",
+      "fullName": "Bạn muốn được gọi là gì?",
+      "fullNamePlaceholder": "vd. Huy",
+      "mainGoal": "Mục tiêu chính của bạn là gì?",
+      "moreTitle": "Giờ ngủ và dậy (không bắt buộc)",
+      "moreHint": "Giúp AI gợi ý lịch ngày tốt hơn. Bỏ qua nếu bạn chưa chắc.",
+      "showMore": "Thêm giờ ngủ / dậy",
+      "hideMore": "Ẩn"
+    },
     "profile": {
       "title": "Hồ sơ cá nhân",
       "subtitle": "Dùng để cá nhân hoá lịch và bữa ăn — bạn có thể sửa sau.",
@@ -229,6 +240,17 @@
       "checkinMood": "Check-in mood",
       "generateSchedule": "Lên lịch AI",
       "askAI": "Hỏi AI"
+    },
+    "status": {
+      "ready": "Sẵn sàng",
+      "attention": "Cần chú ý",
+      "aiOff": "Chưa bật AI"
+    },
+    "heroReady": {
+      "title": "Hôm nay bạn muốn làm gì?",
+      "body": "Mở lịch hôm nay hoặc tạo lịch mới với AI.",
+      "openPlan": "Mở lịch hôm nay",
+      "generatePlan": "Tạo lịch hôm nay"
     },
     "aiCta": {
       "title": "Bật AI để bắt đầu",
@@ -1512,10 +1534,10 @@
         }
       },
       "voice": {
-        "menu": "Voice companion",
-        "title": "Voice companion",
-        "subtitle": "Nói chuyện với trợ lý khi bạn chủ động bấm. Chúng tôi không bao giờ nghe nền.",
-        "promise": "Không nghe nền. Không hotword luôn nghe. Mic chỉ bật khi bạn giữ nút.",
+        "menu": "Phím tắt thông minh",
+        "title": "Phím tắt thông minh",
+        "subtitle": "Ghi nhanh bằng văn bản, xem gợi ý đang chờ và tinh chỉnh check-in.",
+        "promise": "Tính năng giọng nói sẽ ra mắt ở bản sau — hiện tại mọi thứ dùng văn bản.",
         "openQuickCapture": "Ghi nhanh",
         "openCheckinSettings": "Cài đặt check-in",
         "openHealthSettings": "Health & Fitness integration",
@@ -1537,11 +1559,15 @@
         "send": "Phân tích",
         "useAi": "Dùng AI để phân tích sâu hơn",
         "aiBusy": "Đang hỏi AI…",
-        "voiceCta": "Giọng nói (sắp ra mắt)",
-        "voiceComingSoon": "Tính năng chuyển giọng nói thành văn bản sẽ có ở bản sau. Hiện tại hãy gõ tạm.",
+        "voiceCta": "Giữ để nói",
+        "holdToTalk": "Giữ để ghi âm giọng nói",
+        "holdToTalkHint": "Giữ nút mic để ghi âm. Thả ra để chuyển sang văn bản.",
+        "recordingTimer": "Đang ghi {{seconds}}s — thả ra để gửi",
+        "transcribing": "Đang chuyển giọng nói thành văn bản…",
+        "transcribeEmpty": "Tôi chưa nghe rõ. Thử lại nhé?",
         "recording": "Đang ghi âm…",
         "stop": "Dừng",
-        "transcribeStub": "Tính năng chuyển giọng nói thành văn bản sẽ có ở bản sau. Hiện tại hãy gõ tạm.",
+        "transcribeStub": "Tính năng giọng nói cần OpenAI API key. Hãy nhập key để bật.",
         "errorTitle": "Không phân tích được",
         "noDraft": "Tôi chưa nhận ra hành động trong câu đó. Thử ngắn hơn như “cà phê 30k” hoặc “mai 9h gọi khách”.",
         "draftExpense": "Chi tiêu mới",
@@ -1758,6 +1784,12 @@
   "checkin": {
     "sleepTitle": "Giấc ngủ đêm qua",
     "moodTitle": "Hôm nay bạn thấy thế nào?",
+    "presets": {
+      "great": "🌟 Ngủ ngon",
+      "normal": "🙂 Bình thường",
+      "short": "😶 Ngủ ít",
+      "tired": "😴 Hơi mệt"
+    },
     "sleepTime": "Đi ngủ (HH:mm)",
     "wakeTime": "Thức dậy (HH:mm)",
     "quality": "Chất lượng",

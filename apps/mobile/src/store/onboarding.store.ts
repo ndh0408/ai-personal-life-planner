@@ -1,12 +1,16 @@
 import { create } from 'zustand';
+import * as Localization from 'expo-localization';
 
 /**
- * In-memory state for the 5-step onboarding flow. Each step writes its local
- * answers via `patch()`; the final Finance step calls PUT /profile + creates
- * default wallets and then resets the draft.
+ * In-memory state for the onboarding flow.
  *
- * We deliberately don't persist to storage — if the user kills the app
- * mid-onboarding we'd rather they see a clean slate than stale half-answers.
+ * Round 21: collapsed from 5 steps to 3 (Welcome → Basics → AI setup).
+ * Body-metrics, salary, and detailed schedule are no longer asked
+ * upfront — users set those in Profile settings if they want to.
+ *
+ * The shape of the draft is unchanged so the existing `profileApi.update`
+ * call still receives the same DTO; new defaults below cover the
+ * dropped fields. Timezone is auto-detected from the device locale.
  */
 export type OnboardingDraft = {
   // Welcome
@@ -48,28 +52,49 @@ export type OnboardingDraft = {
   wantsMonthlyBudget: boolean;
 };
 
+/**
+ * Best-effort timezone autodetect from the device. Falls back to Asia
+ * because the app's primary market is Vietnam. Profile settings still
+ * lets the user override.
+ */
+function detectTimezone(): string {
+  try {
+    const tz = Localization.getCalendars()[0]?.timeZone;
+    if (tz && typeof tz === 'string') return tz;
+  } catch {
+    // expo-localization not available (e.g. some Jest envs) — fall through.
+  }
+  return 'Asia/Ho_Chi_Minh';
+}
+
 const DEFAULT: OnboardingDraft = {
   locale: 'vi',
   fullName: '',
+  // Body-metrics + occupation are no longer asked in onboarding — keep
+  // empty defaults so profileApi.update receives `undefined` for them.
   age: '',
   gender: '',
   heightCm: '',
   weightKg: '',
   occupation: '',
   mainGoal: '',
-  activityLevel: '',
+  activityLevel: 'MEDIUM',
   dietaryPreference: '',
   healthNotes: '',
+  // Sensible work-day defaults — user can edit in Profile.
   workStartTime: '09:00',
   workEndTime: '18:00',
   usualWakeTime: '06:30',
   usualSleepTime: '23:00',
-  timezone: 'Asia/Ho_Chi_Minh',
+  timezone: detectTimezone(),
+  // Finance fields — no longer asked upfront.
   monthlySalary: '',
   salaryDay: '',
   currency: 'VND',
+  // Auto-create the Cash wallet so AddExpense has a default; bank /
+  // budget toggles default off (user can add later in Finance).
   createCashWallet: true,
-  createBankWallet: true,
+  createBankWallet: false,
   wantsMonthlyBudget: false,
 };
 

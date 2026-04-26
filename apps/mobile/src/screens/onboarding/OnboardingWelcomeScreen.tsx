@@ -1,15 +1,23 @@
 import React, { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../../theme';
+import { useTheme, useResponsive } from '../../theme';
 import { Screen, Button, StepProgress } from '../../components/ui';
 import type { OnboardingScreenProps } from '../../navigation/types';
 import { setLocale, SUPPORTED_LOCALES, getActiveLocale } from '../../i18n';
 import { useOnboardingStore } from '../../store/onboarding.store';
 
+/**
+ * Step 1/3 — Welcome + language picker.
+ *
+ * Round 21: stripped down. The original screen had aspirational copy
+ * + 5-step progress; the new flow advertises a 3-step path so users
+ * don't feel they're being asked to fill out a form.
+ */
 export function OnboardingWelcomeScreen({ navigation }: OnboardingScreenProps<'Welcome'>) {
   const { colors, spacing, radius, typography } = useTheme();
   const { t } = useTranslation();
+  const { isTablet } = useResponsive();
   const patch = useOnboardingStore((s) => s.patch);
   const [selected, setSelected] = useState<'vi' | 'en'>(getActiveLocale() as 'vi' | 'en');
 
@@ -21,8 +29,8 @@ export function OnboardingWelcomeScreen({ navigation }: OnboardingScreenProps<'W
 
   return (
     <Screen>
-      <StepProgress total={5} current={1} />
-      <View style={{ flex: 1 }}>
+      <StepProgress total={3} current={1} />
+      <View style={{ flex: 1, maxWidth: isTablet ? 560 : undefined, alignSelf: isTablet ? 'center' : 'stretch', width: '100%' }}>
         <Text style={[typography.display, { color: colors.text }]}>
           {t('onboarding.welcome.headline1')}
         </Text>
@@ -43,6 +51,8 @@ export function OnboardingWelcomeScreen({ navigation }: OnboardingScreenProps<'W
               <TouchableOpacity
                 key={code}
                 onPress={() => pickLocale(code as 'vi' | 'en')}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: active }}
                 style={{
                   padding: spacing.lg,
                   borderRadius: radius.lg,
@@ -63,7 +73,7 @@ export function OnboardingWelcomeScreen({ navigation }: OnboardingScreenProps<'W
         title={t('onboarding.welcome.cta')}
         size="lg"
         fullWidth
-        onPress={() => navigation.navigate('Profile')}
+        onPress={() => navigation.navigate('Basics')}
       />
     </Screen>
   );

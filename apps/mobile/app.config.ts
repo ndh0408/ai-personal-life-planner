@@ -88,6 +88,10 @@ const config: ExpoConfig = {
       // these are missing when the matching capability is declared.
       NSUserNotificationsUsageDescription:
         'LifeOS AI sends gentle reminders for your schedule, habits, and daily check-ins. You can turn these off in Settings.',
+      // Mic — used ONLY when the user holds the Quick Capture mic
+      // button. No background recording, no hotword, no auto-listen.
+      NSMicrophoneUsageDescription:
+        'LifeOS AI uses the microphone only while you hold the Quick Capture mic button so we can transcribe what you said.',
     },
   },
   android: {
@@ -97,12 +101,29 @@ const config: ExpoConfig = {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#0B0B0F',
     },
-    permissions: ['RECEIVE_BOOT_COMPLETED', 'POST_NOTIFICATIONS', 'VIBRATE'],
+    permissions: [
+      'RECEIVE_BOOT_COMPLETED',
+      'POST_NOTIFICATIONS',
+      'VIBRATE',
+      // Recording mic for Quick Capture press-and-hold.
+      'RECORD_AUDIO',
+    ],
   },
   web: {
     favicon: './assets/favicon.png',
   },
-  plugins: ['expo-notifications', 'expo-localization', 'expo-secure-store'],
+  plugins: [
+    'expo-notifications',
+    'expo-localization',
+    'expo-secure-store',
+    [
+      'expo-av',
+      {
+        microphonePermission:
+          'LifeOS AI uses the microphone only while you hold the Quick Capture mic button so we can transcribe what you said.',
+      },
+    ],
+  ],
   extra: {
     // Kept for backward-compat with older readers; env wins at runtime.
     apiBaseUrl: rawApiBaseUrl,

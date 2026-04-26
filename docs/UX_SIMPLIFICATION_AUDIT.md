@@ -119,3 +119,10 @@ concentrated in **AI setup, onboarding length, and bare-text-input forms**.
   - Tab icon set replacement.
 
 See `docs/MOBILE_REDESIGN_PLAN.md` Phase C/E/G/I for the deferred items.
+
+> **Round 21 update (2026-04-26):** the deferred items above are now
+> done — onboarding rewritten to 3 steps, real Whisper-backed voice
+> STT, vector tab icons, dismiss icon on the email banner, AI feature
+> guards across Today / Meals / Assistant / AIChat. See
+> `docs/ROUND_21_FULL_POLISH.md`. Date/time pickers are still chip-
+> based (no native picker module added).

@@ -27,6 +27,7 @@ import {
 import { mealsApi, type MealPlan, type MealSuggestion } from '../../services/api/meals.api';
 import { mealLogsApi, type MealLog } from '../../services/api/health.api';
 import { aiApi } from '../../services/api/ai.api';
+import { useAiGate } from '../../hooks/useAiEnabled';
 import { QUERY_KEYS } from '../../constants';
 import { useErrorMessage } from '../../i18n/useErrorMessage';
 import {
@@ -59,6 +60,7 @@ export function MealsScreen() {
   const { colors, spacing, radius, typography } = useTheme();
   const { t } = useTranslation();
   const translateError = useErrorMessage();
+  const guardAi = useAiGate();
   const queryClient = useQueryClient();
 
   const [date, setDate] = useState(todayIso());
@@ -179,7 +181,10 @@ export function MealsScreen() {
           </View>
           <Button
             title={suggestMut.isPending ? t('common.loading') : t('meals.ai.cta')}
-            onPress={() => setAiOpen(true)}
+            onPress={() => {
+              if (!guardAi()) return;
+              setAiOpen(true);
+            }}
             disabled={suggestMut.isPending}
           />
         </View>

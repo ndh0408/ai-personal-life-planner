@@ -146,12 +146,47 @@ export function SleepMoodCheckinScreen() {
 
   if (todaySleepQ.isLoading || todayMoodQ.isLoading) return <Loading />;
 
+  // ---- Quick presets — one-tap shortcuts that set both sleep window
+  // and quality in a single tap. Saves 4-5 manual chip taps for the
+  // most common scenarios. Round 21.
+  const QUICK_PRESETS: Array<{
+    key: string;
+    sleep: string;
+    wake: string;
+    quality: (typeof QUALITY)[number];
+    mood: (typeof MOODS)[number];
+    energy: (typeof ENERGY)[number];
+    stress: (typeof STRESS)[number];
+  }> = [
+    { key: 'great', sleep: '22:30', wake: '06:30', quality: 'VERY_GOOD', mood: 'HAPPY', energy: 'HIGH', stress: 'LOW' },
+    { key: 'normal', sleep: '23:00', wake: '07:00', quality: 'NORMAL', mood: 'NORMAL', energy: 'MEDIUM', stress: 'LOW' },
+    { key: 'short', sleep: '01:00', wake: '07:00', quality: 'BAD', mood: 'TIRED', energy: 'LOW', stress: 'MEDIUM' },
+    { key: 'tired', sleep: '00:30', wake: '06:30', quality: 'BAD', mood: 'TIRED', energy: 'LOW', stress: 'MEDIUM' },
+  ];
+  const applyPreset = (p: (typeof QUICK_PRESETS)[number]) => {
+    setSleepHHMM(p.sleep);
+    setWakeHHMM(p.wake);
+    setQuality(p.quality);
+    setMood(p.mood);
+    setEnergy(p.energy);
+    setStress(p.stress);
+  };
+
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ paddingBottom: 140 }}>
         <Text style={[typography.h1, { color: colors.text, marginBottom: spacing.md }]}>
           {t('checkin.sleepTitle')}
         </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.md }}>
+          {QUICK_PRESETS.map((p) => (
+            <Chip
+              key={p.key}
+              label={t(`checkin.presets.${p.key}`)}
+              onPress={() => applyPreset(p)}
+            />
+          ))}
+        </View>
         <Card style={{ marginBottom: spacing.md }}>
           <View style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md }}>
             <View style={{ flex: 1 }}>

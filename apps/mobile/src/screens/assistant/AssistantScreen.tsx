@@ -29,6 +29,7 @@ import {
   type RecommendationStatus,
 } from '../../services/api/assistant.api';
 import { aiApi } from '../../services/api/ai.api';
+import { useAiGate } from '../../hooks/useAiEnabled';
 import { useErrorMessage } from '../../i18n/useErrorMessage';
 import { formatDateByLocale, formatTimeByLocale, todayIso } from '../../utils/format';
 import type { RootStackParamList } from '../../navigation/types';
@@ -62,6 +63,7 @@ export function AssistantScreen() {
   const { t } = useTranslation();
   const { colors, spacing, radius, typography } = useTheme();
   const translateError = useErrorMessage();
+  const guardAi = useAiGate();
   const nav = useNavigation<Nav>();
   const qc = useQueryClient();
   const notifiedRef = useRef<Set<string>>(new Set());
@@ -192,6 +194,7 @@ export function AssistantScreen() {
   }
 
   async function askAi(r: Recommendation) {
+    if (!guardAi()) return;
     try {
       const message = t('assistant.ai.askPrompt', { title: r.title, content: r.content });
       const res = await aiApi.chat({ message, contextType: 'assistant-recommendation' });

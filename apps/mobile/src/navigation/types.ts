@@ -11,10 +11,8 @@ export type AuthStackParamList = {
 
 export type OnboardingStackParamList = {
   Welcome: undefined;
-  Profile: undefined;
-  Goal: undefined;
-  Schedule: undefined;
-  Finance: undefined;
+  Basics: undefined;
+  AISetupOnboarding: undefined;
 };
 
 /**

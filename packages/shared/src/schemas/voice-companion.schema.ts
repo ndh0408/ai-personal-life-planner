@@ -177,9 +177,11 @@ export interface HealthIntegrationDto {
 
 export const TranscribeRequestSchema = z
   .object({
-    /** Base64-encoded audio. Backend caps at ~1MB. v1.2 mock returns 501 unless
-     *  STT provider env is configured. */
-    audioBase64: z.string().min(1).max(2_000_000),
+    /** Base64-encoded audio. Backend caps at 25 MB raw (OpenAI Whisper
+     *  limit; base64 inflates ~33% so the wire ceiling is ~34MB).
+     *  Round 21 wires real Whisper-backed STT in
+     *  `SpeechToTextService.transcribe`. */
+    audioBase64: z.string().min(1).max(34_000_000),
     /** Audio mime/format hint — `audio/m4a`, `audio/wav`, `audio/webm`, etc. */
     mimeType: z.string().min(1).max(60),
     locale: z.enum(['vi', 'en']).optional(),

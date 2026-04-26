@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme';
 import { useAuthStore } from '../../store/auth.store';
@@ -67,8 +68,13 @@ export function EmailVerifyBanner() {
         <Text style={{ color: colors.text, fontWeight: '700', flex: 1 }}>
           {t('auth.verifyEmail.bannerTitle')}
         </Text>
-        <Pressable onPress={() => setDismissed(true)} hitSlop={10}>
-          <Text style={{ color: colors.textMuted, fontSize: 14 }}>{t('common.dismiss')}</Text>
+        <Pressable
+          onPress={() => setDismissed(true)}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.dismiss')}
+        >
+          <Ionicons name="close" size={20} color={colors.textMuted} />
         </Pressable>
       </View>
       <Text style={{ color: colors.textMuted, marginTop: 6 }}>

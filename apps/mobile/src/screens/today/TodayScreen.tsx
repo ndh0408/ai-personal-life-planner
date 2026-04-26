@@ -28,6 +28,7 @@ import { dashboardApi } from '../../services/api/dashboard.api';
 import { contextApi } from '../../services/api/context.api';
 import { SmartNudgeCard } from '../../components/context/SmartNudgeCard';
 import { useErrorMessage } from '../../i18n/useErrorMessage';
+import { useAiGate } from '../../hooks/useAiEnabled';
 import { QUERY_KEYS } from '../../constants';
 import {
   formatDateByLocale,
@@ -52,6 +53,7 @@ export function TodayScreen() {
   const nav = useNavigation<Nav>();
   const queryClient = useQueryClient();
   const online = useOnline();
+  const guardAi = useAiGate();
   const date = todayIso();
 
   const scheduleQ = useQuery({
@@ -138,6 +140,7 @@ export function TodayScreen() {
   /** Ask-confirm overwrite when a schedule already exists before regenerating. */
   function requestGenerate() {
     if (generateMut.isPending) return;
+    if (!guardAi()) return;
     if (scheduleQ.data) {
       Alert.alert(
         t('today.aiPlanner.confirmOverwriteTitle'),
@@ -264,7 +267,7 @@ export function TodayScreen() {
             label={
               rescheduleMut.isPending ? t('today.reschedule.pending') : t('today.aiPlanner.imLate')
             }
-            onPress={() => rescheduleMut.mutate()}
+            onPress={() => guardAi() && rescheduleMut.mutate()}
             disabled={aiBusy || !online || !schedule}
           />
         </View>

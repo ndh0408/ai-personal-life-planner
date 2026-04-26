@@ -102,6 +102,17 @@
       "pickLanguage": "Choose a language",
       "cta": "Let’s go"
     },
+    "basics": {
+      "title": "Tell us a bit about you",
+      "subtitle": "Two quick answers — you can fine-tune everything in Profile later.",
+      "fullName": "What should we call you?",
+      "fullNamePlaceholder": "e.g. Alex",
+      "mainGoal": "What's your main focus right now?",
+      "moreTitle": "Sleep + wake (optional)",
+      "moreHint": "Helps the AI suggest a better daily schedule. Skip if you're not sure.",
+      "showMore": "Add sleep / wake times",
+      "hideMore": "Hide"
+    },
     "profile": {
       "title": "About you",
       "subtitle": "Used to personalize plans and meals — you can edit later.",
@@ -229,6 +240,17 @@
       "checkinMood": "Check-in mood",
       "generateSchedule": "AI schedule",
       "askAI": "Ask AI"
+    },
+    "status": {
+      "ready": "Ready",
+      "attention": "Needs attention",
+      "aiOff": "AI not enabled"
+    },
+    "heroReady": {
+      "title": "What do you want to do today?",
+      "body": "Open today's plan or generate a new one with AI.",
+      "openPlan": "Open today's plan",
+      "generatePlan": "Generate today's plan"
     },
     "aiCta": {
       "title": "Enable AI to get started",
@@ -1512,10 +1534,10 @@
         }
       },
       "voice": {
-        "menu": "Voice companion",
-        "title": "Voice companion",
-        "subtitle": "Talk to your assistant when you bring it up. We never listen in the background.",
-        "promise": "No background listening. No always-on hotword. The mic activates only when you tap and hold.",
+        "menu": "Smart shortcuts",
+        "title": "Smart shortcuts",
+        "subtitle": "Quick-capture text, review suggested actions, and tune smart check-ins.",
+        "promise": "All shortcuts are text-based — fast to type, no permissions needed.",
         "openQuickCapture": "Quick capture",
         "openCheckinSettings": "Smart check-in settings",
         "openHealthSettings": "Health & fitness integration",
@@ -1537,11 +1559,15 @@
         "send": "Parse",
         "useAi": "Use AI for richer parsing",
         "aiBusy": "Asking AI…",
-        "voiceCta": "Voice (coming soon)",
-        "voiceComingSoon": "Voice transcription is coming in a later release. For now, please type.",
+        "voiceCta": "Hold to talk",
+        "holdToTalk": "Hold to talk — record voice",
+        "holdToTalkHint": "Hold the mic to record. Release to transcribe.",
+        "recordingTimer": "Recording {{seconds}}s — release to send",
+        "transcribing": "Transcribing…",
+        "transcribeEmpty": "We couldn't make out any speech. Try again?",
         "recording": "Recording…",
         "stop": "Stop",
-        "transcribeStub": "Voice transcription is coming in a later release. For now, please type.",
+        "transcribeStub": "Voice transcription needs an OpenAI API key. Add one to enable.",
         "errorTitle": "Couldn't parse",
         "noDraft": "I couldn't recognise an action in that. Try a shorter phrase like \"coffee 30k\" or \"tomorrow 9am call client\".",
         "draftExpense": "New expense",
@@ -1758,6 +1784,12 @@
   "checkin": {
     "sleepTitle": "Last night’s sleep",
     "moodTitle": "How are you feeling today?",
+    "presets": {
+      "great": "🌟 Slept great",
+      "normal": "🙂 Normal",
+      "short": "😶 Slept short",
+      "tired": "😴 Tired"
+    },
     "sleepTime": "Slept at (HH:mm)",
     "wakeTime": "Woke at (HH:mm)",
     "quality": "Quality",

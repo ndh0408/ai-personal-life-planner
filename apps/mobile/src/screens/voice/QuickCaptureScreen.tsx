@@ -1,16 +1,18 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useTheme } from '../../theme';
+import { useTheme, useResponsive } from '../../theme';
 import { Screen, Card, Button, Input, Chip, Badge } from '../../components/ui';
 import { voiceCompanionApi } from '../../services/api/voice-companion.api';
 import { expensesApi, walletsApi } from '../../services/api/finance.api';
 import { tasksApi } from '../../services/api/tasks.api';
 import { userAiProvidersApi } from '../../services/api/user-ai-providers.api';
 import { useErrorMessage } from '../../i18n/useErrorMessage';
+import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import { QUERY_KEYS } from '../../constants';
 import { formatMoneyByLocale } from '../../utils/format';
 import {
@@ -39,6 +41,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 export function QuickCaptureScreen() {
   const { colors, spacing, typography } = useTheme();
   const { t, i18n } = useTranslation();
+  const { isTablet } = useResponsive();
   const messageFor = useErrorMessage();
   const nav = useNavigation<Nav>();
   const qc = useQueryClient();
@@ -58,6 +61,55 @@ export function QuickCaptureScreen() {
     staleTime: 60_000,
   });
   const hasAi = (providersQ.data ?? []).length > 0;
+
+  // Voice — Round 21 wires real Whisper-backed transcription via the
+  // backend `/voice/transcribe` route. Press-and-hold pattern; the
+  // mic is OFF until the user actively presses the button.
+  const recorder = useVoiceRecorder();
+  const transcribeMut = useMutation({
+    mutationFn: (input: { audioBase64: string; mimeType: string }) =>
+      voiceCompanionApi.transcribe({
+        audioBase64: input.audioBase64,
+        mimeType: input.mimeType,
+        locale: (i18n.language === 'en' ? 'en' : 'vi') as 'vi' | 'en',
+      }),
+    onSuccess: (res) => {
+      if (res.notImplemented) {
+        Alert.alert(
+          t('errors.AI_PROVIDER_NOT_CONFIGURED'),
+          t('settings.aiSetup.noKeyBody'),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('settings.aiSetup.addKey'), onPress: () => nav.navigate('AISetup') },
+          ],
+        );
+        return;
+      }
+      const transcript = (res.transcript ?? '').trim();
+      if (!transcript) {
+        Alert.alert(t('settings.quickCapture.errorTitle'), t('settings.quickCapture.transcribeEmpty'));
+        return;
+      }
+      setText(transcript);
+      setDidParse(false);
+      // Auto-parse so the user immediately sees a draft after their
+      // recording stops talking — saves a tap.
+      const found = ruleParse(transcript);
+      setDrafts(found);
+      setDidParse(true);
+    },
+    onError: (e) => Alert.alert(t('settings.quickCapture.errorTitle'), messageFor(e)),
+  });
+
+  const onMicPressIn = async () => {
+    await recorder.start();
+  };
+  const onMicPressOut = async () => {
+    if (!recorder.recording) return;
+    const out = await recorder.stopAndGetBase64();
+    if (!out) return;
+    transcribeMut.mutate(out);
+  };
 
   const examples = useMemo<string[]>(() => {
     const raw = i18n.t('settings.quickCapture.examples', { returnObjects: true }) as unknown;
@@ -144,7 +196,14 @@ export function QuickCaptureScreen() {
 
   return (
     <Screen scroll>
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingBottom: 120,
+          maxWidth: isTablet ? 720 : undefined,
+          alignSelf: 'center',
+          width: '100%',
+        }}
+      >
         <Text style={[typography.h1, { color: colors.text }]}>
           {t('settings.quickCapture.title')}
         </Text>
@@ -165,7 +224,50 @@ export function QuickCaptureScreen() {
           style={{ minHeight: 96 }}
         />
 
-        <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}>
+        {/* Press-and-hold mic — sends audio to OpenAI Whisper via the
+            backend; the transcript becomes the input text and is
+            auto-parsed. The mic is OFF until pressed. */}
+        <View style={{ alignItems: 'center', marginTop: spacing.lg }}>
+          <Pressable
+            onPressIn={onMicPressIn}
+            onPressOut={onMicPressOut}
+            disabled={transcribeMut.isPending}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.quickCapture.holdToTalk')}
+            accessibilityState={{ busy: recorder.recording || transcribeMut.isPending }}
+            style={(state: { pressed: boolean }) => ({
+              width: 88,
+              height: 88,
+              borderRadius: 44,
+              backgroundColor: recorder.recording ? colors.danger : colors.primary,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: state.pressed ? 0.85 : 1,
+              shadowColor: '#000',
+              shadowOpacity: 0.15,
+              shadowOffset: { width: 0, height: 4 },
+              shadowRadius: 8,
+              elevation: 4,
+            })}
+          >
+            <Ionicons
+              name={recorder.recording ? 'stop' : 'mic'}
+              size={36}
+              color="#FFFFFF"
+            />
+          </Pressable>
+          <Text style={[typography.caption, { color: colors.textMuted, marginTop: spacing.sm }]}>
+            {recorder.recording
+              ? t('settings.quickCapture.recordingTimer', {
+                  seconds: Math.floor(recorder.durationMs / 1000),
+                })
+              : transcribeMut.isPending
+                ? t('settings.quickCapture.transcribing')
+                : t('settings.quickCapture.holdToTalkHint')}
+          </Text>
+        </View>
+
+        <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg }}>
           <Button
             title={t('settings.quickCapture.parse')}
             onPress={runRuleParse}
@@ -236,17 +338,6 @@ export function QuickCaptureScreen() {
           </View>
         ) : null}
 
-        {/* Voice — coming-soon placeholder; no longer pretends to work. */}
-        <View style={{ marginTop: spacing.xl }}>
-          <Card>
-            <Text style={[typography.bodyStrong, { color: colors.text }]}>
-              {t('settings.quickCapture.voiceCta')}
-            </Text>
-            <Text style={[typography.caption, { color: colors.textMuted, marginTop: spacing.xs }]}>
-              {t('settings.quickCapture.voiceComingSoon')}
-            </Text>
-          </Card>
-        </View>
       </ScrollView>
     </Screen>
   );

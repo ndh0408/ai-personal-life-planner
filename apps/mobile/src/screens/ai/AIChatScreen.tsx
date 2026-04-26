@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../theme';
 import { Screen, Button } from '../../components/ui';
 import { aiApi } from '../../services/api/ai.api';
+import { useAiGate } from '../../hooks/useAiEnabled';
 import { useErrorMessage } from '../../i18n/useErrorMessage';
 
 type Bubble = { id: string; role: 'user' | 'assistant'; text: string };
@@ -27,10 +28,12 @@ export function AIChatScreen() {
   const [sending, setSending] = useState(false);
   const conversationRef = useRef<string | undefined>(undefined);
   const listRef = useRef<FlatList<Bubble>>(null);
+  const guardAi = useAiGate();
 
   const send = async () => {
     const text = input.trim();
     if (!text) return;
+    if (!guardAi()) return;
     setInput('');
     const userBubble: Bubble = { id: `u-${Date.now()}`, role: 'user', text };
     setBubbles((b) => [...b, userBubble]);

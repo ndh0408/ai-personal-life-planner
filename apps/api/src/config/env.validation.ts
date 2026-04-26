@@ -28,6 +28,9 @@ const EnvSchema = z
     // endpoint stamps on new OpenAI rows. Lets ops bump the recommended
     // model without a mobile release. Falls back to AI_MODEL.
     OPENAI_DEFAULT_MODEL: z.string().default('gpt-4o-mini'),
+    // Whisper model used by `/voice/transcribe`. Default is the only
+    // public Whisper model OpenAI ships; ops can swap if they self-host.
+    OPENAI_WHISPER_MODEL: z.string().default('whisper-1'),
 
     // BYOK (Bring-Your-Own-Key) — symmetric key for encrypting user-supplied
     // AI provider API keys at rest. Production builds REFUSE to start without

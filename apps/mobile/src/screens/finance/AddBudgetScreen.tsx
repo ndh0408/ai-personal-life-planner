@@ -74,13 +74,28 @@ export function AddBudgetScreen() {
           {t('budgets.createTitle')}
         </Text>
         <View style={{ gap: spacing.md }}>
-          <Input
-            label={t('budgets.form.category')}
-            placeholder="food"
-            value={category}
-            onChangeText={setCategory}
-            autoCapitalize="none"
-          />
+          <View>
+            <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.xs }]}>
+              {t('budgets.form.category')}
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.sm }}>
+              {(['food', 'transport', 'housing', 'utilities', 'shopping', 'entertainment', 'health', 'education'] as const).map((c) => (
+                <Chip
+                  key={c}
+                  label={t(`expenses.categories.${c}`, { defaultValue: c })}
+                  selected={category === c}
+                  onPress={() => setCategory(c)}
+                />
+              ))}
+            </View>
+            <Input
+              label={t('expenses.form.customCategory', { defaultValue: 'Custom category' })}
+              placeholder="food"
+              value={category}
+              onChangeText={setCategory}
+              autoCapitalize="none"
+            />
+          </View>
           <Input
             label={t('budgets.form.amount')}
             placeholder="3000000"

@@ -1,22 +1,27 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { OnboardingWelcomeScreen } from '../screens/onboarding/OnboardingWelcomeScreen';
-import { OnboardingProfileScreen } from '../screens/onboarding/OnboardingProfileScreen';
-import { OnboardingGoalScreen } from '../screens/onboarding/OnboardingGoalScreen';
-import { OnboardingScheduleScreen } from '../screens/onboarding/OnboardingScheduleScreen';
-import { OnboardingFinanceScreen } from '../screens/onboarding/OnboardingFinanceScreen';
+import { OnboardingBasicsScreen } from '../screens/onboarding/OnboardingBasicsScreen';
+import { OnboardingAISetupScreen } from '../screens/onboarding/OnboardingAISetupScreen';
 import type { OnboardingStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 
+/**
+ * Round 21 — collapsed from 5 steps (Welcome → Profile → Goal →
+ * Schedule → Finance) to 3 (Welcome → Basics → AI setup). Body
+ * metrics, salary, and detailed schedule are now in Profile settings,
+ * not required upfront. The AI setup step doubles as the
+ * onboarding-finalisation point — both the success path and the
+ * "Skip for now" path call `profileApi.update` + create the default
+ * Cash wallet + flip `auth.completeOnboarding()`.
+ */
 export function OnboardingNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Welcome" component={OnboardingWelcomeScreen} />
-      <Stack.Screen name="Profile" component={OnboardingProfileScreen} />
-      <Stack.Screen name="Goal" component={OnboardingGoalScreen} />
-      <Stack.Screen name="Schedule" component={OnboardingScheduleScreen} />
-      <Stack.Screen name="Finance" component={OnboardingFinanceScreen} />
+      <Stack.Screen name="Basics" component={OnboardingBasicsScreen} />
+      <Stack.Screen name="AISetupOnboarding" component={OnboardingAISetupScreen} />
     </Stack.Navigator>
   );
 }

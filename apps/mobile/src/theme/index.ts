@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 import { darkTheme, lightTheme, type ThemeColors } from './colors';
+import { getShadows, type Shadows } from './shadows';
+import { motion, type Motion } from './motion';
+import { layout, type Layout } from './layout';
 
 export const spacing = {
   xs: 4,
@@ -28,6 +31,9 @@ export const typography = {
   bodyStrong: { fontSize: 15, fontWeight: '600' as const },
   caption: { fontSize: 13, fontWeight: '400' as const },
   small: { fontSize: 12, fontWeight: '500' as const },
+  // Money/number-friendly preset — tabular-style alignment hint via
+  // fontVariant; fall back gracefully on RN versions that ignore it.
+  number: { fontSize: 17, fontWeight: '700' as const, fontVariant: ['tabular-nums'] as const },
 };
 
 export type Theme = {
@@ -35,16 +41,24 @@ export type Theme = {
   spacing: typeof spacing;
   radius: typeof radius;
   typography: typeof typography;
+  shadows: Shadows;
+  motion: Motion;
+  layout: Layout;
   isDark: boolean;
 };
 
-const ThemeContext = createContext<Theme>({
+const defaultTheme: Theme = {
   colors: lightTheme,
   spacing,
   radius,
   typography,
+  shadows: getShadows(false),
+  motion,
+  layout,
   isDark: false,
-});
+};
+
+const ThemeContext = createContext<Theme>(defaultTheme);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const scheme = useColorScheme();
@@ -55,6 +69,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       spacing,
       radius,
       typography,
+      shadows: getShadows(isDark),
+      motion,
+      layout,
       isDark,
     }),
     [isDark],
@@ -68,3 +85,19 @@ export function useTheme(): Theme {
 
 export { lightTheme, darkTheme };
 export type { ThemeColors };
+export {
+  financeColor,
+  healthColor,
+  priorityColor,
+  priorityToneFromEnum,
+  recommendationDomainFromEnum,
+  recommendationVisual,
+} from './semantic';
+export type {
+  FinanceTone,
+  HealthTone,
+  PriorityTone,
+  RecommendationDomain,
+} from './semantic';
+export { useResponsive, breakpoints } from './responsive';
+export type { Breakpoint, Responsive } from './responsive';
