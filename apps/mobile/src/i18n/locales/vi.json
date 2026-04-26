@@ -13,7 +13,10 @@
     "showPassword": "Hiện",
     "hidePassword": "Ẩn",
     "showKey": "Hiện key",
-    "hideKey": "Ẩn key"
+    "hideKey": "Ẩn key",
+    "empty": "Chưa có gì",
+    "errorTitle": "Có lỗi xảy ra",
+    "errorBody": "Thử lại nhé. Nếu vẫn lỗi, kiểm tra kết nối."
   },
   "auth": {
     "loginTitle": "Chào mừng trở lại",
@@ -43,27 +46,98 @@
       "unknown": "Có lỗi xảy ra. Thử lại nhé."
     }
   },
-  "aiSetup": {
-    "kicker": "Bước cuối",
-    "title": "Kết nối AI của bạn",
-    "subtitle": "Dán API key OpenAI của bạn. Mình mã hoá rồi mới lưu, không nhìn thấy bản gốc.",
-    "keyLabel": "OpenAI API key",
-    "keyPlaceholder": "sk-...",
-    "saveCta": "Lưu & kiểm tra",
-    "skipCta": "Bỏ qua, làm sau",
-    "noKeyHint": "Tôi chưa có key",
-    "noKeyModalTitle": "Lấy key OpenAI miễn phí",
-    "noKeyModalBody": "Mở platform.openai.com → Sign up → API keys → Create new secret key. Copy chuỗi bắt đầu bằng sk- rồi quay lại đây dán vào.",
-    "testing": "Đang kiểm tra với OpenAI…",
-    "successTitle": "Key hoạt động",
-    "successBody": "Bạn đã sẵn sàng dùng LifeOS AI.",
-    "failedTitle": "Key không dùng được",
-    "errors": {
-      "AI_KEY_INVALID_FORMAT": "Key OpenAI bắt đầu bằng sk- và dài hơn 20 ký tự.",
-      "AI_KEY_TEST_FAILED": "OpenAI từ chối key này. Kiểm tra lại bạn đã copy đúng chưa.",
-      "AI_KEY_QUOTA_EXCEEDED": "Key này đã hết quota. Tạo key mới hoặc nạp tiền cho tài khoản OpenAI.",
-      "AI_PROVIDER_UNREACHABLE": "Không kết nối được tới OpenAI. Thử lại sau."
+  "onboarding": {
+    "welcome": {
+      "kicker": "LifeOS AI",
+      "title": "Một câu, mọi việc.",
+      "body": "Trợ lý cá nhân giúp bạn ghi task, chi tiêu, bữa ăn, giấc ngủ — chỉ bằng cách nói/gõ một câu.",
+      "cta": "Bắt đầu"
+    },
+    "basicSetup": {
+      "kicker": "Bước 1 / 2",
+      "title": "Vài điều về bạn",
+      "subtitle": "Đặt cho đúng — sau này có thể đổi trong Cài đặt.",
+      "preferredName": "Bạn muốn được gọi là",
+      "preferredNamePlaceholder": "Tên thân mật",
+      "wakeTime": "Thường thức dậy lúc",
+      "sleepTime": "Thường ngủ lúc",
+      "cta": "Tiếp tục"
+    },
+    "aiSetup": {
+      "kicker": "Bước 2 / 2",
+      "title": "Kết nối AI của bạn",
+      "subtitle": "Dán API key OpenAI. Mình mã hoá rồi mới lưu, không nhìn thấy bản gốc.",
+      "keyLabel": "OpenAI API key",
+      "keyPlaceholder": "sk-...",
+      "saveCta": "Lưu & kiểm tra",
+      "skipCta": "Bỏ qua, làm sau",
+      "noKeyHint": "Tôi chưa có key",
+      "noKeyModalTitle": "Lấy key OpenAI miễn phí",
+      "noKeyModalBody": "Mở platform.openai.com → Sign up → API keys → Create new secret key. Copy chuỗi bắt đầu bằng sk- rồi quay lại đây dán vào.",
+      "testing": "Đang kiểm tra với OpenAI…",
+      "successTitle": "Key hoạt động",
+      "successBody": "Bạn đã sẵn sàng dùng LifeOS AI.",
+      "failedTitle": "Key không dùng được",
+      "errors": {
+        "AI_KEY_INVALID_FORMAT": "Key OpenAI bắt đầu bằng sk- và dài hơn 20 ký tự.",
+        "AI_KEY_TEST_FAILED": "OpenAI từ chối key này. Kiểm tra lại bạn đã copy đúng chưa.",
+        "AI_KEY_QUOTA_EXCEEDED": "Key này đã hết quota. Tạo key mới hoặc nạp tiền.",
+        "AI_PROVIDER_UNREACHABLE": "Không kết nối được tới OpenAI. Thử lại sau."
+      }
     }
+  },
+  "tabs": {
+    "home": "Hôm nay",
+    "today": "Lịch",
+    "money": "Chi tiêu",
+    "assistant": "Trợ lý",
+    "settings": "Cài đặt"
+  },
+  "home": {
+    "kicker": "Hôm nay",
+    "greeting": "Chào {{name}}",
+    "ready": "Sẵn sàng. Quick Capture sẽ xuất hiện ở round sau.",
+    "apiHealthy": "API kết nối tốt",
+    "apiDegraded": "API hoạt động một phần",
+    "apiUnreachable": "Không kết nối được API",
+    "quickCapturePlaceholder": "Bạn vừa làm gì? (vd: ăn phở 60k)",
+    "stats": {
+      "tasksToday": "Task hôm nay",
+      "spendToday": "Chi tiêu hôm nay",
+      "sleepLastNight": "Giấc ngủ tối qua"
+    },
+    "insights": {
+      "title": "Gợi ý cho hôm nay",
+      "empty": "Chưa có gợi ý mới."
+    }
+  },
+  "today": {
+    "title": "Lịch hôm nay",
+    "empty": "Chưa có gì hôm nay. Quick Capture để thêm."
+  },
+  "money": {
+    "title": "Chi tiêu",
+    "weekTotal": "Tuần này",
+    "todayTotal": "Hôm nay",
+    "empty": "Chưa có chi tiêu nào tuần này."
+  },
+  "assistant": {
+    "title": "Trợ lý",
+    "empty": "Hỏi mình bất kỳ điều gì.",
+    "inputPlaceholder": "Hỏi gì đó…"
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "account": "Tài khoản",
+    "preferences": "Tuỳ chọn",
+    "language": "Ngôn ngữ",
+    "languageVi": "Tiếng Việt",
+    "languageEn": "English",
+    "aiKey": "OpenAI key",
+    "data": "Dữ liệu",
+    "wipeCache": "Xoá cache",
+    "advanced": "Nâng cao",
+    "version": "Phiên bản"
   },
   "aiSettings": {
     "title": "OpenAI key",
@@ -80,13 +154,5 @@
     "deleteConfirmBody": "Sau khi xoá, các tính năng AI sẽ ngừng hoạt động đến khi bạn nhập key mới.",
     "deleteConfirmYes": "Xoá",
     "deleteConfirmNo": "Giữ lại"
-  },
-  "home": {
-    "kicker": "Hôm nay",
-    "greeting": "Chào {{name}}",
-    "ready": "Sẵn sàng. Quick Capture sẽ xuất hiện ở round sau.",
-    "apiHealthy": "API kết nối tốt",
-    "apiDegraded": "API hoạt động một phần",
-    "apiUnreachable": "Không kết nối được API"
   }
 }

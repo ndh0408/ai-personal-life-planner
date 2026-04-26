@@ -56,24 +56,37 @@ Type scale (modular ratio 1.25, base 16):
   Use border `border.subtle` instead of dropshadow.
 - Safe area: respected on top + bottom; horizontal padding 24.
 
-## Components (round 1+ inventory)
+## Components (round 1 — landed)
 
-These are the components the mobile app will own. Foundation round implements
-none of them yet — they're listed so designers and engineers stay aligned.
+The 18 primitives under `apps/mobile/src/components/ui/` form the design
+system. Higher-level composites (Quick Capture bar, mood picker, expense
+row, …) live under `components/<feature>/` and are added as features ship.
 
-- `<Screen>` — top-level container with safe area + scroll behaviour.
-- `<Kicker>`, `<Title>`, `<Body>` — typography wrappers.
-- `<Card>` — surface, radius 16, optional border, optional press state.
-- `<QuickCaptureBar>` — sticky bottom input with mic; the core of the app.
-- `<PreviewChip>` — what comes back after `/capture/parse`; tap to confirm,
-  swipe to discard.
-- `<CategoryPill>` — chip selector (used in confirm screens).
-- `<EmptyState>` — sentence + single action.
-- `<Skeleton>` — shimmer matching the final layout.
-- `<Toast>` — top, auto-dismiss 3 s; success / warning / danger only.
-- `<Sheet>` — bottom sheet; default 60% height, swipe-down to dismiss.
-- `<NumberStepper>` — for amounts (replaces typing where possible).
-- `<MoodPicker>`, `<SleepDial>`, `<TimeChips>` — input replacements.
+| Component | Purpose |
+|---|---|
+| `AppScreen` | Safe-area + scroll + keyboard-avoid wrapper. Default 24 px horizontal padding; `edgeToEdge` flag for full-bleed. |
+| `AppHeader` | Kicker + title + optional back button + trailing slot. |
+| `Card` | Surface (`bg.surface`, 1 px border, radius 16). Optional press state. `emphasis="elevated"` swaps to `surfaceAlt`. |
+| `Button` | `primary` (sienna), `secondary`, `ghost`, `danger`. Sizes `md` / `lg`. Loading + disabled states. |
+| `TextField` | Label + uppercase kicker, optional secret toggle, optional error/hint. |
+| `MoneyInput` | Integer-in-smallest-unit; renders a Vietnamese-grouped display, strips non-digits on input. |
+| `Chip` | Selectable pill, `neutral` / `accent` tones. |
+| `Badge` | Small uppercase tag, status tones (success/warning/danger/info). |
+| `EmptyState` | Title + body + optional action — sentence-first, never an illustration. |
+| `ErrorState` | Title + body + retry. Falls back to i18n `common.errorTitle/Body`. |
+| `LoadingState` | Spinner + label, inline or block. |
+| `SkeletonCard` | Shimmering placeholder matching the eventual card shape. |
+| `ConfirmModal` | Two-button modal with destructive variant. |
+| `BottomSheet` | Animated sheet with scrim; default 60 % height. |
+| `ToastProvider` / `useToast` | Top-mounted, auto-dismiss 3 s; success / warning / danger / info. |
+| `QuickActionButton` | Icon-led row with label + hint. |
+| `InsightCard` | Border-left tone bar + title + body, optional press, optional badge. |
+| `StatCard` | Kicker label + monospaced number + delta arrow. |
+| `Text` | Polymorphic typography wrapper (`display` / `title` / `body` / `kicker` / `link` / …). |
+
+All primitives consume tokens from `apps/mobile/src/theme/`:
+`colors`, `spacing`, `radius`, `typography`, `shadows`. Never hard-code a
+hex / px / weight in a screen — extend the token if it's missing.
 
 ## Motion
 

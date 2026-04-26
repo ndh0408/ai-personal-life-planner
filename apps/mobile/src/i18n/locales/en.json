@@ -13,7 +13,10 @@
     "showPassword": "Show",
     "hidePassword": "Hide",
     "showKey": "Show key",
-    "hideKey": "Hide key"
+    "hideKey": "Hide key",
+    "empty": "Nothing here yet",
+    "errorTitle": "Something went wrong",
+    "errorBody": "Try again. If it keeps failing, check your connection."
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -43,27 +46,98 @@
       "unknown": "Something went wrong. Try again."
     }
   },
-  "aiSetup": {
-    "kicker": "Last step",
-    "title": "Connect your AI",
-    "subtitle": "Paste your OpenAI API key. We encrypt it before storing — never seen as plaintext.",
-    "keyLabel": "OpenAI API key",
-    "keyPlaceholder": "sk-...",
-    "saveCta": "Save & test",
-    "skipCta": "Skip for now",
-    "noKeyHint": "I don't have a key yet",
-    "noKeyModalTitle": "Get a free OpenAI key",
-    "noKeyModalBody": "Open platform.openai.com → Sign up → API keys → Create new secret key. Copy the string that starts with sk- and paste it here.",
-    "testing": "Checking with OpenAI…",
-    "successTitle": "Key works",
-    "successBody": "You're ready to use LifeOS AI.",
-    "failedTitle": "Key doesn't work",
-    "errors": {
-      "AI_KEY_INVALID_FORMAT": "OpenAI keys start with sk- and are longer than 20 chars.",
-      "AI_KEY_TEST_FAILED": "OpenAI rejected this key. Check you pasted it correctly.",
-      "AI_KEY_QUOTA_EXCEEDED": "This key is out of quota. Create a new one or top up your OpenAI account.",
-      "AI_PROVIDER_UNREACHABLE": "Can't reach OpenAI. Try again later."
+  "onboarding": {
+    "welcome": {
+      "kicker": "LifeOS AI",
+      "title": "One sentence. Everything captured.",
+      "body": "A personal assistant that records tasks, expenses, meals, and sleep — from a single line of text or voice.",
+      "cta": "Get started"
+    },
+    "basicSetup": {
+      "kicker": "Step 1 / 2",
+      "title": "A few things about you",
+      "subtitle": "Set the basics — change them anytime in Settings.",
+      "preferredName": "Call me",
+      "preferredNamePlaceholder": "What name do you prefer?",
+      "wakeTime": "Usually wake at",
+      "sleepTime": "Usually sleep at",
+      "cta": "Continue"
+    },
+    "aiSetup": {
+      "kicker": "Step 2 / 2",
+      "title": "Connect your AI",
+      "subtitle": "Paste your OpenAI key. We encrypt before storing — never seen as plaintext.",
+      "keyLabel": "OpenAI API key",
+      "keyPlaceholder": "sk-...",
+      "saveCta": "Save & test",
+      "skipCta": "Skip for now",
+      "noKeyHint": "I don't have a key yet",
+      "noKeyModalTitle": "Get a free OpenAI key",
+      "noKeyModalBody": "Open platform.openai.com → Sign up → API keys → Create new secret key. Copy the string starting with sk- and paste it here.",
+      "testing": "Checking with OpenAI…",
+      "successTitle": "Key works",
+      "successBody": "You're ready to use LifeOS AI.",
+      "failedTitle": "Key doesn't work",
+      "errors": {
+        "AI_KEY_INVALID_FORMAT": "OpenAI keys start with sk- and are longer than 20 chars.",
+        "AI_KEY_TEST_FAILED": "OpenAI rejected this key. Check you pasted it correctly.",
+        "AI_KEY_QUOTA_EXCEEDED": "This key is out of quota. Create a new one or top up your account.",
+        "AI_PROVIDER_UNREACHABLE": "Can't reach OpenAI. Try again later."
+      }
     }
+  },
+  "tabs": {
+    "home": "Today",
+    "today": "Schedule",
+    "money": "Money",
+    "assistant": "Assistant",
+    "settings": "Settings"
+  },
+  "home": {
+    "kicker": "Today",
+    "greeting": "Hi {{name}}",
+    "ready": "Ready. Quick Capture lands in the next round.",
+    "apiHealthy": "API healthy",
+    "apiDegraded": "API partially up",
+    "apiUnreachable": "Can't reach API",
+    "quickCapturePlaceholder": "What did you just do? (e.g. lunch 75k)",
+    "stats": {
+      "tasksToday": "Tasks today",
+      "spendToday": "Spend today",
+      "sleepLastNight": "Sleep last night"
+    },
+    "insights": {
+      "title": "For you today",
+      "empty": "No new suggestions yet."
+    }
+  },
+  "today": {
+    "title": "Today's schedule",
+    "empty": "Nothing scheduled. Quick Capture to add."
+  },
+  "money": {
+    "title": "Money",
+    "weekTotal": "This week",
+    "todayTotal": "Today",
+    "empty": "No expenses this week."
+  },
+  "assistant": {
+    "title": "Assistant",
+    "empty": "Ask me anything.",
+    "inputPlaceholder": "Ask something…"
+  },
+  "settings": {
+    "title": "Settings",
+    "account": "Account",
+    "preferences": "Preferences",
+    "language": "Language",
+    "languageVi": "Tiếng Việt",
+    "languageEn": "English",
+    "aiKey": "OpenAI key",
+    "data": "Data",
+    "wipeCache": "Clear cache",
+    "advanced": "Advanced",
+    "version": "Version"
   },
   "aiSettings": {
     "title": "OpenAI key",
@@ -80,13 +154,5 @@
     "deleteConfirmBody": "After deletion, AI features will stop working until you enter a new key.",
     "deleteConfirmYes": "Delete",
     "deleteConfirmNo": "Keep"
-  },
-  "home": {
-    "kicker": "Today",
-    "greeting": "Hi {{name}}",
-    "ready": "Ready. Quick Capture lands in the next round.",
-    "apiHealthy": "API healthy",
-    "apiDegraded": "API partially up",
-    "apiUnreachable": "Can't reach API"
   }
 }
