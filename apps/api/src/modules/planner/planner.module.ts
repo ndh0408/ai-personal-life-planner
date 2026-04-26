@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
+import { PlannerController } from './planner.controller';
+import { PlannerService } from './planner.service';
 
-/**
- * Round 4 will add: today/this-week views combining tasks + calendar + finance.
- */
-@Module({})
+@Module({
+  controllers: [PlannerController],
+  providers: [PlannerService],
+})
 export class PlannerModule {}
