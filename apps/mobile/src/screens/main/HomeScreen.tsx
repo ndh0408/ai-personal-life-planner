@@ -1,55 +1,48 @@
 import React, { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import type { CompositeScreenProps } from '@react-navigation/native';
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   AppScreen,
   Card,
-  EmptyState,
   InsightCard,
   LoadingState,
-  StatCard,
   Text,
   useToast,
 } from '../../components/ui';
 import { spacing, colors } from '../../theme';
 import { useAuthStore } from '../../store/auth.store';
-import { useHealth } from '../../hooks/useHealth';
+import { useDashboardSummary } from '../../hooks/useDashboard';
 import { useCaptureConfirm, useCaptureParse } from '../../hooks/useCapture';
-import {
-  useExpensesSummary,
-  useFeedInvalidator,
-  useLatestSleep,
-  useTodayTasks,
-} from '../../hooks/useFeed';
-import {
-  useRecommendations,
-  useRefreshRecommendations,
-  useUpdateRecommendationStatus,
-} from '../../hooks/useRecommendations';
+import { useFeedInvalidator } from '../../hooks/useFeed';
+import { useUpdateRecommendationStatus } from '../../hooks/useRecommendations';
 import { QuickCaptureBar } from '../../components/quick-capture/QuickCaptureBar';
 import { CapturePreviewSheet } from '../../components/quick-capture/CapturePreviewSheet';
+import { HomeHero } from '../../components/home/HomeHero';
+import { QuickActionsRow } from '../../components/home/QuickActionsRow';
 import type { CaptureParseResponse } from '../../services/api/capture.service';
-import type { RecommendationPublic } from '../../services/api/recommendations.service';
 import { formatMoney } from '../../utils/format';
+import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
 
-export function HomeScreen() {
-  const { t } = useTranslation();
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<MainTabParamList, 'Home'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
+
+export function HomeScreen({ navigation }: Props) {
+  const { t, i18n: { language } } = useTranslation();
   const user = useAuthStore((s) => s.user);
-  const { data: health } = useHealth();
   const toast = useToast();
 
   const [parsed, setParsed] = useState<CaptureParseResponse | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  const summary = useDashboardSummary();
   const parse = useCaptureParse();
   const confirm = useCaptureConfirm();
   const invalidateFeed = useFeedInvalidator();
-
-  const tasks = useTodayTasks();
-  const summary = useExpensesSummary();
-  const sleep = useLatestSleep();
-  const recs = useRecommendations();
-  const refreshRecs = useRefreshRecommendations();
   const updateRec = useUpdateRecommendationStatus();
 
   const handleSend = (text: string) => {
@@ -58,9 +51,7 @@ export function HomeScreen() {
         setParsed(data);
         setSheetOpen(true);
       },
-      onError: () => {
-        toast.show(t('capture.errors.network'), 'danger');
-      },
+      onError: () => toast.show(t('capture.errors.network'), 'danger'),
     });
   };
 
@@ -71,114 +62,100 @@ export function HomeScreen() {
         setParsed(null);
         toast.show(t('capture.saved'), 'success');
         invalidateFeed();
+        void summary.refetch();
       },
-      onError: () => {
-        toast.show(t('capture.errors.network'), 'danger');
-      },
+      onError: () => toast.show(t('capture.errors.network'), 'danger'),
     });
   };
 
-  const greetingName = user?.displayName?.trim() || user?.email.split('@')[0] || '';
+  const greetingName = user?.displayName?.trim() || user?.email?.split('@')[0] || '';
+  const todayLabel = new Date().toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
 
-  const apiTone =
-    health?.status === 'ok'
-      ? colors.status.success
-      : health?.status === 'unreachable'
-      ? colors.status.danger
-      : colors.status.warning;
-
-  const tasksTodo = tasks.data ? tasks.data.total - tasks.data.doneCount : 0;
-  const sleepHint =
-    sleep.data != null
-      ? `${Math.floor(sleep.data.durationMinutes / 60)}h${String(
-          sleep.data.durationMinutes % 60,
-        ).padStart(2, '0')}m`
-      : '—';
+  const aiEnabled = summary.data?.aiEnabled ?? false;
+  const isOffline = summary.isError && !summary.data;
 
   return (
     <>
       <AppScreen
         noBottomInset
         footer={<QuickCaptureBar busy={parse.isPending} onSend={handleSend} />}
+        scroll={false}
+        edgeToEdge
       >
-        <Text variant="kicker">{t('home.kicker')}</Text>
-        <Text variant="display" style={{ marginTop: spacing.md }}>
-          {t('home.greeting', { name: greetingName })}
-        </Text>
-        <Text style={{ marginTop: spacing.sm, marginBottom: spacing.xl }}>{t('home.ready')}</Text>
-
-        <View style={{ flexDirection: 'row', gap: spacing.md, marginBottom: spacing.xl }}>
-          <StatCard
-            label={t('home.stats.tasksToday')}
-            value={String(tasksTodo)}
-            hint={tasks.data ? `${tasks.data.doneCount}/${tasks.data.total}` : '—'}
-          />
-          <StatCard
-            label={t('home.stats.spendToday')}
-            value={formatMoney(summary.data?.todayTotal ?? 0)}
-            hint={summary.data ? `tuần ${formatMoney(summary.data.weekTotal)}` : '—'}
-          />
-        </View>
-
-        <Card style={{ marginBottom: spacing.xl }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-            <View
-              style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: apiTone }}
-            />
-            <Text variant="bodyEm">
-              {health?.status === 'ok'
-                ? t('home.apiHealthy')
-                : health?.status === 'unreachable'
-                ? t('home.apiUnreachable')
-                : t('home.apiDegraded')}
-            </Text>
-          </View>
-          {health ? (
-            <Text variant="caption">{`${health.baseUrl} · ${health.latencyMs}ms`}</Text>
-          ) : null}
-        </Card>
-
-        <Card style={{ marginBottom: spacing.xl }}>
-          <Text variant="kicker">{t('home.stats.sleepLastNight')}</Text>
-          <Text variant="number">{sleepHint}</Text>
-          {sleep.data?.quality ? <Text variant="caption">{sleep.data.quality}</Text> : null}
-        </Card>
-
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: spacing.md,
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: spacing.xl,
+            paddingTop: spacing.xl,
+            paddingBottom: spacing.xl,
           }}
+          refreshControl={
+            <RefreshControl
+              refreshing={summary.isRefetching}
+              onRefresh={() => summary.refetch()}
+              tintColor={colors.accent.base}
+              colors={[colors.accent.base]}
+            />
+          }
+          showsVerticalScrollIndicator={false}
         >
-          <Text variant="kicker">{t('home.insights.title')}</Text>
-          <Pressable
-            onPress={() => refreshRecs.mutate()}
-            disabled={refreshRecs.isPending}
-            hitSlop={8}
-          >
-            <Text variant="caption" style={{ color: colors.accent.base, fontWeight: '700' }}>
-              {refreshRecs.isPending ? '…' : '↻'}
-            </Text>
-          </Pressable>
-        </View>
+          <HomeHeader
+            greetingName={greetingName}
+            todayLabel={todayLabel}
+            aiEnabled={aiEnabled}
+          />
 
-        {recs.isLoading ? (
-          <LoadingState />
-        ) : recs.data && recs.data.length > 0 ? (
-          <View style={{ gap: spacing.md }}>
-            {recs.data.map((r) => (
-              <InsightRow
-                key={r.id}
-                rec={r}
-                onDismiss={() => updateRec.mutate({ id: r.id, status: 'DISMISSED' })}
+          {isOffline ? <OfflineBanner /> : null}
+
+          <HomeHero
+            aiEnabled={aiEnabled}
+            onAddKey={() => navigation.navigate('AISettings')}
+            onCapture={() =>
+              Alert.alert('', t('home.quickCapturePlaceholder'))
+            }
+            onPlan={() => navigation.navigate('MainTabs', { screen: 'Today' } as never)}
+          />
+
+          <QuickActionsRow
+            actions={[
+              { key: 'capture', glyph: '✎', onPress: () => Alert.alert('', t('home.quickCapturePlaceholder')) },
+              { key: 'expense', glyph: '💸', onPress: () => Alert.alert('', t('home.quickActions.expense')) },
+              { key: 'task', glyph: '✓', onPress: () => Alert.alert('', t('home.quickActions.task')) },
+              { key: 'checkin', glyph: '✦', onPress: () => Alert.alert('', t('home.quickActions.checkin')) },
+              {
+                key: 'askAi',
+                glyph: '✨',
+                onPress: () =>
+                  navigation.navigate('MainTabs', { screen: 'Assistant' } as never),
+                disabled: !aiEnabled,
+              },
+            ]}
+          />
+
+          {summary.isLoading && !summary.data ? (
+            <LoadingState />
+          ) : summary.data ? (
+            <View style={{ gap: spacing.md }}>
+              <TodayPlanCard
+                summary={summary.data.todayPlan}
+                onPress={() => navigation.navigate('MainTabs', { screen: 'Today' } as never)}
               />
-            ))}
-          </View>
-        ) : (
-          <EmptyState title={t('home.insights.empty')} />
-        )}
+              <MoneyCard
+                summary={summary.data.money}
+                onPress={() => navigation.navigate('MainTabs', { screen: 'Money' } as never)}
+              />
+              <NextTaskCard task={summary.data.nextTask} />
+              <NudgeCard
+                nudge={summary.data.topRecommendation}
+                onDismiss={(id) => updateRec.mutate({ id, status: 'DISMISSED' })}
+              />
+              <MoodSleepCard summary={summary.data.moodSleep} />
+            </View>
+          ) : null}
+        </ScrollView>
       </AppScreen>
 
       <CapturePreviewSheet
@@ -192,26 +169,223 @@ export function HomeScreen() {
   );
 }
 
-function InsightRow({
-  rec,
+// ── Subcomponents ──────────────────────────────────────────────────────────
+
+function HomeHeader({
+  greetingName,
+  todayLabel,
+  aiEnabled,
+}: {
+  greetingName: string;
+  todayLabel: string;
+  aiEnabled: boolean;
+}) {
+  const { t } = useTranslation();
+  return (
+    <View style={{ marginBottom: spacing.xl }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Text variant="kicker">{todayLabel}</Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            borderRadius: 99,
+            backgroundColor: aiEnabled ? colors.accent.soft : colors.surfaceAlt,
+          }}
+        >
+          <View
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: aiEnabled ? colors.accent.base : colors.text.muted,
+            }}
+          />
+          <Text
+            variant="caption"
+            style={{ color: aiEnabled ? colors.accent.base : colors.text.muted }}
+          >
+            {aiEnabled ? '✨ AI' : t('home.heroNoAi.cta')}
+          </Text>
+        </View>
+      </View>
+      <Text variant="display" style={{ marginTop: spacing.md }}>
+        {t('home.greeting', { name: greetingName })}
+      </Text>
+    </View>
+  );
+}
+
+function OfflineBanner() {
+  const { t } = useTranslation();
+  return (
+    <View
+      style={{
+        backgroundColor: colors.status.warning + '22',
+        borderColor: colors.status.warning,
+        borderWidth: 1,
+        borderRadius: 12,
+        padding: spacing.md,
+        marginBottom: spacing.md,
+      }}
+    >
+      <Text variant="caption" style={{ color: colors.status.warning }}>
+        {t('home.offlineBanner')}
+      </Text>
+    </View>
+  );
+}
+
+function TodayPlanCard({
+  summary,
+  onPress,
+}: {
+  summary: { totalItems: number; doneItems: number; aiGenerated: boolean };
+  onPress: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Card onPress={onPress}>
+      <View
+        style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+      >
+        <Text variant="bodyEm">{t('home.cards.todayPlanTitle')}</Text>
+        {summary.aiGenerated ? (
+          <Text variant="caption" style={{ color: colors.accent.base, fontWeight: '700' }}>
+            ✨ AI
+          </Text>
+        ) : null}
+      </View>
+      {summary.totalItems > 0 ? (
+        <Text variant="number" style={{ fontSize: 22, lineHeight: 28 }}>
+          {t('home.cards.todayPlanProgress', {
+            done: summary.doneItems,
+            total: summary.totalItems,
+          })}
+        </Text>
+      ) : (
+        <Text variant="caption">{t('home.cards.todayPlanEmpty')}</Text>
+      )}
+    </Card>
+  );
+}
+
+function MoneyCard({
+  summary,
+  onPress,
+}: {
+  summary: { todayTotal: number; weekTotal: number; walletBalance: number };
+  onPress: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Card onPress={onPress}>
+      <Text variant="bodyEm">{t('home.cards.moneyTitle')}</Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          marginTop: spacing.sm,
+        }}
+      >
+        <View>
+          <Text variant="caption">{t('home.cards.moneyToday')}</Text>
+          <Text variant="number" style={{ fontSize: 18, lineHeight: 22 }}>
+            {formatMoney(summary.todayTotal)}
+          </Text>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text variant="caption">{t('home.cards.moneyWallet')}</Text>
+          <Text
+            variant="number"
+            style={{
+              fontSize: 18,
+              lineHeight: 22,
+              color: summary.walletBalance < 0 ? colors.status.danger : colors.text.primary,
+            }}
+          >
+            {formatMoney(summary.walletBalance)}
+          </Text>
+        </View>
+      </View>
+    </Card>
+  );
+}
+
+function NextTaskCard({
+  task,
+}: {
+  task: { id: string; title: string; dueAt: string | null; priority: string } | null;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Card>
+      <Text variant="bodyEm">{t('home.cards.nextTaskTitle')}</Text>
+      {task ? (
+        <>
+          <Text>{task.title}</Text>
+          {task.dueAt ? (
+            <Text variant="caption">
+              {new Date(task.dueAt).toLocaleString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                day: '2-digit',
+                month: '2-digit',
+              })}
+            </Text>
+          ) : null}
+        </>
+      ) : (
+        <Text variant="caption">{t('home.cards.nextTaskEmpty')}</Text>
+      )}
+    </Card>
+  );
+}
+
+function NudgeCard({
+  nudge,
   onDismiss,
 }: {
-  rec: RecommendationPublic;
-  onDismiss: () => void;
+  nudge:
+    | { id: string; type: string; title: string; content: string; priority: string }
+    | null;
+  onDismiss: (id: string) => void;
 }) {
+  const { t } = useTranslation();
+  if (!nudge) {
+    return (
+      <Card>
+        <Text variant="bodyEm">{t('home.cards.nudgeTitle')}</Text>
+        <Text variant="caption">{t('home.cards.nudgeEmpty')}</Text>
+      </Card>
+    );
+  }
   const tone =
-    rec.priority === 'HIGH'
-      ? rec.type === 'FINANCE' || rec.type === 'TASK'
+    nudge.priority === 'HIGH'
+      ? nudge.type === 'FINANCE' || nudge.type === 'TASK'
         ? 'danger'
         : 'warning'
-      : rec.priority === 'MEDIUM'
+      : nudge.priority === 'MEDIUM'
       ? 'info'
       : 'success';
   return (
     <View>
-      <InsightCard title={rec.title} body={rec.content} tone={tone} />
+      <InsightCard
+        title={`${t('home.cards.nudgeTitle')} — ${nudge.title}`}
+        body={nudge.content}
+        tone={tone as 'info' | 'success' | 'warning' | 'danger'}
+      />
       <Pressable
-        onPress={onDismiss}
+        onPress={() => onDismiss(nudge.id)}
         hitSlop={6}
         style={{ alignSelf: 'flex-end', marginTop: 6, padding: 4 }}
       >
@@ -220,5 +394,52 @@ function InsightRow({
         </Text>
       </Pressable>
     </View>
+  );
+}
+
+function MoodSleepCard({
+  summary,
+}: {
+  summary: {
+    lastSleepMinutes: number | null;
+    lastSleepQuality: string | null;
+    lastMood: string | null;
+    lastEnergy: string | null;
+  };
+}) {
+  const { t } = useTranslation();
+  const hasData = summary.lastSleepMinutes != null || summary.lastMood;
+  return (
+    <Card>
+      <Text variant="bodyEm">{t('home.cards.moodSleepTitle')}</Text>
+      {!hasData ? (
+        <Text variant="caption">{t('home.cards.moodSleepEmpty')}</Text>
+      ) : (
+        <View style={{ flexDirection: 'row', gap: spacing.lg, marginTop: spacing.xs }}>
+          {summary.lastSleepMinutes != null ? (
+            <View>
+              <Text variant="caption">💤</Text>
+              <Text variant="bodyEm">
+                {`${Math.floor(summary.lastSleepMinutes / 60)}h${String(
+                  summary.lastSleepMinutes % 60,
+                ).padStart(2, '0')}`}
+              </Text>
+              {summary.lastSleepQuality ? (
+                <Text variant="caption">{summary.lastSleepQuality}</Text>
+              ) : null}
+            </View>
+          ) : null}
+          {summary.lastMood ? (
+            <View>
+              <Text variant="caption">🎯</Text>
+              <Text variant="bodyEm">{summary.lastMood}</Text>
+              {summary.lastEnergy ? (
+                <Text variant="caption">{summary.lastEnergy}</Text>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
+      )}
+    </Card>
   );
 }

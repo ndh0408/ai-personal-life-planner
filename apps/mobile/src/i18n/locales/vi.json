@@ -47,20 +47,38 @@
     }
   },
   "onboarding": {
+    "languageWelcome": {
+      "kicker": "Bước 1 / 3",
+      "title": "Chọn ngôn ngữ",
+      "subtitle": "Có thể đổi sau trong Cài đặt."
+    },
     "welcome": {
       "kicker": "LifeOS AI",
       "title": "Một câu, mọi việc.",
-      "body": "Trợ lý cá nhân giúp bạn ghi task, chi tiêu, bữa ăn, giấc ngủ — chỉ bằng cách nói/gõ một câu.",
+      "body": "Trợ lý cá nhân ghi nhanh task, chi tiêu, bữa ăn, giấc ngủ — chỉ bằng cách nói hoặc gõ một câu.",
+      "languageLabel": "Ngôn ngữ",
       "cta": "Bắt đầu"
     },
     "basicSetup": {
-      "kicker": "Bước 1 / 2",
+      "kicker": "Bước 2 / 3",
       "title": "Vài điều về bạn",
       "subtitle": "Đặt cho đúng — sau này có thể đổi trong Cài đặt.",
       "preferredName": "Bạn muốn được gọi là",
       "preferredNamePlaceholder": "Tên thân mật",
+      "goalsLabel": "Mục tiêu chính",
+      "goalsHint": "Chọn 1–3 mục — mình sẽ ưu tiên gợi ý theo đó.",
+      "goals": {
+        "work": "Làm việc hiệu quả",
+        "money": "Quản lý tiền",
+        "sleep": "Ngủ nghỉ tốt hơn",
+        "eat": "Ăn uống tốt hơn",
+        "habit": "Duy trì thói quen",
+        "balance": "Cân bằng cuộc sống"
+      },
       "wakeTime": "Thường thức dậy lúc",
       "sleepTime": "Thường ngủ lúc",
+      "skipTime": "Bỏ qua mục giờ",
+      "skip": "Bỏ qua",
       "cta": "Tiếp tục"
     },
     "aiSetup": {
@@ -97,10 +115,45 @@
     "kicker": "Hôm nay",
     "greeting": "Chào {{name}}",
     "ready": "Nói gì với mình đi — bữa ăn, chi tiêu, task, giấc ngủ.",
-    "apiHealthy": "API kết nối tốt",
-    "apiDegraded": "API hoạt động một phần",
-    "apiUnreachable": "Không kết nối được API",
+    "apiHealthy": "Đã kết nối",
+    "apiDegraded": "Một phần",
+    "apiUnreachable": "Mất kết nối",
+    "offlineBanner": "Đang offline — đang dùng dữ liệu đã lưu.",
     "quickCapturePlaceholder": "Bạn vừa làm gì? (vd: ăn phở 60k)",
+    "heroNoAi": {
+      "title": "Bật AI để bắt đầu",
+      "body": "Dán API key OpenAI để mở Quick Capture, kế hoạch hôm nay và trợ lý cá nhân.",
+      "cta": "Nhập API key"
+    },
+    "heroReady": {
+      "title": "Hôm nay bạn muốn làm gì?",
+      "ctaCapture": "Ghi nhanh",
+      "ctaPlan": "Tạo lịch"
+    },
+    "quickActions": {
+      "title": "Lối tắt",
+      "capture": "Ghi nhanh",
+      "expense": "Thêm chi tiêu",
+      "task": "Thêm task",
+      "checkin": "Check-in",
+      "askAi": "Hỏi AI"
+    },
+    "cards": {
+      "todayPlanTitle": "Lịch hôm nay",
+      "todayPlanProgress": "{{done}}/{{total}} đã xong",
+      "todayPlanEmpty": "Chưa có lịch — bấm Tạo lịch để bắt đầu.",
+      "moneyTitle": "Chi tiêu",
+      "moneyToday": "Hôm nay",
+      "moneyWallet": "Số dư ví",
+      "nudgeTitle": "Gợi ý của trợ lý",
+      "nudgeEmpty": "Chưa có gợi ý mới.",
+      "nextTaskTitle": "Task tiếp theo",
+      "nextTaskEmpty": "Bạn không còn task tới hạn nào.",
+      "moodSleepTitle": "Mood & giấc ngủ",
+      "moodSleepEmpty": "Chưa có check-in nào — Quick Capture \"hôm nay hơi mệt\" hoặc \"ngủ 7 tiếng\".",
+      "goalsTitle": "Mục tiêu",
+      "goalsEmpty": "Chưa đặt — vào Cài đặt để cập nhật."
+    },
     "stats": {
       "tasksToday": "Task hôm nay",
       "spendToday": "Chi tiêu hôm nay",

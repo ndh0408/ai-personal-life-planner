@@ -47,20 +47,38 @@
     }
   },
   "onboarding": {
+    "languageWelcome": {
+      "kicker": "Step 1 / 3",
+      "title": "Pick your language",
+      "subtitle": "Change anytime in Settings."
+    },
     "welcome": {
       "kicker": "LifeOS AI",
       "title": "One sentence. Everything captured.",
-      "body": "A personal assistant that records tasks, expenses, meals, and sleep — from a single line of text or voice.",
+      "body": "A personal assistant that records tasks, expenses, meals, and sleep from a single line of text or voice.",
+      "languageLabel": "Language",
       "cta": "Get started"
     },
     "basicSetup": {
-      "kicker": "Step 1 / 2",
+      "kicker": "Step 2 / 3",
       "title": "A few things about you",
       "subtitle": "Set the basics — change them anytime in Settings.",
       "preferredName": "Call me",
       "preferredNamePlaceholder": "What name do you prefer?",
+      "goalsLabel": "Main goals",
+      "goalsHint": "Pick 1–3 — we'll prioritise suggestions accordingly.",
+      "goals": {
+        "work": "Work better",
+        "money": "Manage money",
+        "sleep": "Sleep better",
+        "eat": "Eat better",
+        "habit": "Keep habits",
+        "balance": "Life balance"
+      },
       "wakeTime": "Usually wake at",
       "sleepTime": "Usually sleep at",
+      "skipTime": "Skip times",
+      "skip": "Skip",
       "cta": "Continue"
     },
     "aiSetup": {
@@ -97,10 +115,45 @@
     "kicker": "Today",
     "greeting": "Hi {{name}}",
     "ready": "Tell me anything — a meal, a spend, a task, last night's sleep.",
-    "apiHealthy": "API healthy",
-    "apiDegraded": "API partially up",
-    "apiUnreachable": "Can't reach API",
+    "apiHealthy": "Connected",
+    "apiDegraded": "Degraded",
+    "apiUnreachable": "Offline",
+    "offlineBanner": "You're offline — showing cached data.",
     "quickCapturePlaceholder": "What did you just do? (e.g. lunch 75k)",
+    "heroNoAi": {
+      "title": "Turn on AI to start",
+      "body": "Paste your OpenAI API key to unlock Quick Capture, Today plan, and the personal assistant.",
+      "cta": "Add API key"
+    },
+    "heroReady": {
+      "title": "What do you want to do today?",
+      "ctaCapture": "Quick capture",
+      "ctaPlan": "Plan today"
+    },
+    "quickActions": {
+      "title": "Shortcuts",
+      "capture": "Quick capture",
+      "expense": "Add expense",
+      "task": "Add task",
+      "checkin": "Check-in",
+      "askAi": "Ask AI"
+    },
+    "cards": {
+      "todayPlanTitle": "Today's plan",
+      "todayPlanProgress": "{{done}}/{{total}} done",
+      "todayPlanEmpty": "No plan yet — tap Plan today to start.",
+      "moneyTitle": "Money",
+      "moneyToday": "Today",
+      "moneyWallet": "Wallet balance",
+      "nudgeTitle": "Assistant nudge",
+      "nudgeEmpty": "No new suggestions yet.",
+      "nextTaskTitle": "Next task",
+      "nextTaskEmpty": "No upcoming task.",
+      "moodSleepTitle": "Mood & sleep",
+      "moodSleepEmpty": "No check-ins yet — Quick Capture \"slept 7 hours\" or \"feeling tired\".",
+      "goalsTitle": "Goals",
+      "goalsEmpty": "Not set — update in Settings."
+    },
     "stats": {
       "tasksToday": "Tasks today",
       "spendToday": "Spend today",
