@@ -1,167 +1,128 @@
-# Architecture — AI Personal Life Planner
+# LifeOS AI — Architecture
 
-## 1. Goals
-
-A mobile-first personal planner that combines a structured to-do/habit/schedule store with an AI layer that:
-
-- generates a suggested daily plan (wake/sleep/work/meals/breaks),
-- adjusts the rest of the day when the user runs late,
-- writes a weekly report,
-- holds a personal chat conversation with full schedule context,
-- and reminds the user via push notifications.
-
-## 2. High-level diagram
+## Bird's-eye view
 
 ```
-┌────────────────┐      HTTPS / JWT       ┌──────────────────────┐
-│  Mobile (Expo) │ ─────────────────────▶ │   API (NestJS)       │
-│  React Native  │ ◀───────────────────── │  - Auth / Users      │
-│  - UI          │                        │  - Tasks / Habits    │
-│  - Offline     │                        │  - Schedule / Plan   │
-│  - Push        │                        │  - AI proxy          │
-└────────────────┘                        │  - Reports / Push    │
-        │                                 └──────────┬───────────┘
-        │ (only public expo config)                  │
-        ▼                                            ▼
-   AsyncStorage                             ┌──────────────────┐
-   (cached profile,                         │   PostgreSQL     │
-    last plan, tokens)                      │   via Prisma     │
-                                            └──────────────────┘
-                                                     ▲
-                                                     │ (server-side only)
-                                            ┌──────────────────┐
-                                            │  AI provider     │
-                                            │  (Anthropic etc) │
-                                            └──────────────────┘
+┌──────────────────────────┐         HTTPS / JSON         ┌──────────────────────────┐
+│                          │ ───────────────────────────▶ │                          │
+│   Expo React Native app  │                              │     NestJS API           │
+│   (apps/mobile)          │ ◀─────────────────────────── │     (apps/api)           │
+│                          │   AccessToken (Authorization)│                          │
+└──────────────────────────┘                              └────────────┬─────────────┘
+                                                                       │
+                                                                       │ Prisma
+                                                                       ▼
+                                                          ┌──────────────────────────┐
+                                                          │     PostgreSQL 16        │
+                                                          └──────────────────────────┘
+                                                                       ▲
+                                                                       │ BullMQ
+                                                          ┌────────────┴─────────────┐
+                                                          │     Redis 7              │
+                                                          └──────────────────────────┘
+                                                                       ▲
+                                                                       │ HTTPS
+                                                          ┌────────────┴─────────────┐
+                                                          │     OpenAI API           │
+                                                          └──────────────────────────┘
 ```
 
-Mobile **never** talks to the AI provider directly. The provider key lives only in the API's environment.
+The mobile app **never** talks to OpenAI directly. All AI traffic is proxied
+through the API so the user's key stays encrypted at rest and decrypted only
+in-memory for a single request.
 
-## 3. Monorepo
-
-npm workspaces:
-
-```
-apps/api       → @planner/api      (NestJS backend)
-apps/mobile    → @planner/mobile   (Expo app)
-packages/shared→ @planner/shared   (types + Zod)
-```
-
-`@planner/shared` is consumed via the workspace symlink. It's the single source of truth for:
-
-- domain types (`User`, `Task`, `Habit`, `ScheduleBlock`, `DailyPlan`, …),
-- request/response schemas (Zod) used by both the API for validation and the mobile app for forms.
-
-## 4. Backend (apps/api)
-
-### Module map
+## Repository layout
 
 ```
-src/
-├── main.ts                       bootstrap (helmet, cors, validation, filters)
-├── app.module.ts                 wires every module
-├── config/env.validation.ts      Zod-based env validation at boot
-├── common/
-│   ├── pipes/zod-validation.pipe.ts
-│   ├── filters/all-exceptions.filter.ts
-│   └── decorators/current-user.decorator.ts
-├── prisma/                       PrismaModule + PrismaService (global)
-└── modules/
-    ├── health/      GET /api/health, /api/health/ready
-    ├── auth/        register / login / refresh / logout (JWT + refresh hash)
-    ├── users/       GET /api/users/me
-    └── ai/          POST /api/ai/chat (auth-guarded; provider behind env)
+lifeos-ai/
+├── apps/
+│   ├── api/                NestJS + Prisma + JWT + BullMQ
+│   │   ├── prisma/
+│   │   │   └── schema.prisma
+│   │   └── src/
+│   │       ├── main.ts
+│   │       ├── app.module.ts
+│   │       ├── prisma/
+│   │       └── health/
+│   └── mobile/             Expo React Native + TS
+│       ├── App.tsx
+│       └── app.json
+├── packages/
+│   └── shared/             Zod schemas + TS types shared by api & mobile
+│       └── src/
+├── docs/                   This folder
+├── docker/                 Reserved for prod compose / helper Dockerfiles
+├── scripts/                Dev helpers
+├── docker-compose.yml      Local Postgres + Redis
+├── package.json            npm workspaces
+└── tsconfig.base.json
 ```
 
-Modules planned for next iterations:
+Workspaces are managed by **npm workspaces** (no extra tool — keeps onboarding
+zero-friction). `@lifeos/shared` is consumed source-only via the
+`paths` aliases in `tsconfig.base.json` so there's no inner build loop.
 
-- `tasks`           — CRUD, status transitions, due/scheduled queries
-- `habits`          — CRUD + log endpoint, streaks
-- `schedule`        — schedule blocks per day, conflict detection
-- `planner` (AI)    — generate / re-plan day, prompt templates
-- `wellbeing`       — sleep / mood / energy logs
-- `meals`           — meal suggestions
-- `reports`         — weekly aggregations + AI write-up
-- `notifications`   — Expo push tokens, scheduled reminders
+## Tech choices and the reasons behind them
 
-### Auth flow
+| Layer | Choice | Why this and not the obvious alternative |
+|---|---|---|
+| Mobile | Expo SDK 51 + React Native 0.74 | OTA updates + EAS = ship without store roundtrip. RN-only would force native build chain on day 1. |
+| API | NestJS 10 | DI + module boundaries match the domain split (auth / ai / capture / …). Express bare would force us to invent the same structure. |
+| ORM | Prisma 5 | Type-safe queries + first-class migrations. Drizzle is fine but team already knows Prisma. |
+| Database | Postgres 16 | JSONB for flexible AI output, real transactional guarantees. SQLite would block multi-device sync. |
+| Queue | BullMQ on Redis 7 | Schedule recurring "assistant nudge" jobs and rate-limit OpenAI calls per user. |
+| Auth | JWT access (15m) + refresh (30d, rotated, hashed) | Mobile-friendly, no server session lookup on every request. |
+| AI | OpenAI via `openai` npm SDK | Single provider in MVP — explicitly. Multi-provider is phase 2. |
+| Encryption | Node `crypto` AES-256-GCM | Stdlib, audited, simple. No third-party crypto. |
+| i18n | i18next + react-i18next | Same JSON catalogs work on web companion later. |
 
-1. `POST /api/auth/register` or `/login` → returns `{ accessToken, refreshToken, expiresIn }`.
-2. Mobile stores both in AsyncStorage; sends `Authorization: Bearer <accessToken>` on protected routes.
-3. On 401, mobile calls `POST /api/auth/refresh { refreshToken }` to rotate. The previous refresh token is revoked atomically.
-4. Refresh tokens are stored only as SHA-256 hashes (column `tokenHash`, unique). Plaintext lives only in the client.
+## Request lifecycle (typical authenticated call)
 
-### Prisma schema (foundation)
+1. Mobile reads `accessToken` from `expo-secure-store`.
+2. Sends `Authorization: Bearer <accessToken>` to the API.
+3. NestJS `JwtAuthGuard` (round 1) verifies signature → attaches `req.user`.
+4. Controller validates body via a Zod schema imported from `@lifeos/shared`.
+5. Service layer reads/writes Prisma; if AI is involved, it loads the user's
+   `AiCredential`, decrypts in-memory, calls OpenAI, never persists raw key.
+6. Response is serialised via the matching shared schema.
+7. On 401, mobile calls `POST /auth/refresh` once with the refresh token; on
+   success, retries the original call.
 
-Entities in v0:
+## Data flow for Quick Capture
 
-- `User`, `RefreshToken`
-- `Task` (priority, status, dueAt, scheduledFor, estimatedMinutes)
-- `Habit`, `HabitLog`
-- `ScheduleBlock` (kind enum: task/meal/sleep/exercise/focus/break/custom)
+```
+mobile                  api                  openai            postgres
+  │  POST /capture       │                     │                  │
+  │ ────────────────────▶│                     │                  │
+  │                      │  classify+extract   │                  │
+  │                      │ ───────────────────▶│                  │
+  │                      │ ◀─── parsed JSON ───│                  │
+  │  preview JSON        │                     │                  │
+  │ ◀────────────────────│                     │                  │
+  │                      │                     │                  │
+  │  POST /capture/confirm                     │                  │
+  │ ────────────────────▶│                     │                  │
+  │                      │  insert row in matching feature table  │
+  │                      │ ──────────────────────────────────────▶│
+  │  201 + record        │                     │                  │
+  │ ◀────────────────────│                     │                  │
+```
 
-Migration is created on first `db:migrate` call. The schema is split per-feature only once the entity list grows.
+The two-step (preview → confirm) keeps user agency and avoids fake-success on
+low-confidence parses. See [PRODUCT_SPEC §9](./PRODUCT_SPEC.md#9-quick-capture).
 
-## 5. Mobile (apps/mobile)
+## Local environments
 
-- Expo SDK 51, React Native 0.74.
-- `metro.config.js` is configured for the workspace so it watches the monorepo root and resolves `@planner/shared` correctly.
-- `src/services/api.ts` is the only place that talks to the API. It reads tokens from AsyncStorage and attaches the Bearer header. Auto-refresh on 401 is a planned enhancement.
-- Offline strategy (planned): AsyncStorage cache of "today's plan", queue mutations for retry when reconnected.
-- Push notifications: `expo-notifications` is in `package.json`; the registration → token-upload flow lives in the planned `notifications` slice.
+- **Dev box** (current): SSH host `huy-server`, repo at `~/AppQuanLY`. Postgres
+  + Redis run via root `docker-compose.yml`. API and Expo run on host node.
+- **Mobile dev**: Expo Go (LAN) or simulator. `EXPO_PUBLIC_API_BASE_URL` points
+  at `http://<dev-box>:4000/api`.
+- **Production**: out of scope for this round. Last deploy was wiped on
+  2026-04-26; redeploy plan lives in [REBUILD_ROADMAP.md](./REBUILD_ROADMAP.md).
 
-### Building
+## Non-goals (architectural)
 
-- Dev: `expo start` (Expo Go or dev client).
-- Android APK: `eas build --platform android --profile preview`.
-- Android AAB (Play): `eas build --platform android --profile production`.
-- iOS IPA: `eas build --platform ios --profile production`.
-
-## 6. Shared package (packages/shared)
-
-- Pure TypeScript, no React or Nest deps.
-- Compiles to `dist/` via `tsc`. Both the API and the mobile app consume the source directly through workspace resolution; they don't need a pre-build for dev, but `npm run build` produces the `dist/` output if a consumer prefers it.
-- Schemas use Zod so a single contract drives:
-  - server-side request validation (`ZodValidationPipe`),
-  - client-side form validation,
-  - inferred TypeScript input types (`z.infer`).
-
-## 7. Environment & secrets
-
-| Where | What | Notes |
-| --- | --- | --- |
-| `.env` (root) | Values shared with `docker-compose` (Postgres user/pass/db) | Copy from `.env.example` |
-| `apps/api/.env` | API runtime config: `DATABASE_URL`, JWT secrets, AI key, CORS, throttle | Validated by Zod on boot |
-| `apps/mobile/.env` | `EXPO_PUBLIC_*` only — bundled into the app | **Never** put server secrets here |
-| `docker/.env` | Picked up by docker compose | Optional |
-
-The API throws on boot if any required env is missing or weak (e.g. a JWT secret shorter than 32 chars).
-
-## 8. Local DB
-
-`docker/docker-compose.yml` defines:
-
-- `postgres` service (Postgres 16, healthchecked, named volume `planner_pgdata`)
-- `pgadmin` service (in the `tools` profile — start with `docker compose --profile tools up`)
-
-## 9. Quality gates
-
-| Command | What |
-| --- | --- |
-| `npm run typecheck` | `tsc --noEmit` per workspace |
-| `npm run lint` | per-workspace lint (configured progressively) |
-| `npm test` | per-workspace tests (Jest in API; placeholder in mobile/shared) |
-
-CI hookup (planned): GitHub Actions matrix running `typecheck` + `test` for every PR.
-
-## 10. Roadmap of business modules
-
-1. **Tasks** — full CRUD, batch import, "what's next?" query.
-2. **Schedule + planner (AI)** — `POST /planner/day` generates a plan; `POST /planner/replan` adjusts after a missed slot.
-3. **Habits + wellbeing logs** — daily/weekly trackers, sleep/mood/energy entries.
-4. **Meals** — AI suggestion endpoint based on profile constraints.
-5. **Reports** — weekly aggregation + AI write-up via `POST /reports/week`.
-6. **Notifications** — register Expo push tokens, server-scheduled reminders ahead of each block.
-7. **Offline cache** — AsyncStorage-backed read-through cache for today's plan, with mutation queueing.
-
-Each lands as its own NestJS module + a feature folder under `apps/mobile/src/`.
+- No microservices. One Nest app, one database, one queue.
+- No GraphQL. REST + Zod schemas are enough for one client.
+- No CRDT / multi-master sync at MVP. Single source of truth = Postgres.
+- No event sourcing. Plain CRUD with audit columns where needed.

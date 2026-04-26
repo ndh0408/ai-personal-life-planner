@@ -1,34 +1,41 @@
 {
   "name": "lifeos-ai",
-  "private": true,
   "version": "0.1.0",
-  "description": "LifeOS AI — personal life operating system (mobile + api + shared)",
+  "private": true,
+  "description": "LifeOS AI — proactive personal life OS (mobile + API monorepo)",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=20.12.0",
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "dev:mobile": "npm run --workspace apps/mobile start",
-    "dev:api": "npm run --workspace apps/api start:dev",
-    "dev:db": "docker compose -f docker/docker-compose.yml up -d",
-    "dev:db:down": "docker compose -f docker/docker-compose.yml down",
-    "db:migrate": "npm run --workspace apps/api db:migrate",
-    "db:seed": "npm run --workspace apps/api db:seed",
-    "db:studio": "npm run --workspace apps/api db:studio",
-    "build:shared": "npm run --workspace packages/shared build",
-    "build:api": "npm run --workspace apps/api build",
-    "build": "npm run build:shared && npm run build:api",
-    "lint": "npm run lint --workspaces --if-present",
+    "dev": "concurrently -n api,mobile -c blue,magenta \"npm run dev:api\" \"npm run dev:mobile\"",
+    "dev:api": "npm run dev --workspace @lifeos/api",
+    "dev:mobile": "npm run start --workspace @lifeos/mobile",
+    "dev:db": "docker compose up -d postgres redis",
+    "dev:db:down": "docker compose down",
+    "dev:db:logs": "docker compose logs -f postgres redis",
+    "db:migrate": "npm run db:migrate --workspace @lifeos/api",
+    "db:migrate:dev": "npm run db:migrate:dev --workspace @lifeos/api",
+    "db:seed": "npm run db:seed --workspace @lifeos/api",
+    "db:studio": "npm run db:studio --workspace @lifeos/api",
+    "build": "npm run build --workspaces --if-present",
+    "build:shared": "npm run build --workspace @lifeos/shared",
+    "build:api": "npm run build --workspace @lifeos/api",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
+    "clean": "rm -rf node_modules apps/*/node_modules apps/*/dist packages/*/node_modules packages/*/dist"
   },
   "devDependencies": {
-    "prettier": "^3.3.3",
-    "typescript": "^5.5.4"
+    "@types/node": "^20.12.7",
+    "concurrently": "^8.2.2",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5"
   }
 }

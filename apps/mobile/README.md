@@ -1,34 +1,26 @@
-# @planner/mobile
+# @lifeos/mobile
 
-React Native + Expo + TypeScript. Talks to `@planner/api` over HTTPS — never to AI providers directly.
+Expo React Native app for LifeOS AI.
 
-## Run dev
+The app **never holds the OpenAI key in plaintext** and **never calls OpenAI directly**.
+All model calls go through [`@lifeos/api`](../api/README.md), which decrypts the user's
+key in-memory just for the request.
 
-From the repo root:
-```bash
-npm install
-npm run dev:api      # in one terminal
-npm run dev:mobile   # in another — opens Expo dev tools
-```
+See:
+- [docs/UX_PRINCIPLES.md](../../docs/UX_PRINCIPLES.md)
+- [docs/MOBILE_DESIGN_SYSTEM.md](../../docs/MOBILE_DESIGN_SYSTEM.md)
 
-Press `a` for Android emulator, `i` for iOS simulator (macOS only), or scan the QR with Expo Go.
-
-## Build APK / AAB / iOS
+## Local dev
 
 ```bash
-# One-time
-npm i -g eas-cli
-eas login
-
-# From apps/mobile/
-eas build --platform android --profile preview     # internal APK
-eas build --platform android --profile production  # AAB for Play Store
-eas build --platform ios     --profile production  # IPA for App Store
+cp apps/mobile/.env.example apps/mobile/.env
+npm run dev:mobile      # expo start
 ```
 
-For local-only Android APK without EAS, use `expo prebuild` and Android Studio.
+Use the Expo Go app or an iOS/Android simulator to load it.
 
-## Asset placeholders
+## Scripts
 
-`assets/icon.png`, `assets/splash.png`, `assets/adaptive-icon.png`, `assets/favicon.png` are
-referenced by `app.json`. Add real assets before building — Expo will warn otherwise.
+- `start` — expo start
+- `android` / `ios` / `web` — platform-specific launchers
+- `typecheck` — `tsc --noEmit`

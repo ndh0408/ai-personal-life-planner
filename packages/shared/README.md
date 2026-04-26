@@ -1,14 +1,9 @@
-# @planner/shared
+# @lifeos/shared
 
-Shared TypeScript types and Zod validation schemas used by both `apps/api` and `apps/mobile`.
+Shared types and Zod schemas between `@lifeos/api` and `@lifeos/mobile`.
 
-## Layout
-- `src/types/` — pure TypeScript domain types (no runtime dependencies beyond `zod` for schemas).
-- `src/schemas/` — Zod schemas + inferred input types (used for both server-side validation and client-side forms).
+Source-only package — workspaces resolve `src/index.ts` directly so there's no
+build step in the dev loop. The API uses these schemas for request validation;
+the mobile app uses them for response parsing and form types.
 
-## Build
-```bash
-npm run build --workspace @planner/shared
-```
-
-The package is consumed via npm workspaces — both `apps/api` and `apps/mobile` import directly from `@planner/shared`.
+Add new schema groups as siblings of `auth.ts` / `ai.ts` and re-export from `index.ts`.

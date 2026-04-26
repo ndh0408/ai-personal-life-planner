@@ -3,17 +3,17 @@
   "compilerOptions": {
     "strict": true,
     "jsx": "react-native",
-    "module": "esnext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
     "skipLibCheck": true,
+    "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@lifeos/shared": ["../../packages/shared/src/index.ts"],
+      "@lifeos/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", ".expo"]
 }

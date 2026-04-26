@@ -4,4 +4,10 @@ build
 .expo
 coverage
 *.lock
+*.lockb
 package-lock.json
+yarn.lock
+pnpm-lock.yaml
+apps/api/prisma/migrations
+apps/mobile/android
+apps/mobile/ios

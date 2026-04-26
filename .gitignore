@@ -3,22 +3,16 @@ node_modules/
 .pnp
 .pnp.js
 
-# Env files - NEVER commit
-.env
-.env.local
-.env.*.local
-*.env
-!.env.example
-
-# Build outputs
+# Builds
 dist/
 build/
-out/
-.next/
-.expo/
-.expo-shared/
-web-build/
 *.tsbuildinfo
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.production.example
 
 # Logs
 logs/
@@ -31,40 +25,47 @@ pnpm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
-ehthumbs.db
-Desktop.ini
 
-# Editor / IDE
+# IDE
 .vscode/*
 !.vscode/extensions.json
-!.vscode/settings.example.json
+!.vscode/settings.recommended.json
 .idea/
 *.swp
 *.swo
 
-# Testing
-coverage/
-.nyc_output/
+# Expo
+.expo/
+.expo-shared/
+web-build/
+*.jks
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
 
-# Native build artifacts
-android/app/build/
-android/build/
-android/.gradle/
-ios/build/
-ios/Pods/
-ios/DerivedData/
-*.apk
-*.aab
-*.ipa
-*.keystore
-!debug.keystore
+# Native
+ios/
+android/
+!apps/mobile/ios/
+!apps/mobile/android/
+apps/mobile/ios/Pods/
+apps/mobile/ios/build/
+apps/mobile/android/build/
+apps/mobile/android/.gradle/
 
 # Prisma
-apps/api/prisma/migrations/dev.db*
+apps/api/prisma/*.db
+apps/api/prisma/*.db-journal
+
+# Docker / data
+data/
+.docker-data/
+
+# Test
+coverage/
 
 # Misc
 .cache/
 .turbo/
-.parcel-cache/
-tmp/
-temp/
+.eslintcache

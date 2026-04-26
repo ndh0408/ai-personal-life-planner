@@ -4,16 +4,17 @@
     "module": "commonjs",
     "target": "ES2022",
     "outDir": "./dist",
-    "baseUrl": "./",
     "rootDir": "./src",
     "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "strictPropertyInitialization": false,
     "paths": {
-      "@/*": ["src/*"]
+      "@lifeos/shared": ["../../packages/shared/src/index.ts"],
+      "@lifeos/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test", "prisma/seed.ts"]
+  "exclude": ["node_modules", "dist", "test", "prisma/**/*"]
 }
