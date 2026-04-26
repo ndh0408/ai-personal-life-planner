@@ -37,6 +37,7 @@ export function HomeScreen({ navigation }: Props) {
   const toast = useToast();
 
   const [parsed, setParsed] = useState<CaptureParseResponse | null>(null);
+  const [lastRawText, setLastRawText] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const summary = useDashboardSummary();
@@ -46,6 +47,7 @@ export function HomeScreen({ navigation }: Props) {
   const updateRec = useUpdateRecommendationStatus();
 
   const handleSend = (text: string) => {
+    setLastRawText(text);
     parse.mutate(text, {
       onSuccess: (data) => {
         setParsed(data);
@@ -56,7 +58,10 @@ export function HomeScreen({ navigation }: Props) {
   };
 
   const handleConfirm = (req: Parameters<typeof confirm.mutate>[0]) => {
-    confirm.mutate(req, {
+    // Forward the original user text so the server can write a QuickCapture
+    // audit row (powers "what did I capture today" later).
+    const enriched = lastRawText ? { ...req, rawText: lastRawText } : req;
+    confirm.mutate(enriched, {
       onSuccess: () => {
         setSheetOpen(false);
         setParsed(null);

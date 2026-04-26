@@ -89,6 +89,13 @@ export const CaptureConfirmRequestSchema = z.object({
   fields: z.record(z.string(), z.unknown()),
   /** Idempotency key — same value insert returns the existing row, not a duplicate. */
   idempotencyKey: z.string().min(8).max(80).optional(),
+  /**
+   * The original user-typed text. When provided, the server writes a row to
+   * the QuickCapture audit table with status=CONFIRMED + parsedActions=
+   * { kind, fields }, so "what did the user actually say" is recoverable
+   * for undo / activity log later.
+   */
+  rawText: z.string().min(1).max(2000).optional(),
 });
 export type CaptureConfirmRequest = z.infer<typeof CaptureConfirmRequestSchema>;
 

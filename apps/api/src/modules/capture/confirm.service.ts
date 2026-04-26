@@ -21,22 +21,54 @@ export class ConfirmService {
   constructor(private readonly prisma: PrismaService) {}
 
   async confirm(userId: string, input: CaptureConfirmRequest): Promise<CaptureConfirmResponse> {
+    let response: CaptureConfirmResponse;
     switch (input.kind) {
       case 'EXPENSE':
-        return this.insertExpense(userId, input);
+        response = await this.insertExpense(userId, input);
+        break;
       case 'MEAL':
-        return this.insertMeal(userId, input);
+        response = await this.insertMeal(userId, input);
+        break;
       case 'TASK':
-        return this.insertTask(userId, input);
+        response = await this.insertTask(userId, input);
+        break;
       case 'SLEEP':
-        return this.insertSleep(userId, input);
+        response = await this.insertSleep(userId, input);
+        break;
       case 'MOOD':
-        return this.insertMood(userId, input);
+        response = await this.insertMood(userId, input);
+        break;
       default:
         throw new BadRequestException({
           error: { code: 'CAPTURE_FIELDS_INVALID', message: 'kind không hỗ trợ' },
         });
     }
+
+    // Audit: persist the original sentence + parsed action so we can later
+    // power "what did I capture today" / "undo last capture" without needing
+    // to reverse-engineer rows. Best-effort — failure here is logged but
+    // doesn't fail the user-visible insert (which already succeeded).
+    if (input.rawText) {
+      // Prisma's Json column wants InputJsonValue; the action shape is
+      // plain JSON-safe so the cast is safe.
+      const parsedActions = {
+        kind: input.kind,
+        fields: input.fields,
+        targetId: response.id,
+      } as Prisma.InputJsonValue;
+      await this.prisma.quickCapture
+        .create({
+          data: {
+            userId,
+            rawText: input.rawText,
+            status: 'CONFIRMED',
+            parsedActions,
+          },
+        })
+        .catch(() => undefined);
+    }
+
+    return response;
   }
 
   // ── Expense ──────────────────────────────────────────────────────────────

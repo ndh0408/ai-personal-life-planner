@@ -16,6 +16,8 @@ export interface CaptureConfirmRequest {
   kind: Exclude<CaptureKind, 'UNKNOWN'>;
   fields: Record<string, unknown>;
   idempotencyKey?: string;
+  /** Original user text — server writes a QuickCapture audit row when present. */
+  rawText?: string;
 }
 
 export interface CaptureConfirmResponse {
