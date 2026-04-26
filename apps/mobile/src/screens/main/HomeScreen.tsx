@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { AppScreen, Card, EmptyState, StatCard, Text, useToast } from '../../components/ui';
+import {
+  AppScreen,
+  Card,
+  EmptyState,
+  InsightCard,
+  LoadingState,
+  StatCard,
+  Text,
+  useToast,
+} from '../../components/ui';
 import { spacing, colors } from '../../theme';
 import { useAuthStore } from '../../store/auth.store';
 import { useHealth } from '../../hooks/useHealth';
@@ -12,9 +21,15 @@ import {
   useLatestSleep,
   useTodayTasks,
 } from '../../hooks/useFeed';
+import {
+  useRecommendations,
+  useRefreshRecommendations,
+  useUpdateRecommendationStatus,
+} from '../../hooks/useRecommendations';
 import { QuickCaptureBar } from '../../components/quick-capture/QuickCaptureBar';
 import { CapturePreviewSheet } from '../../components/quick-capture/CapturePreviewSheet';
 import type { CaptureParseResponse } from '../../services/api/capture.service';
+import type { RecommendationPublic } from '../../services/api/recommendations.service';
 import { formatMoney } from '../../utils/format';
 
 export function HomeScreen() {
@@ -33,6 +48,9 @@ export function HomeScreen() {
   const tasks = useTodayTasks();
   const summary = useExpensesSummary();
   const sleep = useLatestSleep();
+  const recs = useRecommendations();
+  const refreshRecs = useRefreshRecommendations();
+  const updateRec = useUpdateRecommendationStatus();
 
   const handleSend = (text: string) => {
     parse.mutate(text, {
@@ -126,10 +144,41 @@ export function HomeScreen() {
           {sleep.data?.quality ? <Text variant="caption">{sleep.data.quality}</Text> : null}
         </Card>
 
-        <Text variant="kicker" style={{ marginBottom: spacing.md }}>
-          {t('home.insights.title')}
-        </Text>
-        <EmptyState title={t('home.insights.empty')} />
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: spacing.md,
+          }}
+        >
+          <Text variant="kicker">{t('home.insights.title')}</Text>
+          <Pressable
+            onPress={() => refreshRecs.mutate()}
+            disabled={refreshRecs.isPending}
+            hitSlop={8}
+          >
+            <Text variant="caption" style={{ color: colors.accent.base, fontWeight: '700' }}>
+              {refreshRecs.isPending ? '…' : '↻'}
+            </Text>
+          </Pressable>
+        </View>
+
+        {recs.isLoading ? (
+          <LoadingState />
+        ) : recs.data && recs.data.length > 0 ? (
+          <View style={{ gap: spacing.md }}>
+            {recs.data.map((r) => (
+              <InsightRow
+                key={r.id}
+                rec={r}
+                onDismiss={() => updateRec.mutate({ id: r.id, status: 'DISMISSED' })}
+              />
+            ))}
+          </View>
+        ) : (
+          <EmptyState title={t('home.insights.empty')} />
+        )}
       </AppScreen>
 
       <CapturePreviewSheet
@@ -140,5 +189,36 @@ export function HomeScreen() {
         onClose={() => setSheetOpen(false)}
       />
     </>
+  );
+}
+
+function InsightRow({
+  rec,
+  onDismiss,
+}: {
+  rec: RecommendationPublic;
+  onDismiss: () => void;
+}) {
+  const tone =
+    rec.priority === 'HIGH'
+      ? rec.type === 'FINANCE' || rec.type === 'TASK'
+        ? 'danger'
+        : 'warning'
+      : rec.priority === 'MEDIUM'
+      ? 'info'
+      : 'success';
+  return (
+    <View>
+      <InsightCard title={rec.title} body={rec.content} tone={tone} />
+      <Pressable
+        onPress={onDismiss}
+        hitSlop={6}
+        style={{ alignSelf: 'flex-end', marginTop: 6, padding: 4 }}
+      >
+        <Text variant="caption" style={{ color: colors.text.muted }}>
+          ✕
+        </Text>
+      </Pressable>
+    </View>
   );
 }
