@@ -55,17 +55,26 @@ export class ConfirmService {
       if (existing) return done('EXPENSE', existing.id, existing.createdAt);
     }
 
-    const row = await this.prisma.expense.create({
-      data: {
-        userId,
-        walletId: wallet.id,
-        title: fields.title,
-        amount: new Prisma.Decimal(fields.amount),
-        category: fields.category,
-        expenseDate: new Date(fields.expenseDateIso),
-        idempotencyKey: input.idempotencyKey ?? null,
-      },
-    });
+    // Insert the expense AND decrement the wallet balance in one transaction
+    // so the running balance never drifts from the sum of expenses + incomes.
+    const amount = new Prisma.Decimal(fields.amount);
+    const [row] = await this.prisma.$transaction([
+      this.prisma.expense.create({
+        data: {
+          userId,
+          walletId: wallet.id,
+          title: fields.title,
+          amount,
+          category: fields.category,
+          expenseDate: new Date(fields.expenseDateIso),
+          idempotencyKey: input.idempotencyKey ?? null,
+        },
+      }),
+      this.prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { balance: { decrement: amount } },
+      }),
+    ]);
     return done('EXPENSE', row.id, row.createdAt);
   }
 

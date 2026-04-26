@@ -3,5 +3,7 @@ export * from './ai';
 export * from './assistant';
 export * from './capture';
 export * from './common';
+export * from './dashboard';
 export * from './planner';
+export * from './profile';
 export * from './recommendations';
