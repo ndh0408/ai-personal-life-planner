@@ -59,13 +59,26 @@ export function parseTimeOfDay(s: string): { hours: number; minutes: number } | 
   return { hours: h % 24, minutes: mins };
 }
 
-/** Resolve relative-day words to a date offset (today=0, yesterday=-1, …). */
-export function relativeDayOffset(text: string): number {
+/**
+ * Resolve relative-day words to a date offset (today=0, yesterday=-1, …).
+ * "cuối tuần" / "weekend" → next Saturday from today.
+ *   - if today is Sat → 0 (today)
+ *   - if today is Sun → +6 (next Sat)
+ *   - else → days until Saturday
+ */
+export function relativeDayOffset(text: string, now = new Date(), tz = 'Asia/Ho_Chi_Minh'): number {
   const t = text.toLowerCase();
   if (/\bhôm\s*qua\b/.test(t) || /\btối\s*qua\b/.test(t) || /\bđêm\s*qua\b/.test(t)) return -1;
   if (/\bhôm\s*kia\b/.test(t)) return -2;
   if (/\bngày\s*mai\b/.test(t) || /\bsáng\s*mai\b/.test(t) || /\btối\s*mai\b/.test(t)) return 1;
   if (/\bngày\s*kia\b/.test(t)) return 2;
+  if (/\bcuối\s*tuần\b/.test(t) || /\bweekend\b/.test(t)) {
+    const local = new Date(now.getTime() + offsetMinFor(tz) * 60_000);
+    const wd = local.getUTCDay(); // 0=Sun, 6=Sat
+    if (wd === 6) return 0;
+    if (wd === 0) return 6;
+    return 6 - wd; // days to Saturday
+  }
   return 0;
 }
 
@@ -80,7 +93,7 @@ export function resolveLocalIso(
   opts: { defaultHour?: number; defaultMinute?: number } = {},
 ): string {
   const { y, m, d } = localParts(now, tz);
-  const offset = relativeDayOffset(text);
+  const offset = relativeDayOffset(text, now, tz);
   const time = parseTimeOfDay(text);
   const baseHour = time?.hours ?? opts.defaultHour ?? 12;
   const baseMin = time?.minutes ?? opts.defaultMinute ?? 0;

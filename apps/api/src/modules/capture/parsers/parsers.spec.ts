@@ -95,6 +95,18 @@ describe('Task parser', () => {
     expect(hit?.kind).toBe('TASK');
     expect(hit?.fields.priority).toBe('HIGH');
   });
+
+  it('classifies "cuối tuần đi cafe" as TASK with weekend dueAt', () => {
+    const hit = runRuleParsers('cuối tuần đi cafe', ctx);
+    expect(hit?.kind).toBe('TASK');
+    expect(hit?.fields.dueAtIso).toBeDefined();
+    const due = new Date(hit!.fields.dueAtIso as string);
+    // 2026-04-26 is a Sunday; next Saturday is 2026-05-02 09:00 ICT = 02:00 UTC.
+    expect(due.getUTCFullYear()).toBe(2026);
+    expect(due.getUTCMonth()).toBe(4); // May (0-indexed)
+    expect(due.getUTCDate()).toBe(2);
+    expect(due.getUTCHours()).toBe(2);
+  });
 });
 
 describe('Sleep parser', () => {
@@ -114,6 +126,25 @@ describe('Sleep parser', () => {
   it('marks "ngủ ngon" as quality=GOOD', () => {
     const hit = runRuleParsers('ngủ 7 tiếng ngon', ctx);
     expect(hit?.fields.quality).toBe('GOOD');
+  });
+
+  it('parses overnight window "ngủ lúc 23h dậy 7h" as 8h', () => {
+    const hit = runRuleParsers('ngủ lúc 23h dậy 7h', ctx);
+    expect(hit?.kind).toBe('SLEEP');
+    expect(hit?.fields.durationMinutes).toBe(8 * 60);
+    // Wake should be today 07:00 ICT = 00:00 UTC
+    const wake = new Date(hit!.fields.wakeAtIso as string);
+    expect(wake.getUTCHours()).toBe(0);
+    // Sleep should be the day before, 23:00 ICT = 16:00 UTC
+    const sleep = new Date(hit!.fields.sleepAtIso as string);
+    expect(sleep.getUTCHours()).toBe(16);
+    expect(hit?.confidence).toBeGreaterThanOrEqual(0.9);
+  });
+
+  it('parses "ngủ 1h dậy 7h" as 6h overnight', () => {
+    const hit = runRuleParsers('ngủ 1h dậy 7h', ctx);
+    expect(hit?.kind).toBe('SLEEP');
+    expect(hit?.fields.durationMinutes).toBe(6 * 60);
   });
 });
 

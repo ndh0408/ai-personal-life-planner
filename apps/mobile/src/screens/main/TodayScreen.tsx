@@ -39,6 +39,13 @@ export function TodayScreen() {
         <LoadingState />
       ) : plan.data ? (
         <View style={{ marginBottom: spacing['2xl'] }}>
+          {plan.data.summary ? (
+            <Card style={{ marginBottom: spacing.md, backgroundColor: '#FFF7EE' }}>
+              <Text variant="bodyEm" style={{ color: '#5A3A22' }}>
+                {plan.data.summary}
+              </Text>
+            </Card>
+          ) : null}
           {plan.data.aiGenerated ? (
             <View
               style={{

@@ -36,9 +36,15 @@ export class PlannerService {
 
     // Try AI first; if it returns null (no key, privacy off, network/parse fail),
     // fall back to the rule generator.
-    let drafts: DraftItem[] | null = await this.ai.generate(userId);
-    let aiUsed = drafts !== null && drafts.length > 0;
-    if (!drafts) {
+    const aiResult = await this.ai.generate(userId);
+    let drafts: DraftItem[];
+    let summary: string | null;
+    let aiUsed: boolean;
+    if (aiResult && aiResult.items.length > 0) {
+      drafts = aiResult.items;
+      summary = aiResult.summary;
+      aiUsed = true;
+    } else {
       const range = rangeFor('today');
       const [profile, tasks] = await Promise.all([
         this.prisma.userProfile.findUnique({ where: { userId } }),
@@ -53,14 +59,15 @@ export class PlannerService {
         }),
       ]);
       drafts = generatePlanItems(tasks, profile, new Date());
+      summary = ruleSummary(drafts, profile, tasks.length);
       aiUsed = false;
     }
 
     // Upsert the plan, then replace its items (simplest "regenerate" semantics).
     const plan = await this.prisma.dailyPlan.upsert({
       where: { userId_date: { userId, date: today } },
-      create: { userId, date: today, aiGenerated: aiUsed, summary: null },
-      update: { aiGenerated: aiUsed, updatedAt: new Date() },
+      create: { userId, date: today, aiGenerated: aiUsed, summary },
+      update: { aiGenerated: aiUsed, summary, updatedAt: new Date() },
     });
 
     await this.prisma.$transaction([
@@ -113,6 +120,28 @@ export class PlannerService {
 function startOfTodayLocal(): Date {
   const r = rangeFor('today');
   return r.start;
+}
+
+/**
+ * Best-effort fallback summary when the AI is unavailable. Threads the user's
+ * preferredName + open-task count into one empathetic sentence; intentionally
+ * lightweight so it doesn't masquerade as the real AI line.
+ */
+function ruleSummary(
+  drafts: DraftItem[],
+  profile: { preferredName: string | null } | null,
+  totalOpenTasks: number,
+): string {
+  const taskCount = drafts.filter((d) => d.type === 'TASK').length;
+  const name = profile?.preferredName?.trim();
+  const greet = name ? `${name} ơi, ` : '';
+  if (totalOpenTasks === 0) {
+    return `${greet}hôm nay không có việc tồn — dành thời gian phục hồi và làm điều mình thích.`;
+  }
+  if (taskCount <= 1) {
+    return `${greet}một việc chính trong ngày, phần còn lại là ăn uống + nghỉ. Đi từ tốn nhé.`;
+  }
+  return `${greet}${taskCount} việc xếp trong ngày — ưu tiên việc quan trọng vào lúc tỉnh táo nhất.`;
 }
 
 function toItem(i: DailyPlanItem): DailyPlanItemPublic {

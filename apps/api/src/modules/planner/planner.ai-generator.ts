@@ -1,11 +1,12 @@
 /**
- * AI-augmented day planner. Loads a snapshot of the user's recent context
- * (profile, today's open tasks, last night's sleep, latest mood, today's
- * expenses) and asks OpenAI to draft a day. Falls back to null on any
- * failure so the rule-based generator can take over.
+ * AI-augmented day planner. Pulls a wide snapshot of the user's actual recent
+ * behaviour — sleep variability, mood trend, meal history, expense categories,
+ * task throughput — and asks OpenAI to draft a day that is *specific to this
+ * person* on *this day*. No fixed meal slots, no template suggestions.
  *
- * The user's encrypted OpenAI key is decrypted only for the duration of
- * the outbound call. Privacy toggles gate which signals are sent.
+ * Falls back to null on any failure so the rule-based generator can take over.
+ * The user's encrypted OpenAI key is decrypted only for the duration of the
+ * outbound call. Privacy toggles gate which signal classes are sent.
  */
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -16,25 +17,53 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { rangeFor } from '../../common/datetime/range';
 import type { DraftItem } from './planner.generator';
 
-const SYS_PROMPT = `You are LifeOS AI's day planner.
-Given a snapshot of the user's recent activity, produce a JSON plan for TODAY.
-The plan is a flat array of items. Be specific to what you see.
+const SYS_PROMPT = `You are LifeOS AI's personal day planner. You are NOT a generic
+template — every plan must reflect THIS specific user on THIS specific day.
 
-Constraints:
-- Return STRICT JSON shape: { "items": [...] }
+Return STRICT JSON: { "summary": string, "items": [...] }
+
+PERSONALIZATION RULES (most important):
+- Read the user's signals carefully. Their preferredName, mainGoals, usualWakeTime
+  and usualSleepTime are individual — anchor meals + rest around THEIR window,
+  not a default 7am/12pm/7pm template. If they wake at 9:30 and sleep at 1am,
+  breakfast is around 10am, dinner around 8–9pm.
+- For meals: look at recentMeals to see what they actually eat. Suggest specific
+  food ideas that ROTATE from what they had recently (no two phở days in a row,
+  add variety, balance protein/veg). If recentMeals is empty, suggest something
+  light and grounded in Vietnamese cuisine for VN users.
+- For activities: look at lastMood, sleepTrend, completedTaskCount. A user who
+  slept 4h with STRESSED mood needs a softer day (shorter blocks, real rest).
+  A user with high energy + GOOD sleep can take a heavier task load.
+- For finance: if topExpenseCategory dominates the week (e.g. eating out > 60%),
+  the FINANCE item should gently address THAT category, not a generic "review
+  spending" line.
+- For mainGoals: if they care about "sleep_better", emphasize the wind-down. If
+  "save_money", default to home-cooked meals. If "work", protect deep-work blocks.
+
+ITEM SHAPE:
 - Each item: { "title": string, "type": one of [TASK, MEAL, REST, WORK, PERSONAL, HEALTH, FINANCE, CUSTOM],
-  "startAt": ISO 8601 string in user TZ, "endAt": ISO 8601 string }
+  "startAt": ISO 8601 in user TZ, "endAt": ISO 8601 in user TZ }
 - 6–10 items, ordered by startAt.
-- Always include three meals (BREAKFAST/LUNCH/DINNER) anchored at sensible local times,
-  customised to the user's usual wake/sleep window.
-- Slot the user's open TODO/IN_PROGRESS tasks into 60-min blocks; HIGH priority first.
-- If sleep < 6h last night, add an early wind-down item before usual sleep time.
-- If mood was STRESSED/TIRED, add a HEALTH break (walk, stretch).
-- If today's expenses are already high vs week-avg, add a FINANCE personal note.
-- Title in Vietnamese for VN locale users; otherwise English.
-- No commentary outside the JSON.`;
+- Titles must be CONCRETE: "Bữa trưa: cơm gà nướng + canh chua" beats "Bữa trưa".
+  "Đi bộ 15 phút quanh khu" beats "Tập thể dục".
+- Slot the user's open tasks (HIGH priority first) into focused 45–60 min blocks.
+
+SUMMARY:
+- ONE short empathetic sentence (≤ 140 chars), second-person, addressed to the
+  user by preferredName when known. Call out THE most relevant signal you
+  noticed (low sleep last night, stressed mood, heavy spend, big task today).
+- Vietnamese for VN locale users; otherwise English.
+- No emoji, no bullet list, no rote phrasing like "Hôm nay là một ngày…".
+
+OUTPUT: JSON only, no commentary.`;
 
 const TIMEOUT_MS = 30_000;
+
+interface RecentMeal {
+  mealType: string;
+  title: string;
+  daysAgo: number;
+}
 
 interface SnapshotInput {
   now: Date;
@@ -42,9 +71,13 @@ interface SnapshotInput {
   profile: UserProfile | null;
   openTasks: Task[];
   lastSleepMinutes: number | null;
-  lastMood: string | null;
+  sleepTrendHours: number[]; // last 7 nights, oldest first
+  recentMoods: { mood: string; daysAgo: number }[];
+  recentMeals: RecentMeal[];
   todaySpendVnd: number;
   weekSpendVnd: number;
+  topExpenseCategory: { category: string; pct: number } | null;
+  completedTaskCount7d: number;
 }
 
 interface LlmItem {
@@ -68,7 +101,7 @@ export class PlannerAiGenerator {
    * Returns null if the user has no key, privacy is off, or the call fails.
    * Caller must fall back to the rule-based generator.
    */
-  async generate(userId: string): Promise<DraftItem[] | null> {
+  async generate(userId: string): Promise<{ items: DraftItem[]; summary: string | null } | null> {
     const privacy = await this.prisma.privacySetting.findUnique({ where: { userId } });
     if (!privacy?.personalizationEnabled) return null;
 
@@ -92,6 +125,7 @@ export class PlannerAiGenerator {
             usualWakeTime: snap.profile.usualWakeTime,
             usualSleepTime: snap.profile.usualSleepTime,
             locale: snap.profile.locale,
+            mainGoals: snap.profile.mainGoals,
           }
         : null,
       openTasks: snap.openTasks.map((t) => ({
@@ -102,9 +136,13 @@ export class PlannerAiGenerator {
       })),
       lastSleepHours:
         snap.lastSleepMinutes != null ? +(snap.lastSleepMinutes / 60).toFixed(1) : null,
-      lastMood: snap.lastMood,
+      sleepTrendHours: snap.sleepTrendHours,
+      recentMoods: snap.recentMoods,
+      recentMeals: snap.recentMeals,
       todaySpendVnd: snap.todaySpendVnd,
       weekSpendVnd: snap.weekSpendVnd,
+      topExpenseCategory: snap.topExpenseCategory,
+      completedTaskCount7d: snap.completedTaskCount7d,
     });
 
     const ctrl = new AbortController();
@@ -123,17 +161,22 @@ export class PlannerAiGenerator {
             { role: 'user', content: userMsg },
           ],
           response_format: { type: 'json_object' },
-          temperature: 0.4,
-          max_tokens: 1200,
+          temperature: 0.7,
+          max_tokens: 1400,
         },
         { signal: ctrl.signal },
       );
       const raw = res.choices[0]?.message?.content;
       if (!raw) return null;
 
-      const parsed = JSON.parse(raw) as { items?: LlmItem[] };
+      const parsed = JSON.parse(raw) as { items?: LlmItem[]; summary?: string };
       if (!Array.isArray(parsed.items) || parsed.items.length === 0) return null;
-      return mapToDrafts(parsed.items);
+      const items = mapToDrafts(parsed.items);
+      const summary =
+        typeof parsed.summary === 'string' && parsed.summary.trim().length > 0
+          ? parsed.summary.trim().slice(0, 240)
+          : null;
+      return { items, summary };
     } catch (e) {
       this.logger.warn(`AI plan generation failed for userId=${userId}: ${(e as Error).message}`);
       return null;
@@ -150,8 +193,18 @@ export class PlannerAiGenerator {
     const now = new Date();
     const today = rangeFor('today', now, tz);
     const week = rangeFor('week', now, tz);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60_000);
 
-    const [profile, openTasks, lastSleep, lastMood, todayExp, weekExp] = await Promise.all([
+    const [
+      profile,
+      openTasks,
+      sleepLogs7,
+      moodLogs7,
+      mealLogs7,
+      todayExp,
+      weekExp,
+      completedTasks7,
+    ] = await Promise.all([
       this.prisma.userProfile.findUnique({ where: { userId } }),
       privacy.useTasksForAI
         ? this.prisma.task.findMany({
@@ -166,19 +219,26 @@ export class PlannerAiGenerator {
           })
         : Promise.resolve([] as Task[]),
       privacy.useHealthForAI
-        ? this.prisma.sleepLog.findFirst({
-            where: { userId },
-            orderBy: { sleepAt: 'desc' },
-            select: { durationMinutes: true },
+        ? this.prisma.sleepLog.findMany({
+            where: { userId, sleepAt: { gte: sevenDaysAgo } },
+            orderBy: { sleepAt: 'asc' },
+            select: { durationMinutes: true, sleepAt: true },
           })
-        : Promise.resolve(null),
+        : Promise.resolve([]),
       privacy.useHealthForAI
-        ? this.prisma.moodLog.findFirst({
-            where: { userId },
+        ? this.prisma.moodLog.findMany({
+            where: { userId, loggedAt: { gte: sevenDaysAgo } },
             orderBy: { loggedAt: 'desc' },
-            select: { mood: true },
+            select: { mood: true, loggedAt: true },
+            take: 5,
           })
-        : Promise.resolve(null),
+        : Promise.resolve([]),
+      this.prisma.mealLog.findMany({
+        where: { userId, loggedAt: { gte: sevenDaysAgo } },
+        orderBy: { loggedAt: 'desc' },
+        select: { title: true, mealType: true, loggedAt: true },
+        take: 12,
+      }),
       privacy.useFinanceForAI
         ? this.prisma.expense.findMany({
             where: {
@@ -196,20 +256,59 @@ export class PlannerAiGenerator {
               deletedAt: null,
               expenseDate: { gte: week.start, lt: week.end },
             },
-            select: { amount: true },
+            select: { amount: true, category: true },
           })
         : Promise.resolve([]),
+      privacy.useTasksForAI
+        ? this.prisma.task.count({
+            where: {
+              userId,
+              deletedAt: null,
+              status: 'COMPLETED',
+              updatedAt: { gte: sevenDaysAgo },
+            },
+          })
+        : Promise.resolve(0),
     ]);
+
+    const sleepTrendHours = sleepLogs7.map((s) => +(s.durationMinutes / 60).toFixed(1));
+    const lastSleepMinutes = sleepLogs7.length > 0
+      ? sleepLogs7[sleepLogs7.length - 1].durationMinutes
+      : null;
+
+    const recentMoods = moodLogs7.map((m) => ({
+      mood: m.mood,
+      daysAgo: Math.max(0, Math.floor((now.getTime() - m.loggedAt.getTime()) / (24 * 60 * 60_000))),
+    }));
+
+    const recentMeals: RecentMeal[] = mealLogs7.map((m) => ({
+      mealType: m.mealType,
+      title: m.title,
+      daysAgo: Math.max(0, Math.floor((now.getTime() - m.loggedAt.getTime()) / (24 * 60 * 60_000))),
+    }));
+
+    const weekTotal = weekExp.reduce((s, e) => s + Number(e.amount), 0);
+    const byCat: Record<string, number> = {};
+    for (const e of weekExp) byCat[e.category] = (byCat[e.category] ?? 0) + Number(e.amount);
+    let topExpenseCategory: { category: string; pct: number } | null = null;
+    if (weekTotal > 0) {
+      const [top] = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+      if (top) topExpenseCategory = { category: top[0], pct: Math.round((top[1] / weekTotal) * 100) };
+    }
 
     return {
       now,
       tz,
       profile,
       openTasks,
-      lastSleepMinutes: lastSleep?.durationMinutes ?? null,
-      lastMood: lastMood?.mood ?? null,
+      lastSleepMinutes,
+      sleepTrendHours,
+      recentMoods,
+      recentMeals,
       todaySpendVnd: todayExp.reduce((s, e) => s + Number(e.amount), 0),
-      weekSpendVnd: weekExp.reduce((s, e) => s + Number(e.amount), 0),
+      weekSpendVnd: weekTotal,
+      topExpenseCategory,
+      completedTaskCount7d: completedTasks7,
     };
   }
 }
@@ -241,7 +340,6 @@ function mapToDrafts(items: LlmItem[]): DraftItem[] {
       sortOrder: drafts.length + 1,
     });
   }
-  // Sort by start time; items without a start go last.
   return drafts
     .sort((a, b) => {
       const at = a.startAt?.getTime() ?? Infinity;

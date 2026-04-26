@@ -1,5 +1,5 @@
 import type { ParseHit, ParseContext, RuleParser } from './types';
-import { resolveLocalIso, parseTimeOfDay } from './datetime';
+import { resolveLocalIso, parseTimeOfDay, relativeDayOffset } from './datetime';
 import { vnWord } from './word';
 
 const TASK_TRIGGERS = vnWord([
@@ -24,9 +24,10 @@ export class TaskParser implements RuleParser {
   match(text: string, ctx: ParseContext): ParseHit | null {
     const hasTrigger = TASK_TRIGGERS.test(text);
     const hasTime = parseTimeOfDay(text) !== null;
+    const hasRelativeDay = relativeDayOffset(text, ctx.now, ctx.tz) !== 0;
     if (!hasTrigger && !hasTime) return null;
 
-    const dueAtIso = hasTime
+    const dueAtIso = hasTime || hasRelativeDay
       ? resolveLocalIso(text, ctx.now, ctx.tz, { defaultHour: 9, defaultMinute: 0 })
       : null;
     const priority = HIGH_PRIORITY.test(text)

@@ -170,7 +170,8 @@ Spec used the names `QuickCaptureModal` + `SuggestedActionReviewModal` +
 | `ăn cơm gà 45k` | EXPENSE 0.92 / food / 45 000 ₫ | row + wallet decrement |
 | `mai 9h gọi khách` | TASK 0.88 / "Gọi khách" / dueAt = tomorrow 09:00 ICT | row in `Task` |
 | `nhắc tôi trả lời email lúc 8h` | TASK 0.88 / due 08:00 today | row in `Task` |
-| `ngủ lúc 1h dậy 7h` | SLEEP — currently rule sees only `ngủ X tiếng` shape; the "ngủ lúc X dậy Y" pattern is a TODO (round 11+) — for now the OpenAI fallback handles it | row in `SleepLog` |
+| `ngủ lúc 1h dậy 7h` | SLEEP 0.92 / 6h overnight (sleepAt yesterday 01:00, wakeAt today 07:00) | row in `SleepLog` |
+| `cuối tuần đi cafe` | TASK / dueAt = next Saturday 09:00 (computed from local weekday) | row in `Task` |
 | `hôm nay hơi mệt` | MOOD 0.85 / TIRED | row in `MoodLog` |
 | `ăn phở 60k trưa nay` | EXPENSE 0.92 / food / 60 000 ₫ | row + wallet decrement |
 
