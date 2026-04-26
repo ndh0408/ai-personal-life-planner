@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { MealLog } from '@prisma/client';
+import { Prisma, type MealLog } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { rangeFor, type RangeName } from '../../common/datetime/range';
 
@@ -9,6 +9,15 @@ export interface MealRow {
   mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK';
   cost: number | null;
   loggedAt: string;
+  note: string | null;
+}
+
+export interface CreateMealInput {
+  title: string;
+  mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK';
+  cost?: number | null;
+  loggedAtIso: string;
+  note?: string | null;
 }
 
 @Injectable()
@@ -28,6 +37,20 @@ export class MealsService {
     });
     return { range, total: rows.length, rows: rows.map(toRow) };
   }
+
+  async create(userId: string, input: CreateMealInput): Promise<MealRow> {
+    const row = await this.prisma.mealLog.create({
+      data: {
+        userId,
+        title: input.title.trim(),
+        mealType: input.mealType,
+        cost: input.cost != null ? new Prisma.Decimal(input.cost) : null,
+        loggedAt: new Date(input.loggedAtIso),
+        note: input.note?.trim() || null,
+      },
+    });
+    return toRow(row);
+  }
 }
 
 function toRow(m: MealLog): MealRow {
@@ -37,5 +60,6 @@ function toRow(m: MealLog): MealRow {
     mealType: m.mealType,
     cost: m.cost ? Number(m.cost) : null,
     loggedAt: m.loggedAt.toISOString(),
+    note: m.note,
   };
 }

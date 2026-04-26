@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { TaskStatus, type Task } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { rangeFor, type RangeName } from '../../common/datetime/range';
@@ -21,6 +21,21 @@ export interface TaskListResponse {
   rows: TaskRow[];
 }
 
+export interface CreateTaskInput {
+  title: string;
+  description?: string | null;
+  dueAt?: string | null;
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
+export interface UpdateTaskInput {
+  title?: string;
+  description?: string | null;
+  dueAt?: string | null;
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH';
+  status?: 'TODO' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+}
+
 @Injectable()
 export class TasksService {
   constructor(private readonly prisma: PrismaService) {}
@@ -32,7 +47,6 @@ export class TasksService {
       Object.assign(where, {
         OR: [
           { dueAt: { gte: start, lt: end } },
-          // Tasks with no due date that were created today still belong on Today.
           range === 'today'
             ? { dueAt: null, createdAt: { gte: start, lt: end } }
             : undefined,
@@ -50,6 +64,67 @@ export class TasksService {
       doneCount: rows.filter((t) => t.status === TaskStatus.COMPLETED).length,
       rows: rows.map(toRow),
     };
+  }
+
+  async create(userId: string, input: CreateTaskInput): Promise<TaskRow> {
+    const row = await this.prisma.task.create({
+      data: {
+        userId,
+        title: input.title.trim(),
+        description: input.description?.trim() || null,
+        dueAt: input.dueAt ? new Date(input.dueAt) : null,
+        priority: input.priority ?? 'MEDIUM',
+        status: 'TODO',
+      },
+    });
+    return toRow(row);
+  }
+
+  async update(userId: string, id: string, input: UpdateTaskInput): Promise<TaskRow> {
+    await this.assertOwn(userId, id);
+    const data: Record<string, unknown> = {};
+    if (input.title !== undefined) data.title = input.title.trim();
+    if (input.description !== undefined) data.description = input.description?.trim() || null;
+    if (input.dueAt !== undefined) data.dueAt = input.dueAt ? new Date(input.dueAt) : null;
+    if (input.priority !== undefined) data.priority = input.priority;
+    if (input.status !== undefined) {
+      data.status = input.status;
+      data.completedAt = input.status === 'COMPLETED' ? new Date() : null;
+    }
+    const row = await this.prisma.task.update({ where: { id }, data });
+    return toRow(row);
+  }
+
+  async complete(userId: string, id: string): Promise<TaskRow> {
+    await this.assertOwn(userId, id);
+    const row = await this.prisma.task.update({
+      where: { id },
+      data: { status: 'COMPLETED', completedAt: new Date() },
+    });
+    return toRow(row);
+  }
+
+  async softDelete(userId: string, id: string): Promise<{ id: string }> {
+    await this.assertOwn(userId, id);
+    await this.prisma.task.update({ where: { id }, data: { deletedAt: new Date() } });
+    return { id };
+  }
+
+  private async assertOwn(userId: string, id: string): Promise<void> {
+    const t = await this.prisma.task.findUnique({
+      where: { id },
+      select: { userId: true, deletedAt: true },
+    });
+    if (!t || t.deletedAt) {
+      throw new NotFoundException({
+        error: { code: 'NOT_FOUND', message: 'Task không tồn tại.' },
+      });
+    }
+    if (t.userId !== userId) {
+      throw new ForbiddenException({
+        error: { code: 'FORBIDDEN', message: 'Không có quyền với task này.' },
+      });
+    }
   }
 }
 

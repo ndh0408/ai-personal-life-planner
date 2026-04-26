@@ -22,6 +22,8 @@ interface Props {
    * Quick Capture bars or persistent CTAs that should stay above the keyboard.
    */
   footer?: React.ReactNode;
+  /** Pull-to-refresh control passed straight through to the inner ScrollView. */
+  refreshControl?: React.ReactElement;
 }
 
 export function AppScreen({
@@ -30,6 +32,7 @@ export function AppScreen({
   edgeToEdge = false,
   noBottomInset = false,
   footer,
+  refreshControl,
 }: Props) {
   const padding = edgeToEdge ? styles.paddingNone : styles.paddingDefault;
   const inner = scroll ? (
@@ -37,6 +40,7 @@ export function AppScreen({
       contentContainerStyle={[padding, styles.contentVertical]}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
+      refreshControl={refreshControl}
     >
       {children}
     </ScrollView>

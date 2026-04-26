@@ -26,4 +26,9 @@ export type MainTabParamList = {
 export type RootStackParamList = {
   MainTabs: undefined;
   AISettings: undefined;
+  Tasks: undefined;
+  AddTask: undefined;
+  AddExpense: undefined;
+  MealLog: undefined;
+  SleepMoodCheckin: undefined;
 };

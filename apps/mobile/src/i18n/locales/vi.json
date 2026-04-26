@@ -9,6 +9,7 @@
     "next": "Tiếp tục",
     "back": "Quay lại",
     "delete": "Xoá",
+    "deleted": "Đã xoá",
     "loading": "Đang tải…",
     "showPassword": "Hiện",
     "hidePassword": "Ẩn",
@@ -229,13 +230,111 @@
   },
   "today": {
     "title": "Lịch hôm nay",
-    "empty": "Chưa có gì hôm nay. Quick Capture để thêm."
+    "empty": "Chưa có gì hôm nay. Quick Capture để thêm.",
+    "openTasks": "Mở danh sách",
+    "openMeals": "Sổ ăn uống"
+  },
+  "tasks": {
+    "kicker": "Việc cần làm",
+    "title": "Tasks",
+    "addTitle": "Thêm task",
+    "addCta": "Thêm task",
+    "saveCta": "Lưu task",
+    "completeCta": "Xong",
+    "empty": "Chưa có task nào. Thêm để bắt đầu.",
+    "completed": "Đã đánh dấu xong",
+    "created": "Đã thêm task",
+    "confirmDeleteTitle": "Xoá task này?",
+    "filters": {
+      "today": "Hôm nay",
+      "week": "Tuần này",
+      "month": "Tháng này"
+    },
+    "fields": {
+      "title": "Tên task",
+      "priority": "Ưu tiên",
+      "due": "Hạn"
+    },
+    "placeholders": {
+      "title": "VD: Gọi điện cho An"
+    },
+    "dueChips": {
+      "none": "Không hạn",
+      "today9": "Hôm nay 9:00",
+      "tonight": "Tối nay 20:00",
+      "tomorrow9": "Mai 9:00"
+    }
   },
   "money": {
     "title": "Chi tiêu",
+    "addTitle": "Thêm chi tiêu",
+    "addCta": "Thêm chi tiêu",
+    "saveCta": "Lưu khoản chi",
+    "added": "Đã ghi nhận khoản chi",
     "weekTotal": "Tuần này",
     "todayTotal": "Hôm nay",
-    "empty": "Chưa có chi tiêu nào tuần này."
+    "empty": "Chưa có chi tiêu nào tuần này.",
+    "byCategory": "Theo nhóm",
+    "confirmDeleteTitle": "Xoá khoản chi này?",
+    "fields": {
+      "title": "Mô tả",
+      "amount": "Số tiền (VND)",
+      "category": "Nhóm",
+      "note": "Ghi chú"
+    },
+    "placeholders": {
+      "title": "VD: Cà phê sáng",
+      "note": "Tuỳ chọn"
+    },
+    "categories": {
+      "food": "Ăn uống",
+      "transport": "Đi lại",
+      "shopping": "Mua sắm",
+      "health": "Sức khoẻ",
+      "learning": "Học tập",
+      "bills": "Hoá đơn",
+      "other": "Khác"
+    }
+  },
+  "meals": {
+    "kicker": "Bữa ăn",
+    "title": "Sổ ăn uống",
+    "saveCta": "Lưu bữa",
+    "added": "Đã ghi nhận bữa ăn",
+    "empty": "Chưa có bữa nào hôm nay.",
+    "todayList": "Hôm nay",
+    "fields": {
+      "title": "Bạn ăn gì?",
+      "cost": "Giá tiền (tuỳ chọn)"
+    },
+    "placeholders": {
+      "title": "VD: Cơm gà 45k"
+    }
+  },
+  "checkin": {
+    "kicker": "Check-in",
+    "title": "Sleep & Mood",
+    "sleepKicker": "Tối qua bạn ngủ bao lâu?",
+    "moodKicker": "Hôm nay cảm thấy thế nào?",
+    "skipSleep": "Bỏ qua",
+    "saveCta": "Lưu check-in",
+    "saved": "Đã lưu check-in",
+    "qualities": {
+      "BAD": "Tệ",
+      "OK": "Tạm",
+      "GOOD": "Ngon"
+    },
+    "energies": {
+      "LOW": "Năng lượng thấp",
+      "MEDIUM": "Bình thường",
+      "HIGH": "Năng lượng cao"
+    },
+    "fields": {
+      "note": "Ghi chú thêm (tuỳ chọn)"
+    },
+    "placeholders": {
+      "note": "VD: Hơi đau đầu, uống ít nước…"
+    }
   },
   "assistant": {
     "title": "Trợ lý",

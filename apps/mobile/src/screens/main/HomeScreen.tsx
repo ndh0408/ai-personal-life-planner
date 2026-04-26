@@ -127,9 +127,9 @@ export function HomeScreen({ navigation }: Props) {
           <QuickActionsRow
             actions={[
               { key: 'capture', glyph: '✎', onPress: () => Alert.alert('', t('home.quickCapturePlaceholder')) },
-              { key: 'expense', glyph: '💸', onPress: () => Alert.alert('', t('home.quickActions.expense')) },
-              { key: 'task', glyph: '✓', onPress: () => Alert.alert('', t('home.quickActions.task')) },
-              { key: 'checkin', glyph: '✦', onPress: () => Alert.alert('', t('home.quickActions.checkin')) },
+              { key: 'expense', glyph: '💸', onPress: () => navigation.navigate('AddExpense') },
+              { key: 'task', glyph: '✓', onPress: () => navigation.navigate('AddTask') },
+              { key: 'checkin', glyph: '✦', onPress: () => navigation.navigate('SleepMoodCheckin') },
               {
                 key: 'askAi',
                 glyph: '✨',

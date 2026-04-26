@@ -9,6 +9,7 @@
     "next": "Continue",
     "back": "Back",
     "delete": "Delete",
+    "deleted": "Deleted",
     "loading": "Loading…",
     "showPassword": "Show",
     "hidePassword": "Hide",
@@ -229,13 +230,111 @@
   },
   "today": {
     "title": "Today's schedule",
-    "empty": "Nothing scheduled. Quick Capture to add."
+    "empty": "Nothing scheduled. Quick Capture to add.",
+    "openTasks": "Open list",
+    "openMeals": "Meal log"
+  },
+  "tasks": {
+    "kicker": "To do",
+    "title": "Tasks",
+    "addTitle": "New task",
+    "addCta": "New task",
+    "saveCta": "Save task",
+    "completeCta": "Done",
+    "empty": "No tasks yet. Add one to start.",
+    "completed": "Marked done",
+    "created": "Task added",
+    "confirmDeleteTitle": "Delete this task?",
+    "filters": {
+      "today": "Today",
+      "week": "Week",
+      "month": "Month"
+    },
+    "fields": {
+      "title": "Title",
+      "priority": "Priority",
+      "due": "Due"
+    },
+    "placeholders": {
+      "title": "e.g. Call An"
+    },
+    "dueChips": {
+      "none": "No due",
+      "today9": "Today 9:00",
+      "tonight": "Tonight 20:00",
+      "tomorrow9": "Tomorrow 9:00"
+    }
   },
   "money": {
     "title": "Money",
+    "addTitle": "Add expense",
+    "addCta": "Add expense",
+    "saveCta": "Save expense",
+    "added": "Expense saved",
     "weekTotal": "This week",
     "todayTotal": "Today",
-    "empty": "No expenses this week."
+    "empty": "No expenses this week.",
+    "byCategory": "By category",
+    "confirmDeleteTitle": "Delete this expense?",
+    "fields": {
+      "title": "Description",
+      "amount": "Amount (VND)",
+      "category": "Category",
+      "note": "Note"
+    },
+    "placeholders": {
+      "title": "e.g. Morning coffee",
+      "note": "Optional"
+    },
+    "categories": {
+      "food": "Food",
+      "transport": "Transport",
+      "shopping": "Shopping",
+      "health": "Health",
+      "learning": "Learning",
+      "bills": "Bills",
+      "other": "Other"
+    }
+  },
+  "meals": {
+    "kicker": "Meals",
+    "title": "Meal log",
+    "saveCta": "Save meal",
+    "added": "Meal logged",
+    "empty": "No meals yet today.",
+    "todayList": "Today",
+    "fields": {
+      "title": "What did you eat?",
+      "cost": "Cost (optional)"
+    },
+    "placeholders": {
+      "title": "e.g. Chicken rice 45k"
+    }
+  },
+  "checkin": {
+    "kicker": "Check-in",
+    "title": "Sleep & mood",
+    "sleepKicker": "How long did you sleep last night?",
+    "moodKicker": "How are you feeling?",
+    "skipSleep": "Skip",
+    "saveCta": "Save check-in",
+    "saved": "Check-in saved",
+    "qualities": {
+      "BAD": "Bad",
+      "OK": "OK",
+      "GOOD": "Great"
+    },
+    "energies": {
+      "LOW": "Low energy",
+      "MEDIUM": "Medium",
+      "HIGH": "High energy"
+    },
+    "fields": {
+      "note": "Note (optional)"
+    },
+    "placeholders": {
+      "note": "e.g. Headache, dehydrated…"
+    }
   },
   "assistant": {
     "title": "Assistant",

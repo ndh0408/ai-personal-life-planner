@@ -22,6 +22,7 @@ import { UserProfileModule } from './modules/user-profile/user-profile.module';
 import { UserAiKeyModule } from './modules/user-ai-key/user-ai-key.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { FinanceModule } from './modules/finance/finance.module';
+import { WalletsModule } from './modules/wallets/wallets.module';
 import { MealsModule } from './modules/meals/meals.module';
 import { SleepMoodModule } from './modules/sleep-mood/sleep-mood.module';
 import { PlannerModule } from './modules/planner/planner.module';
@@ -59,6 +60,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     UserAiKeyModule,
     TasksModule,
     FinanceModule,
+    WalletsModule,
     MealsModule,
     SleepMoodModule,
     PlannerModule,

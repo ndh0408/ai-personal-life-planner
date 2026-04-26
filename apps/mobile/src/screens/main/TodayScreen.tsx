@@ -1,6 +1,9 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import type { CompositeScreenProps } from '@react-navigation/native';
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   AppScreen,
   Badge,
@@ -18,8 +21,14 @@ import { PlanItemRow } from '../../components/today/PlanItemRow';
 import type { TaskRow } from '../../services/api/tasks.service';
 import type { MealRow } from '../../services/api/journal.service';
 import { formatMoney } from '../../utils/format';
+import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
 
-export function TodayScreen() {
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<MainTabParamList, 'Today'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
+
+export function TodayScreen({ navigation }: Props) {
   const { t, i18n } = useTranslation();
   const tasks = useTodayTasks();
   const meals = useTodayMeals();
@@ -99,25 +108,61 @@ export function TodayScreen() {
       ) : null}
 
       {/* Tasks */}
-      <Text variant="kicker" style={{ marginBottom: spacing.sm }}>
-        {t('home.stats.tasksToday')}
-      </Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: spacing.sm,
+        }}
+      >
+        <Text variant="kicker">{t('home.stats.tasksToday')}</Text>
+        <Text
+          variant="caption"
+          onPress={() => navigation.navigate('Tasks')}
+          style={{ color: '#C97B4A', fontWeight: '700' }}
+        >
+          {t('today.openTasks')}
+        </Text>
+      </View>
       {tasks.isLoading ? (
         <LoadingState />
       ) : tasks.data && tasks.data.rows.length === 0 ? (
         <EmptyState title={t('today.empty')} />
       ) : (
-        <View style={{ gap: spacing.md, marginBottom: spacing.xl }}>
+        <View style={{ gap: spacing.md, marginBottom: spacing.lg }}>
           {tasks.data!.rows.map((row) => (
             <TaskRowCard key={row.id} row={row} locale={i18n.language as 'vi' | 'en'} />
           ))}
         </View>
       )}
+      <View style={{ marginBottom: spacing.xl }}>
+        <Button
+          label={'+ ' + t('tasks.addCta')}
+          variant="ghost"
+          onPress={() => navigation.navigate('AddTask')}
+        />
+      </View>
 
       {/* Meals */}
-      <Text variant="kicker" style={{ marginBottom: spacing.sm, marginTop: spacing.lg }}>
-        {t('capture.kinds.MEAL')}
-      </Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: spacing.sm,
+          marginTop: spacing.lg,
+        }}
+      >
+        <Text variant="kicker">{t('capture.kinds.MEAL')}</Text>
+        <Text
+          variant="caption"
+          onPress={() => navigation.navigate('MealLog')}
+          style={{ color: '#C97B4A', fontWeight: '700' }}
+        >
+          {t('today.openMeals')}
+        </Text>
+      </View>
       {meals.isLoading ? (
         <LoadingState />
       ) : meals.data && meals.data.rows.length === 0 ? (

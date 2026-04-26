@@ -45,13 +45,16 @@ export const apiClient = {
   },
 
   async request<T>(
-    method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     path: string,
     body?: unknown,
-    options: { auth?: boolean; timeoutMs?: number } = {},
+    options: { auth?: boolean; timeoutMs?: number; headers?: Record<string, string> } = {},
   ): Promise<T> {
     const auth = options.auth ?? true;
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers ?? {}),
+    };
     if (auth && memTokens?.accessToken) {
       headers.Authorization = `Bearer ${memTokens.accessToken}`;
     }

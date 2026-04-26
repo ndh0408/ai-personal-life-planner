@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import type { Expense } from '@prisma/client';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, type Expense } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { rangeFor, type RangeName } from '../../common/datetime/range';
 
@@ -11,6 +11,7 @@ export interface ExpenseRow {
   category: string;
   expenseDate: string;
   walletId: string;
+  note: string | null;
   createdAt: string;
 }
 
@@ -25,9 +26,26 @@ export interface ExpenseSummary {
   todayTotal: number;
   weekTotal: number;
   monthTotal: number;
-  /** Top categories this week (descending). */
   weekByCategory: Array<{ category: string; amount: number }>;
   currency: 'VND';
+}
+
+export interface CreateExpenseInput {
+  title: string;
+  amount: number;
+  category: string;
+  expenseDateIso: string;
+  walletId?: string;
+  note?: string | null;
+  idempotencyKey?: string;
+}
+
+export interface UpdateExpenseInput {
+  title?: string;
+  amount?: number;
+  category?: string;
+  expenseDateIso?: string;
+  note?: string | null;
 }
 
 @Injectable()
@@ -71,7 +89,6 @@ export class FinanceService {
     const sum = (rows: { amount: { toString: () => string } }[]) =>
       rows.reduce((s, r) => s + Number(r.amount), 0);
 
-    // Group week by category, sort by amount desc.
     const byCat = new Map<string, number>();
     for (const r of weekRows) {
       byCat.set(r.category, (byCat.get(r.category) ?? 0) + Number(r.amount));
@@ -88,6 +105,122 @@ export class FinanceService {
       currency: 'VND',
     };
   }
+
+  async create(userId: string, input: CreateExpenseInput): Promise<ExpenseRow> {
+    const wallet = await this.resolveWallet(userId, input.walletId);
+
+    if (input.idempotencyKey) {
+      const existing = await this.prisma.expense.findUnique({
+        where: { userId_idempotencyKey: { userId, idempotencyKey: input.idempotencyKey } },
+      });
+      if (existing) return toRow(existing);
+    }
+
+    const amount = new Prisma.Decimal(input.amount);
+    const [row] = await this.prisma.$transaction([
+      this.prisma.expense.create({
+        data: {
+          userId,
+          walletId: wallet.id,
+          title: input.title.trim(),
+          amount,
+          category: input.category,
+          expenseDate: new Date(input.expenseDateIso),
+          note: input.note?.trim() || null,
+          idempotencyKey: input.idempotencyKey ?? null,
+        },
+      }),
+      this.prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { balance: { decrement: amount } },
+      }),
+    ]);
+    return toRow(row);
+  }
+
+  async update(userId: string, id: string, input: UpdateExpenseInput): Promise<ExpenseRow> {
+    const existing = await this.assertOwn(userId, id);
+
+    const newAmount =
+      input.amount !== undefined ? new Prisma.Decimal(input.amount) : null;
+    const data: Prisma.ExpenseUpdateInput = {};
+    if (input.title !== undefined) data.title = input.title.trim();
+    if (input.category !== undefined) data.category = input.category;
+    if (input.expenseDateIso !== undefined) data.expenseDate = new Date(input.expenseDateIso);
+    if (input.note !== undefined) data.note = input.note?.trim() || null;
+    if (newAmount !== null) data.amount = newAmount;
+
+    if (newAmount !== null && !newAmount.equals(existing.amount)) {
+      // Wallet adjusts by the delta — positive delta = spent more, decrement.
+      const delta = newAmount.minus(existing.amount);
+      const [row] = await this.prisma.$transaction([
+        this.prisma.expense.update({ where: { id }, data }),
+        this.prisma.wallet.update({
+          where: { id: existing.walletId },
+          data: { balance: { decrement: delta } },
+        }),
+      ]);
+      return toRow(row);
+    }
+
+    const row = await this.prisma.expense.update({ where: { id }, data });
+    return toRow(row);
+  }
+
+  async softDelete(userId: string, id: string): Promise<{ id: string }> {
+    const existing = await this.assertOwn(userId, id);
+    // Soft delete + refund the wallet.
+    await this.prisma.$transaction([
+      this.prisma.expense.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      }),
+      this.prisma.wallet.update({
+        where: { id: existing.walletId },
+        data: { balance: { increment: existing.amount } },
+      }),
+    ]);
+    return { id };
+  }
+
+  private async assertOwn(userId: string, id: string): Promise<Expense> {
+    const e = await this.prisma.expense.findUnique({ where: { id } });
+    if (!e || e.deletedAt) {
+      throw new NotFoundException({
+        error: { code: 'NOT_FOUND', message: 'Khoản chi không tồn tại.' },
+      });
+    }
+    if (e.userId !== userId) {
+      throw new ForbiddenException({
+        error: { code: 'FORBIDDEN', message: 'Không có quyền với khoản chi này.' },
+      });
+    }
+    return e;
+  }
+
+  private async resolveWallet(userId: string, walletId?: string) {
+    if (walletId) {
+      const w = await this.prisma.wallet.findUnique({ where: { id: walletId } });
+      if (!w || w.deletedAt) {
+        throw new NotFoundException({
+          error: { code: 'NOT_FOUND', message: 'Ví không tồn tại.' },
+        });
+      }
+      if (w.userId !== userId) {
+        throw new ForbiddenException({
+          error: { code: 'FORBIDDEN', message: 'Không có quyền với ví này.' },
+        });
+      }
+      return w;
+    }
+    const existing = await this.prisma.wallet.findFirst({
+      where: { userId, deletedAt: null, isDefault: true },
+    });
+    if (existing) return existing;
+    return this.prisma.wallet.create({
+      data: { userId, name: 'Ví chính', isDefault: true, currency: 'VND' },
+    });
+  }
 }
 
 function toRow(e: Expense): ExpenseRow {
@@ -95,12 +228,11 @@ function toRow(e: Expense): ExpenseRow {
     id: e.id,
     title: e.title,
     amount: Number(e.amount),
-    // Expense rows inherit currency from their Wallet — MVP is VND-only,
-    // multi-currency is phase 2 (PRODUCT_SPEC §6).
     currency: 'VND',
     category: e.category,
     expenseDate: e.expenseDate.toISOString(),
     walletId: e.walletId,
+    note: e.note,
     createdAt: e.createdAt.toISOString(),
   };
 }

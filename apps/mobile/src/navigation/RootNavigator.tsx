@@ -7,6 +7,11 @@ import { AuthStack } from './AuthStack';
 import { OnboardingStack } from './OnboardingStack';
 import { MainTabs } from './MainTabs';
 import { AISettingsScreen } from '../screens/main/AISettingsScreen';
+import { TasksScreen } from '../screens/main/TasksScreen';
+import { AddTaskScreen } from '../screens/main/AddTaskScreen';
+import { AddExpenseScreen } from '../screens/main/AddExpenseScreen';
+import { MealLogScreen } from '../screens/main/MealLogScreen';
+import { SleepMoodCheckinScreen } from '../screens/main/SleepMoodCheckinScreen';
 import type { RootStackParamList } from './types';
 import { colors } from '../theme';
 
@@ -40,6 +45,11 @@ function MainStack() {
         component={AISettingsScreen}
         options={{ presentation: 'card', animation: 'slide_from_right' }}
       />
+      <Stack.Screen name="Tasks" component={TasksScreen} />
+      <Stack.Screen name="AddTask" component={AddTaskScreen} />
+      <Stack.Screen name="AddExpense" component={AddExpenseScreen} />
+      <Stack.Screen name="MealLog" component={MealLogScreen} />
+      <Stack.Screen name="SleepMoodCheckin" component={SleepMoodCheckinScreen} />
     </Stack.Navigator>
   );
 }
