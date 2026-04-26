@@ -192,6 +192,7 @@
   "settings": {
     "title": "Settings",
     "account": "Account",
+    "memberSince": "Joined {{date}}",
     "preferences": "Preferences",
     "language": "Language",
     "languageVi": "Tiếng Việt",
@@ -199,8 +200,25 @@
     "aiKey": "OpenAI key",
     "data": "Data",
     "wipeCache": "Clear cache",
+    "wipeCacheBody": "Clears tokens + local cache and signs you out. Server data is untouched.",
+    "wipeCacheConfirm": "Clear",
+    "wipeCacheCancel": "Keep",
+    "wipeCacheDone": "Cleared",
     "advanced": "Advanced",
-    "version": "Version"
+    "version": "Version {{version}}",
+    "buildHint": "Tap 7 times to open Developer",
+    "developer": {
+      "title": "Developer",
+      "apiBaseUrl": "API base URL",
+      "appVersion": "App version",
+      "rnVersion": "RN version",
+      "platform": "Platform",
+      "userId": "User ID",
+      "tokens": "Tokens",
+      "tokensPresent": "Present",
+      "tokensMissing": "None",
+      "close": "Close"
+    }
   },
   "aiSettings": {
     "title": "OpenAI key",

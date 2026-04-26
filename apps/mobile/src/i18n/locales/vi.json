@@ -192,6 +192,7 @@
   "settings": {
     "title": "Cài đặt",
     "account": "Tài khoản",
+    "memberSince": "Tạo ngày {{date}}",
     "preferences": "Tuỳ chọn",
     "language": "Ngôn ngữ",
     "languageVi": "Tiếng Việt",
@@ -199,8 +200,25 @@
     "aiKey": "OpenAI key",
     "data": "Dữ liệu",
     "wipeCache": "Xoá cache",
+    "wipeCacheBody": "Xoá toàn bộ token + cache cục bộ và đăng xuất. Dữ liệu trên server vẫn còn nguyên.",
+    "wipeCacheConfirm": "Xoá",
+    "wipeCacheCancel": "Giữ lại",
+    "wipeCacheDone": "Đã xoá",
     "advanced": "Nâng cao",
-    "version": "Phiên bản"
+    "version": "Phiên bản {{version}}",
+    "buildHint": "Bấm 7 lần để mở Developer",
+    "developer": {
+      "title": "Developer",
+      "apiBaseUrl": "API base URL",
+      "appVersion": "App version",
+      "rnVersion": "RN version",
+      "platform": "Platform",
+      "userId": "User ID",
+      "tokens": "Tokens",
+      "tokensPresent": "Đã có",
+      "tokensMissing": "Chưa có",
+      "close": "Đóng"
+    }
   },
   "aiSettings": {
     "title": "OpenAI key",
