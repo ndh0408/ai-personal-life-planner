@@ -12,11 +12,15 @@ import type {
 } from '@lifeos/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { rangeFor } from '../../common/datetime/range';
-import { generatePlanItems } from './planner.generator';
+import { generatePlanItems, type DraftItem } from './planner.generator';
+import { PlannerAiGenerator } from './planner.ai-generator';
 
 @Injectable()
 export class PlannerService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ai: PlannerAiGenerator,
+  ) {}
 
   async getToday(userId: string): Promise<DailyPlanPublic | null> {
     const today = startOfTodayLocal();
@@ -29,26 +33,34 @@ export class PlannerService {
 
   async generateToday(userId: string): Promise<GenerateDailyPlanResponse> {
     const today = startOfTodayLocal();
-    const range = rangeFor('today');
-    const [profile, tasks] = await Promise.all([
-      this.prisma.userProfile.findUnique({ where: { userId } }),
-      this.prisma.task.findMany({
-        where: {
-          userId,
-          deletedAt: null,
-          status: { in: ['TODO', 'IN_PROGRESS'] },
-          OR: [{ dueAt: null }, { dueAt: { gte: range.start, lt: range.end } }],
-        },
-        take: 30,
-      }),
-    ]);
-    const drafts = generatePlanItems(tasks, profile, new Date());
+
+    // Try AI first; if it returns null (no key, privacy off, network/parse fail),
+    // fall back to the rule generator.
+    let drafts: DraftItem[] | null = await this.ai.generate(userId);
+    let aiUsed = drafts !== null && drafts.length > 0;
+    if (!drafts) {
+      const range = rangeFor('today');
+      const [profile, tasks] = await Promise.all([
+        this.prisma.userProfile.findUnique({ where: { userId } }),
+        this.prisma.task.findMany({
+          where: {
+            userId,
+            deletedAt: null,
+            status: { in: ['TODO', 'IN_PROGRESS'] },
+            OR: [{ dueAt: null }, { dueAt: { gte: range.start, lt: range.end } }],
+          },
+          take: 30,
+        }),
+      ]);
+      drafts = generatePlanItems(tasks, profile, new Date());
+      aiUsed = false;
+    }
 
     // Upsert the plan, then replace its items (simplest "regenerate" semantics).
     const plan = await this.prisma.dailyPlan.upsert({
       where: { userId_date: { userId, date: today } },
-      create: { userId, date: today, aiGenerated: false, summary: null },
-      update: { aiGenerated: false, updatedAt: new Date() },
+      create: { userId, date: today, aiGenerated: aiUsed, summary: null },
+      update: { aiGenerated: aiUsed, updatedAt: new Date() },
     });
 
     await this.prisma.$transaction([

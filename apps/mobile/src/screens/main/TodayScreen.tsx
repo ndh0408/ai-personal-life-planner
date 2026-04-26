@@ -39,6 +39,21 @@ export function TodayScreen() {
         <LoadingState />
       ) : plan.data ? (
         <View style={{ marginBottom: spacing['2xl'] }}>
+          {plan.data.aiGenerated ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                marginBottom: spacing.md,
+              }}
+            >
+              <Text variant="caption" style={{ color: '#C97B4A', fontWeight: '700' }}>
+                ✨ AI
+              </Text>
+              <Text variant="caption">— Lên kế hoạch theo dữ liệu của bạn</Text>
+            </View>
+          ) : null}
           {plan.data.items.map((item) => (
             <PlanItemRow
               key={item.id}
