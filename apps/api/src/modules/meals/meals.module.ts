@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
+import { MealsController } from './meals.controller';
+import { MealsService } from './meals.service';
 
-/**
- * Round 3 will add: meal log entries, fullness rating, optional kcal estimate.
- */
-@Module({})
+@Module({
+  controllers: [MealsController],
+  providers: [MealsService],
+})
 export class MealsModule {}

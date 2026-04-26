@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
+import { TasksController } from './tasks.controller';
+import { TasksService } from './tasks.service';
 
-/**
- * Round 3 will add: task CRUD, completion, recurring, today filter.
- */
-@Module({})
+@Module({
+  controllers: [TasksController],
+  providers: [TasksService],
+})
 export class TasksModule {}

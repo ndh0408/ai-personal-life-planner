@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
+import { ExpensesController } from './finance.controller';
+import { FinanceService } from './finance.service';
 
-/**
- * Round 3 will add: expense entries, daily/weekly aggregates, simple wallet.
- */
-@Module({})
+@Module({
+  controllers: [ExpensesController],
+  providers: [FinanceService],
+})
 export class FinanceModule {}
