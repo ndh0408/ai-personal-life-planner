@@ -29,6 +29,7 @@ import { AssistantModule } from './modules/assistant/assistant.module';
 import { AiModule } from './modules/ai/ai.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PrivacyModule } from './modules/privacy/privacy.module';
+import { CaptureModule } from './modules/capture/capture.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { PrivacyModule } from './modules/privacy/privacy.module';
     AiModule,
     NotificationsModule,
     PrivacyModule,
+    CaptureModule,
   ],
   controllers: [HealthController, VersionController],
   providers: [
