@@ -3,10 +3,27 @@ import { Text, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../../theme';
 
 type Tone = 'neutral' | 'primary' | 'success' | 'warning' | 'danger' | 'info';
-type Props = { tone?: Tone; children: React.ReactNode; style?: ViewStyle };
 
-export function Badge({ tone = 'neutral', children, style }: Props) {
-  const { colors, radius, spacing } = useTheme();
+type Props = {
+  tone?: Tone;
+  children: React.ReactNode;
+  /**
+   * Editorial mode — small caps tracked label paired with a tiny
+   * leading dot in the tone colour. Used on the Dashboard status
+   * chip ("• SẴN SÀNG"). Round 22.
+   */
+  variant?: 'fill' | 'editorial';
+  style?: ViewStyle;
+};
+
+/**
+ * Status / category pill. Round 22 introduces an "editorial" variant
+ * that ditches the filled pill for a tracked-out small-caps label
+ * with a leading dot, the way magazines mark column kickers.
+ */
+export function Badge({ tone = 'neutral', variant = 'fill', children, style }: Props) {
+  const { colors, radius, spacing, fonts, typography } = useTheme();
+
   const palette = (() => {
     switch (tone) {
       case 'primary':
@@ -23,6 +40,28 @@ export function Badge({ tone = 'neutral', children, style }: Props) {
         return { bg: colors.surfaceMuted, fg: colors.textMuted };
     }
   })();
+
+  if (variant === 'editorial') {
+    return (
+      <View
+        style={[
+          { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' },
+          style,
+        ]}
+      >
+        <View
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: palette.fg,
+          }}
+        />
+        <Text style={[typography.eyebrow, { color: palette.fg }]}>{children}</Text>
+      </View>
+    );
+  }
+
   return (
     <View
       style={[
@@ -36,7 +75,16 @@ export function Badge({ tone = 'neutral', children, style }: Props) {
         style,
       ]}
     >
-      <Text style={{ color: palette.fg, fontSize: 12, fontWeight: '700' }}>{children}</Text>
+      <Text
+        style={{
+          color: palette.fg,
+          fontFamily: fonts.sansSemibold,
+          fontSize: 11,
+          letterSpacing: 0.4,
+        }}
+      >
+        {children}
+      </Text>
     </View>
   );
 }

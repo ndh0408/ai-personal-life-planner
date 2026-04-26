@@ -72,6 +72,9 @@ export function AISetupScreen() {
   return (
     <Screen scroll>
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+        <Text style={[typography.eyebrow, { color: colors.primary, marginBottom: spacing.sm }]}>
+          {t('settings.aiSetup.kicker', { defaultValue: 'AI · BYOK' })}
+        </Text>
         <Text style={[typography.h1, { color: colors.text, marginBottom: spacing.xs }]}>
           {t('settings.aiSetup.title')}
         </Text>

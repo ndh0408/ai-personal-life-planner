@@ -30,18 +30,38 @@ export function OnboardingWelcomeScreen({ navigation }: OnboardingScreenProps<'W
   return (
     <Screen>
       <StepProgress total={3} current={1} />
-      <View style={{ flex: 1, maxWidth: isTablet ? 560 : undefined, alignSelf: isTablet ? 'center' : 'stretch', width: '100%' }}>
+      <View
+        style={{
+          flex: 1,
+          maxWidth: isTablet ? 560 : undefined,
+          alignSelf: isTablet ? 'center' : 'stretch',
+          width: '100%',
+        }}
+      >
+        {/* Editorial issue-number kicker — the way a Vogue cover marks
+            "VOL. 01 · NO. 01" before the masthead. */}
+        <Text style={[typography.eyebrow, { color: colors.primary, marginBottom: spacing.lg }]}>
+          {t('app.name')} · {t('app.tagline')}
+        </Text>
         <Text style={[typography.display, { color: colors.text }]}>
           {t('onboarding.welcome.headline1')}
         </Text>
-        <Text style={[typography.display, { color: colors.primary, marginBottom: spacing.lg }]}>
+        <Text
+          style={[
+            typography.displayItalic,
+            { color: colors.primary, marginBottom: spacing.xl },
+          ]}
+        >
           {t('onboarding.welcome.headline2')}
         </Text>
-        <Text style={[typography.body, { color: colors.textMuted, marginBottom: spacing.xl }]}>
+        <Text style={[typography.body, { color: colors.textMuted, marginBottom: spacing.xxl }]}>
           {t('onboarding.welcome.body')}
         </Text>
 
-        <Text style={[typography.caption, { color: colors.textMuted, marginBottom: spacing.sm }]}>
+        {/* Language picker — editorial radio cards. Active card sports a
+            sienna left rule + warm cream fill so it reads as "selected"
+            without the standard checkbox affordance. */}
+        <Text style={[typography.eyebrow, { color: colors.textMuted, marginBottom: spacing.sm }]}>
           {t('onboarding.welcome.pickLanguage')}
         </Text>
         <View style={{ gap: spacing.sm }}>
@@ -59,11 +79,31 @@ export function OnboardingWelcomeScreen({ navigation }: OnboardingScreenProps<'W
                   borderWidth: 1,
                   borderColor: active ? colors.primary : colors.border,
                   backgroundColor: active ? colors.surfaceMuted : colors.surface,
+                  overflow: 'hidden',
                 }}
               >
-                <Text style={[typography.bodyStrong, { color: colors.text }]}>
-                  {t(`settings.language.${code}`)}
-                </Text>
+                {active ? (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      bottom: 0,
+                      left: 0,
+                      width: 3,
+                      backgroundColor: colors.primary,
+                    }}
+                  />
+                ) : null}
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+                  <Text
+                    style={[typography.h3, { color: colors.text }]}
+                  >
+                    {t(`settings.language.${code}`)}
+                  </Text>
+                  <Text style={[typography.italicAccent, { color: colors.textMuted }]}>
+                    {code.toUpperCase()}
+                  </Text>
+                </View>
               </TouchableOpacity>
             );
           })}

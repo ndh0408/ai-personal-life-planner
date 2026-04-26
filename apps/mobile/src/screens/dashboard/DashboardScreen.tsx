@@ -17,6 +17,7 @@ import {
   Screen,
   Card,
   Badge,
+  Eyebrow,
   Loading,
   ErrorView,
   MoneyCard,
@@ -173,7 +174,9 @@ export function DashboardScreen() {
         </View>
 
         {/* 3. QUICK ACTIONS — responsive grid */}
-        <SectionHeader title={t('dashboard.quickActions.title')} />
+        <View style={{ marginTop: spacing.xl, marginBottom: spacing.md }}>
+          <Eyebrow>{t('dashboard.quickActions.title')}</Eyebrow>
+        </View>
         <QuickActionGrid
           columns={gridColumns}
           actions={[
@@ -206,7 +209,9 @@ export function DashboardScreen() {
         ) : null}
 
         {/* 5. TODAY PLAN */}
-        <SectionHeader title={t('dashboard.todayPlan.title')} />
+        <View style={{ marginTop: spacing.xl, marginBottom: spacing.md }}>
+          <Eyebrow>{t('dashboard.todayPlan.title')}</Eyebrow>
+        </View>
         <Card>
           {data.todayPlan.hasSchedule ? (
             <>
@@ -249,10 +254,12 @@ export function DashboardScreen() {
         </Card>
 
         {/* 6. MONEY SNAPSHOT */}
-        <SectionHeader
-          title={t('dashboard.finance.title')}
-          onViewMore={() => nav.navigate('Main', { screen: 'Finance' } as never)}
-        />
+        <View style={{ marginTop: spacing.xl, marginBottom: spacing.md }}>
+          <SectionRow
+            title={t('dashboard.finance.title')}
+            onViewMore={() => nav.navigate('Main', { screen: 'Finance' } as never)}
+          />
+        </View>
         <View
           style={{
             flexDirection: twoColumn ? 'row' : 'row',
@@ -304,7 +311,9 @@ export function DashboardScreen() {
         ) : null}
 
         {/* 7. HEALTH / LIFESTYLE */}
-        <SectionHeader title={t('dashboard.health.title')} />
+        <View style={{ marginTop: spacing.xl, marginBottom: spacing.md }}>
+          <Eyebrow>{t('dashboard.health.title')}</Eyebrow>
+        </View>
         <View style={{ flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md, flexWrap: 'wrap' }}>
           <View style={{ flex: 1, minWidth: 140 }}>
             <InsightCard
@@ -347,10 +356,12 @@ export function DashboardScreen() {
         </View>
 
         {/* 8. TASKS */}
-        <SectionHeader
-          title={t('dashboard.tasks.title')}
-          onViewMore={() => nav.navigate('Tasks')}
-        />
+        <View style={{ marginTop: spacing.xl, marginBottom: spacing.md }}>
+          <SectionRow
+            title={t('dashboard.tasks.title')}
+            onViewMore={() => nav.navigate('Tasks')}
+          />
+        </View>
         <Card>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm }}>
             <TaskStat label={t('dashboard.tasks.today')} value={`${data.tasks.todayCompleted}/${data.tasks.todayTotal}`} />
@@ -395,10 +406,12 @@ export function DashboardScreen() {
         </Card>
 
         {/* 9. GOALS */}
-        <SectionHeader
-          title={t('dashboard.goals.title')}
-          onViewMore={() => nav.navigate('PersonalGoals')}
-        />
+        <View style={{ marginTop: spacing.xl, marginBottom: spacing.md }}>
+          <SectionRow
+            title={t('dashboard.goals.title')}
+            onViewMore={() => nav.navigate('PersonalGoals')}
+          />
+        </View>
         <View style={{ gap: spacing.md }}>
           <Card>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -449,15 +462,40 @@ function Header({
     hour < 11 ? 'dashboard.greeting.morning' : hour < 17 ? 'dashboard.greeting.afternoon' : 'dashboard.greeting.evening';
   return (
     <View>
+      {/* Date ledger row — italic serif date on the left, editorial
+          status kicker on the right. The horizontal rule below ties
+          them together like a column header on a magazine spread. */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={[typography.caption, { color: colors.textMuted }]}>
+        <Text style={[typography.italicAccent, { color: colors.textMuted }]}>
           {formatDateByLocale(dateIso)}
         </Text>
-        <Badge tone={statusTone}>{statusLabel}</Badge>
+        <Badge tone={statusTone} variant="editorial">{statusLabel}</Badge>
       </View>
-      <Text style={[typography.display, { color: colors.text, marginTop: spacing.xs }]}>
-        {t(greetingKey, { name })}
+      <View
+        style={{
+          height: 1,
+          backgroundColor: colors.border,
+          opacity: 0.5,
+          marginTop: spacing.sm,
+          marginBottom: spacing.lg,
+        }}
+      />
+      {/* Greeting — display serif with a soft italic name pulled out
+          on its own line so the eye lands on it the way a magazine
+          drop-cap does. */}
+      <Text style={[typography.display, { color: colors.text }]}>
+        {t(`${greetingKey}Plain`)}
       </Text>
+      {name ? (
+        <Text
+          style={[
+            typography.displayItalic,
+            { color: colors.primary, marginTop: 2 },
+          ]}
+        >
+          {name}.
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -477,7 +515,7 @@ function HeroCta({
   icon: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
 }) {
-  const { colors, spacing, radius, typography } = useTheme();
+  const { colors, spacing, radius, typography, shadows } = useTheme();
   const isPrimary = tone === 'primary';
   const bg = isPrimary ? colors.primary : colors.surface;
   const fg = isPrimary ? colors.textInverse : colors.text;
@@ -485,48 +523,97 @@ function HeroCta({
   return (
     <TouchableOpacity
       onPress={onPress}
-      activeOpacity={0.8}
+      activeOpacity={0.92}
       accessibilityRole="button"
       accessibilityLabel={`${title}. ${cta}`}
-      style={{
-        backgroundColor: bg,
-        padding: spacing.lg,
-        borderRadius: radius.lg,
-        borderWidth: isPrimary ? 0 : 1,
-        borderColor: colors.border,
-      }}
+      style={[
+        {
+          backgroundColor: bg,
+          padding: spacing.xl,
+          borderRadius: radius.lg,
+          borderWidth: 1,
+          borderColor: isPrimary ? 'transparent' : colors.border,
+          overflow: 'hidden',
+        },
+        shadows.level2,
+      ]}
     >
+      {/* Editorial top rule — sienna accent that signals "this is the
+          headline" the way a magazine pull-quote uses a thin gold rule. */}
+      {!isPrimary ? (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 2,
+            backgroundColor: colors.primary,
+          }}
+        />
+      ) : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
         <View
           style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: isPrimary ? 'rgba(255,255,255,0.2)' : colors.surfaceMuted,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: isPrimary ? 'rgba(255, 252, 246, 0.22)' : colors.surfaceMuted,
+            borderWidth: isPrimary ? 0 : 1,
+            borderColor: colors.border,
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Ionicons name={icon} size={20} color={fg} />
+          <Ionicons name={icon} size={22} color={fg} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[typography.h3, { color: fg }]}>{title}</Text>
-          <Text style={[typography.body, { color: sub, marginTop: spacing.xs }]}>{body}</Text>
+          <Text style={[typography.h2, { color: fg }]}>{title}</Text>
+          <Text
+            style={[
+              typography.body,
+              { color: sub, marginTop: 4, opacity: isPrimary ? 0.92 : 1 },
+            ]}
+          >
+            {body}
+          </Text>
         </View>
       </View>
-      <Text
-        style={[
-          typography.bodyStrong,
-          { color: isPrimary ? colors.textInverse : colors.primary, marginTop: spacing.md },
-        ]}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing.xs,
+          marginTop: spacing.lg,
+        }}
       >
-        {cta} →
-      </Text>
+        <Text
+          style={[
+            typography.bodyStrong,
+            {
+              color: isPrimary ? colors.textInverse : colors.primary,
+              letterSpacing: 0.3,
+            },
+          ]}
+        >
+          {cta}
+        </Text>
+        <Ionicons
+          name="arrow-forward"
+          size={16}
+          color={isPrimary ? colors.textInverse : colors.primary}
+        />
+      </View>
     </TouchableOpacity>
   );
 }
 
-function SectionHeader({
+/**
+ * Editorial section row — eyebrow on the left + a small "View more"
+ * link on the right. Replaces the old SectionHeader for any section
+ * that needs a CTA pair. Sections without a CTA use bare `<Eyebrow>`.
+ */
+function SectionRow({
   title,
   onViewMore,
 }: {
@@ -534,21 +621,21 @@ function SectionHeader({
   onViewMore?: () => void;
 }) {
   const { t } = useTranslation();
-  const { colors, spacing, typography } = useTheme();
+  const { colors, fonts } = useTheme();
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: spacing.xl,
-        marginBottom: spacing.md,
-      }}
-    >
-      <Text style={[typography.h2, { color: colors.text }]}>{title}</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Eyebrow style={{ marginBottom: 0, flex: 1 }}>{title}</Eyebrow>
       {onViewMore ? (
         <TouchableOpacity onPress={onViewMore} accessibilityRole="link">
-          <Text style={[typography.caption, { color: colors.primary }]}>
+          <Text
+            style={{
+              color: colors.primary,
+              fontFamily: fonts.sansSemibold,
+              fontSize: 12,
+              letterSpacing: 0.4,
+              textTransform: 'uppercase',
+            }}
+          >
             {t('common.viewMore')}
           </Text>
         </TouchableOpacity>

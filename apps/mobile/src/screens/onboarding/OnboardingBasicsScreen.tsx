@@ -45,7 +45,16 @@ export function OnboardingBasicsScreen({ navigation }: OnboardingScreenProps<'Ba
   return (
     <Screen scroll>
       <StepProgress total={3} current={2} />
-      <View style={{ maxWidth: isTablet ? 640 : undefined, alignSelf: isTablet ? 'center' : 'stretch', width: '100%' }}>
+      <View
+        style={{
+          maxWidth: isTablet ? 640 : undefined,
+          alignSelf: isTablet ? 'center' : 'stretch',
+          width: '100%',
+        }}
+      >
+        <Text style={[typography.eyebrow, { color: colors.primary, marginBottom: spacing.sm }]}>
+          {t('onboarding.basics.kicker', { defaultValue: 'STEP 02 · BASICS' })}
+        </Text>
         <Text style={[typography.h1, { color: colors.text, marginBottom: spacing.xs }]}>
           {t('onboarding.basics.title')}
         </Text>
@@ -62,8 +71,8 @@ export function OnboardingBasicsScreen({ navigation }: OnboardingScreenProps<'Ba
 
         <Text
           style={[
-            typography.caption,
-            { color: colors.textMuted, marginTop: spacing.lg, marginBottom: spacing.sm },
+            typography.eyebrow,
+            { color: colors.textMuted, marginTop: spacing.xl, marginBottom: spacing.sm },
           ]}
         >
           {t('onboarding.basics.mainGoal')}

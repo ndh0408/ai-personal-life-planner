@@ -24,6 +24,13 @@ type Props = Omit<PressableProps, 'style'> & {
   style?: ViewStyle;
 };
 
+/**
+ * Primary CTA. Round 22 — switches the label to Plus Jakarta Sans
+ * Semibold with a small uppercase tracking lift on `lg` so the
+ * button reads as deliberate, the way a magazine pull-quote button
+ * would. Press scales 0.985 (sub-pixel feedback rather than the
+ * usual aggressive 0.95).
+ */
 export function Button({
   title,
   variant = 'primary',
@@ -36,10 +43,11 @@ export function Button({
   style,
   ...rest
 }: Props) {
-  const { colors, radius, spacing } = useTheme();
-  const padV = size === 'lg' ? spacing.md + 2 : size === 'sm' ? spacing.sm : spacing.md;
+  const { colors, radius, spacing, fonts } = useTheme();
+  const padV = size === 'lg' ? spacing.md + 4 : size === 'sm' ? spacing.sm : spacing.md;
   const padH = size === 'lg' ? spacing.xl : size === 'sm' ? spacing.md : spacing.lg;
-  const fontSize = size === 'lg' ? 17 : size === 'sm' ? 13 : 15;
+  const fontSize = size === 'lg' ? 16 : size === 'sm' ? 13 : 14;
+  const letterSpacing = size === 'lg' ? 0.4 : 0.2;
 
   const palette = (() => {
     switch (variant) {
@@ -48,9 +56,9 @@ export function Button({
       case 'ghost':
         return { bg: 'transparent', fg: colors.primary, border: 'transparent' };
       case 'danger':
-        return { bg: colors.danger, fg: '#FFFFFF', border: colors.danger };
+        return { bg: colors.danger, fg: colors.textInverse, border: colors.danger };
       default:
-        return { bg: colors.primary, fg: '#FFFFFF', border: colors.primary };
+        return { bg: colors.primary, fg: colors.textInverse, border: colors.primary };
     }
   })();
 
@@ -60,16 +68,19 @@ export function Button({
     <Pressable
       {...rest}
       disabled={isDisabled}
-      style={({ pressed }) => [
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!isDisabled, busy: !!loading }}
+      style={(state: { pressed: boolean }) => [
         styles.base,
         {
           backgroundColor: palette.bg,
           borderColor: palette.border,
-          borderRadius: radius.md,
+          borderRadius: radius.md + 2,
           paddingVertical: padV,
           paddingHorizontal: padH,
-          opacity: isDisabled ? 0.5 : pressed ? 0.85 : 1,
+          opacity: isDisabled ? 0.5 : 1,
           width: fullWidth ? '100%' : undefined,
+          transform: state.pressed && !isDisabled ? [{ scale: 0.985 }] : undefined,
         },
         style,
       ]}
@@ -78,9 +89,18 @@ export function Button({
         <ActivityIndicator color={palette.fg} />
       ) : (
         <View style={styles.content}>
-          {leftIcon ? <View style={{ marginRight: 6 }}>{leftIcon}</View> : null}
-          <Text style={{ color: palette.fg, fontSize, fontWeight: '600' }}>{title}</Text>
-          {rightIcon ? <View style={{ marginLeft: 6 }}>{rightIcon}</View> : null}
+          {leftIcon ? <View style={{ marginRight: 8 }}>{leftIcon}</View> : null}
+          <Text
+            style={{
+              color: palette.fg,
+              fontFamily: fonts.sansSemibold,
+              fontSize,
+              letterSpacing,
+            }}
+          >
+            {title}
+          </Text>
+          {rightIcon ? <View style={{ marginLeft: 8 }}>{rightIcon}</View> : null}
         </View>
       )}
     </Pressable>

@@ -127,6 +127,9 @@ export function OnboardingAISetupScreen({
           width: '100%',
         }}
       >
+        <Text style={[typography.eyebrow, { color: colors.primary, marginBottom: spacing.sm }]}>
+          {t('onboarding.basics.kickerStep3', { defaultValue: 'STEP 03 · ENABLE AI' })}
+        </Text>
         <Text style={[typography.h1, { color: colors.text, marginBottom: spacing.xs }]}>
           {t('settings.aiSetup.title')}
         </Text>

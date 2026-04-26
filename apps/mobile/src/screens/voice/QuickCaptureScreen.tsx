@@ -204,6 +204,9 @@ export function QuickCaptureScreen() {
           width: '100%',
         }}
       >
+        <Text style={[typography.eyebrow, { color: colors.primary, marginBottom: spacing.sm }]}>
+          {t('settings.quickCapture.kicker', { defaultValue: 'CAPTURE · ONE LINE' })}
+        </Text>
         <Text style={[typography.h1, { color: colors.text }]}>
           {t('settings.quickCapture.title')}
         </Text>

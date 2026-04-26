@@ -191,6 +191,9 @@
       "morning": "Chào buổi sáng, {{name}} ☀️",
       "afternoon": "Chào buổi chiều, {{name}} 👋",
       "evening": "Chào buổi tối, {{name}} 🌙",
+      "morningPlain": "Chào buổi sáng,",
+      "afternoonPlain": "Chào buổi chiều,",
+      "eveningPlain": "Chào buổi tối,",
       "subtitle": "{{tasksToday}} việc hôm nay · {{habits}} thói quen đang theo dõi"
     },
     "assistantEmpty": {

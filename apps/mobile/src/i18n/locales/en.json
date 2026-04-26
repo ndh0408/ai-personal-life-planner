@@ -191,6 +191,9 @@
       "morning": "Good morning, {{name}} ☀️",
       "afternoon": "Good afternoon, {{name}} 👋",
       "evening": "Good evening, {{name}} 🌙",
+      "morningPlain": "Good morning,",
+      "afternoonPlain": "Good afternoon,",
+      "eveningPlain": "Good evening,",
       "subtitle": "{{tasksToday}} tasks today · {{habits}} active habits"
     },
     "assistantEmpty": {

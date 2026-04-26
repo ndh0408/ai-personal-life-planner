@@ -22,18 +22,96 @@ export const radius = {
   pill: 999,
 };
 
+/**
+ * Round 22 — "Editorial Calm" typography.
+ *
+ * Two voices:
+ *   - **Fraunces** — variable serif with oldstyle figures + soft italic.
+ *     Used for displays, headings, status chips, money amounts.
+ *   - **Plus Jakarta Sans** — refined sans, generous x-height.
+ *     Used for body, captions, button labels.
+ *
+ * Both are loaded in `App.tsx` before the splash hides — see
+ * `useFraunces` / `useJakarta`. If the OTA load ever fails (no
+ * network, etc.) RN falls back to the platform serif/sans which is
+ * typographically close enough that the layout stays intact.
+ *
+ * Helpers:
+ *   - `serif`, `sans` — explicit font families for one-off use.
+ *   - `eyebrow` — small caps + extra letter-spacing, for section
+ *     headers (e.g. "TODAY · MORNING").
+ */
+export const fonts = {
+  serif: 'Fraunces_400Regular',
+  serifMedium: 'Fraunces_500Medium',
+  serifSemibold: 'Fraunces_600SemiBold',
+  serifBold: 'Fraunces_700Bold',
+  serifItalic: 'Fraunces_400Regular_Italic',
+  serifMediumItalic: 'Fraunces_500Medium_Italic',
+  sans: 'PlusJakartaSans_400Regular',
+  sansMedium: 'PlusJakartaSans_500Medium',
+  sansSemibold: 'PlusJakartaSans_600SemiBold',
+  sansBold: 'PlusJakartaSans_700Bold',
+} as const;
+
 export const typography = {
-  display: { fontSize: 32, fontWeight: '700' as const, letterSpacing: -0.5 },
-  h1: { fontSize: 24, fontWeight: '700' as const },
-  h2: { fontSize: 20, fontWeight: '600' as const },
-  h3: { fontSize: 17, fontWeight: '600' as const },
-  body: { fontSize: 15, fontWeight: '400' as const },
-  bodyStrong: { fontSize: 15, fontWeight: '600' as const },
-  caption: { fontSize: 13, fontWeight: '400' as const },
-  small: { fontSize: 12, fontWeight: '500' as const },
-  // Money/number-friendly preset — tabular-style alignment hint via
-  // fontVariant; fall back gracefully on RN versions that ignore it.
-  number: { fontSize: 17, fontWeight: '700' as const, fontVariant: ['tabular-nums'] as const },
+  // Display — magazine-cover scale, soft serif italic option for hero.
+  display: {
+    fontFamily: fonts.serifSemibold,
+    fontSize: 36,
+    lineHeight: 42,
+    letterSpacing: -0.6,
+  },
+  displayItalic: {
+    fontFamily: fonts.serifMediumItalic,
+    fontSize: 36,
+    lineHeight: 42,
+    letterSpacing: -0.4,
+  },
+  h1: { fontFamily: fonts.serifSemibold, fontSize: 26, lineHeight: 32, letterSpacing: -0.3 },
+  h2: { fontFamily: fonts.serifSemibold, fontSize: 21, lineHeight: 27, letterSpacing: -0.2 },
+  h3: { fontFamily: fonts.serifMedium, fontSize: 17, lineHeight: 23 },
+
+  // Body — sans, 15/22 — comfortable reading rhythm.
+  body: { fontFamily: fonts.sans, fontSize: 15, lineHeight: 22 },
+  bodyStrong: { fontFamily: fonts.sansSemibold, fontSize: 15, lineHeight: 22 },
+
+  caption: { fontFamily: fonts.sans, fontSize: 13, lineHeight: 18 },
+  small: { fontFamily: fonts.sansMedium, fontSize: 12, lineHeight: 16 },
+
+  // Eyebrow — small caps style: tracked-out, tiny, used for section
+  // headers ("TODAY · MORNING"). RN can't true-fontFeature small-caps,
+  // so we approximate with uppercase + letter-spacing.
+  eyebrow: {
+    fontFamily: fonts.sansSemibold,
+    fontSize: 11,
+    lineHeight: 14,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase' as const,
+  },
+
+  // Numbers — Fraunces oldstyle figures, slight italic. Tabular hint
+  // keeps amounts column-aligned in finance cards.
+  number: {
+    fontFamily: fonts.serifSemibold,
+    fontSize: 22,
+    lineHeight: 26,
+    fontVariant: ['tabular-nums'] as const,
+  },
+  numberLarge: {
+    fontFamily: fonts.serifBold,
+    fontSize: 30,
+    lineHeight: 34,
+    letterSpacing: -0.2,
+    fontVariant: ['tabular-nums'] as const,
+  },
+
+  // Italic accent — used for status chips and decorative quotes.
+  italicAccent: {
+    fontFamily: fonts.serifItalic,
+    fontSize: 14,
+    lineHeight: 20,
+  },
 };
 
 export type Theme = {
@@ -41,6 +119,7 @@ export type Theme = {
   spacing: typeof spacing;
   radius: typeof radius;
   typography: typeof typography;
+  fonts: typeof fonts;
   shadows: Shadows;
   motion: Motion;
   layout: Layout;
@@ -52,6 +131,7 @@ const defaultTheme: Theme = {
   spacing,
   radius,
   typography,
+  fonts,
   shadows: getShadows(false),
   motion,
   layout,
@@ -69,6 +149,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       spacing,
       radius,
       typography,
+      fonts,
       shadows: getShadows(isDark),
       motion,
       layout,

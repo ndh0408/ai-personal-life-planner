@@ -16,3 +16,17 @@ export { StepProgress } from './StepProgress';
 export { BarChart } from './BarChart';
 export { OfflineBanner } from './OfflineBanner';
 export { ErrorBoundary } from './ErrorBoundary';
+
+// Round 20 — design-system additions
+export { AppHeader } from './AppHeader';
+export { AppShell } from './AppShell';
+export { SectionHeader } from './SectionHeader';
+export { IconButton } from './IconButton';
+export { QuickActionButton } from './QuickActionButton';
+export { StatCard } from './StatCard';
+export { PrivacyNoticeCard } from './PrivacyNoticeCard';
+export { showConfirmDialog } from './ConfirmDialog';
+export type { ConfirmDialogOptions } from './ConfirmDialog';
+
+// Round 22 — editorial primitives
+export { Eyebrow } from './Eyebrow';
