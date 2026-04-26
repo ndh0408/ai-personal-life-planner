@@ -1,0 +1,92 @@
+{
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "retry": "Retry",
+    "skip": "Skip",
+    "next": "Continue",
+    "back": "Back",
+    "delete": "Delete",
+    "loading": "Loading…",
+    "showPassword": "Show",
+    "hidePassword": "Hide",
+    "showKey": "Show key",
+    "hideKey": "Hide key"
+  },
+  "auth": {
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Sign in to continue",
+    "registerTitle": "Create account",
+    "registerSubtitle": "Takes 30 seconds",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "At least 8 characters",
+    "displayName": "Display name",
+    "displayNamePlaceholder": "What should we call you?",
+    "loginCta": "Sign in",
+    "registerCta": "Create account",
+    "logoutCta": "Sign out",
+    "noAccount": "No account yet?",
+    "hasAccount": "Already have one?",
+    "signUpLink": "Sign up",
+    "signInLink": "Sign in",
+    "errors": {
+      "EMAIL_TAKEN": "This email is already in use. Sign in instead?",
+      "INVALID_CREDENTIALS": "Email or password is incorrect.",
+      "ACCOUNT_DISABLED": "This account is disabled.",
+      "RATE_LIMITED": "Too many attempts. Wait a minute and try again.",
+      "validation_failed": "Some fields look off.",
+      "network": "Can't reach the server.",
+      "unknown": "Something went wrong. Try again."
+    }
+  },
+  "aiSetup": {
+    "kicker": "Last step",
+    "title": "Connect your AI",
+    "subtitle": "Paste your OpenAI API key. We encrypt it before storing — never seen as plaintext.",
+    "keyLabel": "OpenAI API key",
+    "keyPlaceholder": "sk-...",
+    "saveCta": "Save & test",
+    "skipCta": "Skip for now",
+    "noKeyHint": "I don't have a key yet",
+    "noKeyModalTitle": "Get a free OpenAI key",
+    "noKeyModalBody": "Open platform.openai.com → Sign up → API keys → Create new secret key. Copy the string that starts with sk- and paste it here.",
+    "testing": "Checking with OpenAI…",
+    "successTitle": "Key works",
+    "successBody": "You're ready to use LifeOS AI.",
+    "failedTitle": "Key doesn't work",
+    "errors": {
+      "AI_KEY_INVALID_FORMAT": "OpenAI keys start with sk- and are longer than 20 chars.",
+      "AI_KEY_TEST_FAILED": "OpenAI rejected this key. Check you pasted it correctly.",
+      "AI_KEY_QUOTA_EXCEEDED": "This key is out of quota. Create a new one or top up your OpenAI account.",
+      "AI_PROVIDER_UNREACHABLE": "Can't reach OpenAI. Try again later."
+    }
+  },
+  "aiSettings": {
+    "title": "OpenAI key",
+    "statusEnabled": "Enabled",
+    "statusDisabled": "Not set up",
+    "lastTest": "Last tested",
+    "testNever": "Never tested",
+    "testStatusSuccess": "Working",
+    "testStatusFailed": "Not working",
+    "replaceCta": "Replace key",
+    "deleteCta": "Delete key",
+    "testCta": "Test again",
+    "deleteConfirmTitle": "Delete API key?",
+    "deleteConfirmBody": "After deletion, AI features will stop working until you enter a new key.",
+    "deleteConfirmYes": "Delete",
+    "deleteConfirmNo": "Keep"
+  },
+  "home": {
+    "kicker": "Today",
+    "greeting": "Hi {{name}}",
+    "ready": "Ready. Quick Capture lands in the next round.",
+    "apiHealthy": "API healthy",
+    "apiDegraded": "API partially up",
+    "apiUnreachable": "Can't reach API"
+  }
+}

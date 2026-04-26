@@ -1,0 +1,92 @@
+{
+  "common": {
+    "ok": "OK",
+    "cancel": "Huỷ",
+    "save": "Lưu",
+    "saving": "Đang lưu…",
+    "retry": "Thử lại",
+    "skip": "Bỏ qua",
+    "next": "Tiếp tục",
+    "back": "Quay lại",
+    "delete": "Xoá",
+    "loading": "Đang tải…",
+    "showPassword": "Hiện",
+    "hidePassword": "Ẩn",
+    "showKey": "Hiện key",
+    "hideKey": "Ẩn key"
+  },
+  "auth": {
+    "loginTitle": "Chào mừng trở lại",
+    "loginSubtitle": "Đăng nhập để tiếp tục",
+    "registerTitle": "Tạo tài khoản",
+    "registerSubtitle": "Mất 30 giây",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Mật khẩu",
+    "passwordPlaceholder": "Tối thiểu 8 ký tự",
+    "displayName": "Tên hiển thị",
+    "displayNamePlaceholder": "Bạn muốn được gọi là gì?",
+    "loginCta": "Đăng nhập",
+    "registerCta": "Tạo tài khoản",
+    "logoutCta": "Đăng xuất",
+    "noAccount": "Chưa có tài khoản?",
+    "hasAccount": "Đã có tài khoản?",
+    "signUpLink": "Đăng ký",
+    "signInLink": "Đăng nhập",
+    "errors": {
+      "EMAIL_TAKEN": "Email này đã được dùng. Đăng nhập thay vì đăng ký?",
+      "INVALID_CREDENTIALS": "Email hoặc mật khẩu không đúng.",
+      "ACCOUNT_DISABLED": "Tài khoản này đã bị khoá.",
+      "RATE_LIMITED": "Bạn thử quá nhiều lần. Đợi một phút rồi thử lại.",
+      "validation_failed": "Thông tin nhập chưa hợp lệ.",
+      "network": "Không kết nối được tới máy chủ.",
+      "unknown": "Có lỗi xảy ra. Thử lại nhé."
+    }
+  },
+  "aiSetup": {
+    "kicker": "Bước cuối",
+    "title": "Kết nối AI của bạn",
+    "subtitle": "Dán API key OpenAI của bạn. Mình mã hoá rồi mới lưu, không nhìn thấy bản gốc.",
+    "keyLabel": "OpenAI API key",
+    "keyPlaceholder": "sk-...",
+    "saveCta": "Lưu & kiểm tra",
+    "skipCta": "Bỏ qua, làm sau",
+    "noKeyHint": "Tôi chưa có key",
+    "noKeyModalTitle": "Lấy key OpenAI miễn phí",
+    "noKeyModalBody": "Mở platform.openai.com → Sign up → API keys → Create new secret key. Copy chuỗi bắt đầu bằng sk- rồi quay lại đây dán vào.",
+    "testing": "Đang kiểm tra với OpenAI…",
+    "successTitle": "Key hoạt động",
+    "successBody": "Bạn đã sẵn sàng dùng LifeOS AI.",
+    "failedTitle": "Key không dùng được",
+    "errors": {
+      "AI_KEY_INVALID_FORMAT": "Key OpenAI bắt đầu bằng sk- và dài hơn 20 ký tự.",
+      "AI_KEY_TEST_FAILED": "OpenAI từ chối key này. Kiểm tra lại bạn đã copy đúng chưa.",
+      "AI_KEY_QUOTA_EXCEEDED": "Key này đã hết quota. Tạo key mới hoặc nạp tiền cho tài khoản OpenAI.",
+      "AI_PROVIDER_UNREACHABLE": "Không kết nối được tới OpenAI. Thử lại sau."
+    }
+  },
+  "aiSettings": {
+    "title": "OpenAI key",
+    "statusEnabled": "Đang bật",
+    "statusDisabled": "Chưa cài đặt",
+    "lastTest": "Lần kiểm tra gần nhất",
+    "testNever": "Chưa từng kiểm tra",
+    "testStatusSuccess": "Hoạt động tốt",
+    "testStatusFailed": "Không hoạt động",
+    "replaceCta": "Thay key khác",
+    "deleteCta": "Xoá key",
+    "testCta": "Kiểm tra lại",
+    "deleteConfirmTitle": "Xoá API key?",
+    "deleteConfirmBody": "Sau khi xoá, các tính năng AI sẽ ngừng hoạt động đến khi bạn nhập key mới.",
+    "deleteConfirmYes": "Xoá",
+    "deleteConfirmNo": "Giữ lại"
+  },
+  "home": {
+    "kicker": "Hôm nay",
+    "greeting": "Chào {{name}}",
+    "ready": "Sẵn sàng. Quick Capture sẽ xuất hiện ở round sau.",
+    "apiHealthy": "API kết nối tốt",
+    "apiDegraded": "API hoạt động một phần",
+    "apiUnreachable": "Không kết nối được API"
+  }
+}
