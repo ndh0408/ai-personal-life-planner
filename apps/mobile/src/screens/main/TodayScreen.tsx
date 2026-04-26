@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   AppScreen,
   Badge,
+  Button,
   Card,
   EmptyState,
   ErrorState,
@@ -12,6 +13,8 @@ import {
 } from '../../components/ui';
 import { spacing } from '../../theme';
 import { useTodayMeals, useTodayTasks } from '../../hooks/useFeed';
+import { useGenerateTodayPlan, useSetItemStatus, useTodayPlan } from '../../hooks/usePlanner';
+import { PlanItemRow } from '../../components/today/PlanItemRow';
 import type { TaskRow } from '../../services/api/tasks.service';
 import type { MealRow } from '../../services/api/journal.service';
 import { formatMoney } from '../../utils/format';
@@ -20,6 +23,9 @@ export function TodayScreen() {
   const { t, i18n } = useTranslation();
   const tasks = useTodayTasks();
   const meals = useTodayMeals();
+  const plan = useTodayPlan();
+  const gen = useGenerateTodayPlan();
+  const setStatus = useSetItemStatus();
 
   return (
     <AppScreen>
@@ -27,6 +33,39 @@ export function TodayScreen() {
       <Text variant="display" style={{ marginTop: spacing.md, marginBottom: spacing.xl }}>
         {t('today.title')}
       </Text>
+
+      {/* Plan timeline */}
+      {plan.isLoading ? (
+        <LoadingState />
+      ) : plan.data ? (
+        <View style={{ marginBottom: spacing['2xl'] }}>
+          {plan.data.items.map((item) => (
+            <PlanItemRow
+              key={item.id}
+              item={item}
+              onToggle={(status) => setStatus.mutate({ id: item.id, status })}
+            />
+          ))}
+          <View style={{ marginTop: spacing.md }}>
+            <Button
+              label={gen.isPending ? t('common.loading') : t('common.retry')}
+              variant="ghost"
+              onPress={() => gen.mutate()}
+              disabled={gen.isPending}
+            />
+          </View>
+        </View>
+      ) : (
+        <View style={{ marginBottom: spacing['2xl'], gap: spacing.md }}>
+          <EmptyState title={t('today.empty')} />
+          <Button
+            label={gen.isPending ? t('common.loading') : '✨ ' + t('common.next')}
+            onPress={() => gen.mutate()}
+            disabled={gen.isPending}
+            loading={gen.isPending}
+          />
+        </View>
+      )}
 
       {tasks.isError || meals.isError ? (
         <ErrorState
