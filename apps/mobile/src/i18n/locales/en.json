@@ -96,7 +96,7 @@
   "home": {
     "kicker": "Today",
     "greeting": "Hi {{name}}",
-    "ready": "Ready. Quick Capture lands in the next round.",
+    "ready": "Tell me anything — a meal, a spend, a task, last night's sleep.",
     "apiHealthy": "API healthy",
     "apiDegraded": "API partially up",
     "apiUnreachable": "Can't reach API",
@@ -109,6 +109,69 @@
     "insights": {
       "title": "For you today",
       "empty": "No new suggestions yet."
+    }
+  },
+  "capture": {
+    "send": "Send",
+    "parsing": "Parsing…",
+    "previewTitle": "Looks right?",
+    "kinds": {
+      "EXPENSE": "Expense",
+      "MEAL": "Meal",
+      "TASK": "Task",
+      "SLEEP": "Sleep",
+      "MOOD": "Mood",
+      "UNKNOWN": "Not sure"
+    },
+    "fields": {
+      "title": "Title",
+      "amount": "Amount (₫)",
+      "category": "Category",
+      "mealType": "Meal",
+      "cost": "Cost (₫)",
+      "priority": "Priority",
+      "dueAt": "When",
+      "durationHours": "Hours",
+      "quality": "Quality",
+      "mood": "Mood",
+      "energy": "Energy"
+    },
+    "mealTypes": {
+      "BREAKFAST": "Breakfast",
+      "LUNCH": "Lunch",
+      "DINNER": "Dinner",
+      "SNACK": "Snack"
+    },
+    "priorities": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High"
+    },
+    "qualities": {
+      "BAD": "Bad",
+      "OK": "OK",
+      "GOOD": "Good"
+    },
+    "moods": {
+      "GREAT": "Great",
+      "GOOD": "Good",
+      "OK": "OK",
+      "TIRED": "Tired",
+      "STRESSED": "Stressed",
+      "SAD": "Sad"
+    },
+    "energies": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High"
+    },
+    "confirm": "Confirm",
+    "discard": "Discard",
+    "saved": "Saved",
+    "errors": {
+      "network": "Couldn't send. Try again.",
+      "AI_KEY_MISSING": "Need an AI key to understand complex sentences. Add one in Settings.",
+      "unknown": "Didn't catch that — be more specific or try again."
     }
   },
   "today": {

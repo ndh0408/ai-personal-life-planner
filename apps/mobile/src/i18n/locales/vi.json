@@ -96,7 +96,7 @@
   "home": {
     "kicker": "Hôm nay",
     "greeting": "Chào {{name}}",
-    "ready": "Sẵn sàng. Quick Capture sẽ xuất hiện ở round sau.",
+    "ready": "Nói gì với mình đi — bữa ăn, chi tiêu, task, giấc ngủ.",
     "apiHealthy": "API kết nối tốt",
     "apiDegraded": "API hoạt động một phần",
     "apiUnreachable": "Không kết nối được API",
@@ -109,6 +109,69 @@
     "insights": {
       "title": "Gợi ý cho hôm nay",
       "empty": "Chưa có gợi ý mới."
+    }
+  },
+  "capture": {
+    "send": "Gửi",
+    "parsing": "Đang hiểu…",
+    "previewTitle": "Đúng ý bạn chưa?",
+    "kinds": {
+      "EXPENSE": "Chi tiêu",
+      "MEAL": "Bữa ăn",
+      "TASK": "Việc cần làm",
+      "SLEEP": "Giấc ngủ",
+      "MOOD": "Cảm xúc",
+      "UNKNOWN": "Chưa rõ"
+    },
+    "fields": {
+      "title": "Tên",
+      "amount": "Số tiền (₫)",
+      "category": "Danh mục",
+      "mealType": "Bữa",
+      "cost": "Số tiền (₫)",
+      "priority": "Ưu tiên",
+      "dueAt": "Lúc",
+      "durationHours": "Số tiếng",
+      "quality": "Chất lượng",
+      "mood": "Cảm xúc",
+      "energy": "Năng lượng"
+    },
+    "mealTypes": {
+      "BREAKFAST": "Sáng",
+      "LUNCH": "Trưa",
+      "DINNER": "Tối",
+      "SNACK": "Vặt"
+    },
+    "priorities": {
+      "LOW": "Thấp",
+      "MEDIUM": "Vừa",
+      "HIGH": "Cao"
+    },
+    "qualities": {
+      "BAD": "Tệ",
+      "OK": "Tạm",
+      "GOOD": "Ngon"
+    },
+    "moods": {
+      "GREAT": "Tuyệt",
+      "GOOD": "Vui",
+      "OK": "Ổn",
+      "TIRED": "Mệt",
+      "STRESSED": "Stress",
+      "SAD": "Buồn"
+    },
+    "energies": {
+      "LOW": "Thấp",
+      "MEDIUM": "Vừa",
+      "HIGH": "Cao"
+    },
+    "confirm": "Xác nhận",
+    "discard": "Huỷ",
+    "saved": "Đã lưu",
+    "errors": {
+      "network": "Không gửi được. Thử lại nhé.",
+      "AI_KEY_MISSING": "Cần API key AI để hiểu câu phức tạp. Vào Cài đặt để thêm.",
+      "unknown": "Chưa hiểu — gõ rõ hơn hoặc thử lại."
     }
   },
   "today": {

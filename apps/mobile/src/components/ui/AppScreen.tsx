@@ -17,9 +17,20 @@ interface Props {
   edgeToEdge?: boolean;
   /** Bottom inset suppression (e.g., a tab bar already inset). */
   noBottomInset?: boolean;
+  /**
+   * Optional sticky footer rendered below the (scrolling) content. Useful for
+   * Quick Capture bars or persistent CTAs that should stay above the keyboard.
+   */
+  footer?: React.ReactNode;
 }
 
-export function AppScreen({ children, scroll = true, edgeToEdge = false, noBottomInset = false }: Props) {
+export function AppScreen({
+  children,
+  scroll = true,
+  edgeToEdge = false,
+  noBottomInset = false,
+  footer,
+}: Props) {
   const padding = edgeToEdge ? styles.paddingNone : styles.paddingDefault;
   const inner = scroll ? (
     <ScrollView
@@ -41,6 +52,7 @@ export function AppScreen({ children, scroll = true, edgeToEdge = false, noBotto
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {inner}
+        {footer ? <View style={styles.footer}>{footer}</View> : null}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -51,5 +63,13 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   paddingNone: { paddingHorizontal: 0 },
   paddingDefault: { paddingHorizontal: spacing.xl },
-  contentVertical: { paddingTop: spacing['2xl'], paddingBottom: spacing['3xl'], flexGrow: 1 },
+  contentVertical: { paddingTop: spacing['2xl'], paddingBottom: spacing.xl, flexGrow: 1 },
+  footer: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.canvas,
+  },
 });
