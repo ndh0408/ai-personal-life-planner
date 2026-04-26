@@ -23,12 +23,10 @@ describe('EncryptionService', () => {
     expect(() => svcWith('aa')).toThrow(/64 hex chars/);
   });
 
-  it('round-trips plaintext', () => {
+  it('round-trips plaintext as a packed string', () => {
     const svc = svcWith(goodKey);
     const sealed = svc.seal('sk-test-1234567890abcdef');
-    expect(sealed.ciphertext).toMatch(/^[A-Za-z0-9+/=]+$/);
-    expect(sealed.iv).toMatch(/^[A-Za-z0-9+/=]+$/);
-    expect(sealed.authTag).toMatch(/^[A-Za-z0-9+/=]+$/);
+    expect(sealed).toMatch(/^v1:gcm:[A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+$/);
     expect(svc.open(sealed)).toBe('sk-test-1234567890abcdef');
   });
 
@@ -36,27 +34,31 @@ describe('EncryptionService', () => {
     const svc = svcWith(goodKey);
     const a = svc.seal('hello');
     const b = svc.seal('hello');
-    expect(a.iv).not.toBe(b.iv);
-    expect(a.ciphertext).not.toBe(b.ciphertext);
+    expect(a).not.toBe(b);
   });
 
   it('rejects tampered ciphertext', () => {
     const svc = svcWith(goodKey);
     const sealed = svc.seal('hello');
-    const buf = Buffer.from(sealed.ciphertext, 'base64');
+    const parts = sealed.split(':');
+    const buf = Buffer.from(parts[4], 'base64');
     buf[0] = buf[0] ^ 0x01;
-    const tampered = { ...sealed, ciphertext: buf.toString('base64') };
-    expect(() => svc.open(tampered)).toThrow();
+    parts[4] = buf.toString('base64');
+    expect(() => svc.open(parts.join(':'))).toThrow();
   });
 
   it('rejects a wrong auth tag', () => {
     const svc = svcWith(goodKey);
     const sealed = svc.seal('hello');
-    const tampered = {
-      ...sealed,
-      authTag: Buffer.alloc(16).toString('base64'),
-    };
-    expect(() => svc.open(tampered)).toThrow();
+    const parts = sealed.split(':');
+    parts[3] = Buffer.alloc(16).toString('base64');
+    expect(() => svc.open(parts.join(':'))).toThrow();
+  });
+
+  it('rejects an unknown version tag', () => {
+    const svc = svcWith(goodKey);
+    const sealed = svc.seal('hello').replace(/^v1:gcm/, 'v2:gcm');
+    expect(() => svc.open(sealed)).toThrow(/unrecognised/);
   });
 
   it('a key swap cannot decrypt prior data', () => {
@@ -64,5 +66,11 @@ describe('EncryptionService', () => {
     const sealed = svcA.seal('hello');
     const svcB = svcWith(randomBytes(32).toString('hex'));
     expect(() => svcB.open(sealed)).toThrow();
+  });
+
+  it('fingerprint returns last4 and pre-masked display string', () => {
+    const fp = EncryptionService.fingerprint('sk-1234567890abcXYZ9');
+    expect(fp.last4).toBe('XYZ9');
+    expect(fp.masked).toBe('sk-•••••••••XYZ9');
   });
 });

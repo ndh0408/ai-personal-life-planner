@@ -1,9 +1,16 @@
-// LifeOS AI — Prisma schema (foundation)
+// LifeOS AI — Prisma schema
 //
-// Round 0 (this round): the bare minimum tables required to make
-// auth + encrypted OpenAI key + a single user row work end-to-end.
-// Feature tables (Task, Expense, Meal, Mood, Sleep, etc.) are added
-// in later rounds — see docs/REBUILD_ROADMAP.md.
+// Conventions used throughout:
+//   • cuid() ids
+//   • Money is `Decimal @db.Decimal(18, 2)` — never Float, never Int
+//     (precision 18, scale 2 covers VND up to ~10^16, with 2-digit forex headroom)
+//   • Soft delete: `deletedAt DateTime?` on finance + tasks (and a partial-style
+//     index on `[userId, deletedAt]` for "live rows for this user" queries)
+//   • Every entity scoped to a user has `@@index([userId])`
+//   • Date-range entities also get `@@index([userId, <dateColumn>])`
+//   • Cascade delete from User down — privacy/right-to-erasure relies on this
+//
+// See docs/DATABASE_SCHEMA.md for the narrative version.
 
 generator client {
   provider = "prisma-client-js"
@@ -14,56 +21,507 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Locale {
-  vi
-  en
+// ---------- Enums --------------------------------------------------------------
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
 }
+
+enum AiProvider {
+  OPENAI
+}
+
+enum AiKeyTestStatus {
+  SUCCESS
+  FAILED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+enum SleepQuality {
+  BAD
+  OK
+  GOOD
+}
+
+enum Mood {
+  GREAT
+  GOOD
+  OK
+  TIRED
+  STRESSED
+  SAD
+}
+
+enum EnergyLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum DailyPlanItemType {
+  TASK
+  MEAL
+  REST
+  WORK
+  PERSONAL
+  HEALTH
+  FINANCE
+  CUSTOM
+}
+
+enum DailyPlanItemStatus {
+  PENDING
+  COMPLETED
+  SKIPPED
+}
+
+enum AiMessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum AiRecommendationType {
+  SCHEDULE
+  TASK
+  MEAL
+  SLEEP
+  MOOD
+  FINANCE
+  GENERAL
+}
+
+enum AiRecommendationPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum AiRecommendationStatus {
+  NEW
+  VIEWED
+  DISMISSED
+  APPLIED
+}
+
+enum QuickCaptureStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
+// ---------- Identity ------------------------------------------------------------
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  displayName  String?
-  locale       Locale   @default(vi)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String     @id @default(cuid())
+  email           String     @unique
+  passwordHash    String
+  displayName     String?
+  emailVerifiedAt DateTime?
+  status          UserStatus @default(ACTIVE)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
-  sessions     Session[]
-  aiCredential AiCredential?
+  profile             UserProfile?
+  aiKey               UserAiKey?
+  privacy             PrivacySetting?
+  notificationSetting NotificationSetting?
 
-  @@index([email])
+  refreshTokens   RefreshToken[]
+  wallets         Wallet[]
+  expenses        Expense[]
+  incomes         Income[]
+  tasks           Task[]
+  meals           MealLog[]
+  sleeps          SleepLog[]
+  moods           MoodLog[]
+  dailyPlans      DailyPlan[]
+  dailyPlanItems  DailyPlanItem[]
+  aiConversations AIConversation[]
+  aiMessages      AIMessage[]
+  aiRecs          AIRecommendation[]
+  aiUsages        AiUsageLog[]
+  quickCaptures   QuickCapture[]
+
+  @@index([status])
 }
 
-// Refresh-token sessions. Access tokens stay short-lived JWTs (no DB row).
-model Session {
-  id               String   @id @default(cuid())
-  userId           String
-  refreshTokenHash String
-  userAgent        String?
-  ipAddress        String?
-  expiresAt        DateTime
-  revokedAt        DateTime?
-  createdAt        DateTime @default(now())
+model RefreshToken {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String
+  userAgent  String?
+  ipAddress  String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([refreshTokenHash])
+  @@index([tokenHash])
+  @@index([expiresAt])
 }
 
-// Encrypted-at-rest OpenAI key per user (AES-256-GCM via ENCRYPTION_KEY).
-// One credential per user for MVP. Multi-provider explicitly out-of-scope (PRODUCT_SPEC §6).
-model AiCredential {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  provider        String   @default("openai")
-  encryptedApiKey String
-  iv              String
-  authTag         String
-  lastTestedAt    DateTime?
-  lastTestOk      Boolean?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+model UserProfile {
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  preferredName         String?
+  locale                String    @default("vi")
+  timezone              String    @default("Asia/Ho_Chi_Minh")
+  currency              String    @default("VND")
+  // Free-form goal tags chosen during onboarding; small list, JSON keeps it portable.
+  mainGoals             Json      @default("[]")
+  usualWakeTime         String?   // "07:00" — local wall-clock, not a DateTime
+  usualSleepTime        String?   // "23:30"
+  onboardingCompletedAt DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------- AI credentials ------------------------------------------------------
+
+model UserAiKey {
+  id              String           @id @default(cuid())
+  userId          String           @unique
+  provider        AiProvider       @default(OPENAI)
+  // Packed AES-256-GCM payload "v1:gcm:<iv_b64>:<tag_b64>:<ct_b64>" — see EncryptionService.
+  encryptedApiKey String
+  apiKeyLast4     String           // e.g. "x9aB" — used only for display
+  maskedApiKey    String           // e.g. "sk-•••••••••x9aB" — pre-rendered, safe to send to mobile
+  baseUrl         String           @default("https://api.openai.com/v1")
+  defaultModel    String?
+  lastTestedAt    DateTime?
+  lastTestStatus  AiKeyTestStatus?
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------- Finance -------------------------------------------------------------
+
+model Wallet {
+  id        String    @id @default(cuid())
+  userId    String
+  name      String
+  balance   Decimal   @default(0) @db.Decimal(18, 2)
+  currency  String    @default("VND")
+  isDefault Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses Expense[]
+  incomes  Income[]
+
+  @@index([userId])
+  @@index([userId, deletedAt])
+}
+
+model Expense {
+  id              String    @id @default(cuid())
+  userId          String
+  walletId        String
+  title           String
+  amount          Decimal   @db.Decimal(18, 2)
+  category        String
+  expenseDate     DateTime
+  note            String?
+  idempotencyKey  String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Restrict)
+
+  // Idempotency: same key twice from the same user must collapse to one row.
+  @@unique([userId, idempotencyKey])
+  @@index([userId])
+  @@index([userId, expenseDate])
+  @@index([userId, deletedAt])
+  @@index([walletId])
+}
+
+model Income {
+  id              String    @id @default(cuid())
+  userId          String
+  walletId        String
+  title           String
+  amount          Decimal   @db.Decimal(18, 2)
+  category        String?
+  incomeDate      DateTime
+  note            String?
+  idempotencyKey  String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId])
+  @@index([userId, incomeDate])
+  @@index([userId, deletedAt])
+  @@index([walletId])
+}
+
+// ---------- Tasks ---------------------------------------------------------------
+
+model Task {
+  id          String       @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  dueAt       DateTime?
+  priority    TaskPriority @default(MEDIUM)
+  status      TaskStatus   @default(TODO)
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, dueAt])
+  @@index([userId, deletedAt])
+}
+
+// ---------- Health journal ------------------------------------------------------
+
+model MealLog {
+  id        String   @id @default(cuid())
+  userId    String
+  mealType  MealType
+  title     String
+  cost      Decimal? @db.Decimal(18, 2)
+  loggedAt  DateTime
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, loggedAt])
+}
+
+model SleepLog {
+  id              String        @id @default(cuid())
+  userId          String
+  sleepAt         DateTime
+  wakeAt          DateTime
+  durationMinutes Int
+  quality         SleepQuality?
+  note            String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, sleepAt])
+}
+
+model MoodLog {
+  id        String      @id @default(cuid())
+  userId    String
+  mood      Mood
+  energy    EnergyLevel
+  loggedAt  DateTime
+  note      String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, loggedAt])
+}
+
+// ---------- Planner -------------------------------------------------------------
+
+model DailyPlan {
+  id          String   @id @default(cuid())
+  userId      String
+  date        DateTime @db.Date
+  summary     String?
+  aiGenerated Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items DailyPlanItem[]
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([userId, date])
+}
+
+model DailyPlanItem {
+  id          String              @id @default(cuid())
+  userId      String
+  dailyPlanId String
+  title       String
+  startAt     DateTime?
+  endAt       DateTime?
+  type        DailyPlanItemType
+  status      DailyPlanItemStatus @default(PENDING)
+  sortOrder   Int                 @default(0)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dailyPlan DailyPlan @relation(fields: [dailyPlanId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([dailyPlanId])
+  @@index([userId, status])
+}
+
+// ---------- AI conversation -----------------------------------------------------
+
+model AIConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages AIMessage[]
+
+  @@index([userId])
+}
+
+model AIMessage {
+  id             String        @id @default(cuid())
+  userId         String
+  conversationId String
+  role           AiMessageRole
+  content        String
+  createdAt      DateTime      @default(now())
+
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([conversationId, createdAt])
+}
+
+model AIRecommendation {
+  id        String                   @id @default(cuid())
+  userId    String
+  type      AiRecommendationType
+  title     String
+  content   String
+  priority  AiRecommendationPriority @default(MEDIUM)
+  status    AiRecommendationStatus   @default(NEW)
+  // Free-form: the rows / aggregates the LLM looked at when generating this.
+  evidence  Json?
+  createdAt DateTime                 @default(now())
+  updatedAt DateTime                 @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, type])
+}
+
+model AiUsageLog {
+  id         String   @id @default(cuid())
+  userId     String
+  feature    String   // "capture.parse", "assistant.recommend", …
+  model      String?
+  success    Boolean
+  errorCode  String?
+  latencyMs  Int?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([feature, createdAt])
+}
+
+// ---------- Privacy + notifications --------------------------------------------
+
+model PrivacySetting {
+  id                       String   @id @default(cuid())
+  userId                   String   @unique
+  personalizationEnabled   Boolean  @default(true)
+  useFinanceForAI          Boolean  @default(true)
+  useHealthForAI           Boolean  @default(true)
+  useMealsForAI            Boolean  @default(true)
+  useTasksForAI            Boolean  @default(true)
+  aiMemoryEnabled          Boolean  @default(true)
+  proactiveRecommendations Boolean  @default(true)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NotificationSetting {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  taskReminder     Boolean  @default(true)
+  mealReminder     Boolean  @default(true)
+  sleepReminder    Boolean  @default(true)
+  financeReminder  Boolean  @default(true)
+  assistantNudge   Boolean  @default(true)
+  quietHoursStart  String?  // "22:00"
+  quietHoursEnd    String?  // "07:00"
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------- Quick Capture -------------------------------------------------------
+
+model QuickCapture {
+  id            String             @id @default(cuid())
+  userId        String
+  rawText       String
+  // The structured outputs returned by the parser; kept verbatim until confirmed.
+  parsedActions Json
+  status        QuickCaptureStatus @default(DRAFT)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, status])
 }

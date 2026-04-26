@@ -3,15 +3,15 @@ import { ConfigService } from '@nestjs/config';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
 const ALGO = 'aes-256-gcm';
-const IV_BYTES = 12; // GCM standard
+const IV_BYTES = 12;
 const KEY_BYTES = 32;
+const FORMAT_TAG = 'v1:gcm';
 
-export interface SealedSecret {
-  ciphertext: string; // base64
-  iv: string; // base64
-  authTag: string; // base64
-}
-
+/**
+ * Stores a single packed string in the DB:
+ *   "v1:gcm:<iv_b64>:<tag_b64>:<ct_b64>"
+ * The version tag lets us migrate to a new algorithm later without ambiguity.
+ */
 @Injectable()
 export class EncryptionService implements OnModuleInit {
   private key!: Buffer;
@@ -34,25 +34,42 @@ export class EncryptionService implements OnModuleInit {
     }
   }
 
-  seal(plaintext: string): SealedSecret {
+  seal(plaintext: string): string {
     const iv = randomBytes(IV_BYTES);
     const cipher = createCipheriv(ALGO, this.key, iv);
     const ct = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
     const tag = cipher.getAuthTag();
-    return {
-      ciphertext: ct.toString('base64'),
-      iv: iv.toString('base64'),
-      authTag: tag.toString('base64'),
-    };
+    return [FORMAT_TAG, iv.toString('base64'), tag.toString('base64'), ct.toString('base64')].join(
+      ':',
+    );
   }
 
-  open(sealed: SealedSecret): string {
-    const iv = Buffer.from(sealed.iv, 'base64');
-    const tag = Buffer.from(sealed.authTag, 'base64');
-    const ct = Buffer.from(sealed.ciphertext, 'base64');
+  open(packed: string): string {
+    const parts = packed.split(':');
+    if (parts.length !== 5 || `${parts[0]}:${parts[1]}` !== FORMAT_TAG) {
+      throw new Error('encrypted payload format is unrecognised');
+    }
+    const iv = Buffer.from(parts[2], 'base64');
+    const tag = Buffer.from(parts[3], 'base64');
+    const ct = Buffer.from(parts[4], 'base64');
+    if (iv.length !== IV_BYTES) {
+      throw new Error(`encrypted payload IV must be ${IV_BYTES} bytes`);
+    }
     const decipher = createDecipheriv(ALGO, this.key, iv);
     decipher.setAuthTag(tag);
     const pt = Buffer.concat([decipher.update(ct), decipher.final()]);
     return pt.toString('utf8');
+  }
+
+  /**
+   * "sk-1234567890abcdef...XYZ" → { last4: "9XYZ", masked: "sk-•••••••••9XYZ" }
+   * Useful for UserAiKey display fields (apiKeyLast4, maskedApiKey).
+   */
+  static fingerprint(plaintextKey: string): { last4: string; masked: string } {
+    const last4 = plaintextKey.slice(-4);
+    return {
+      last4,
+      masked: `sk-${'•'.repeat(9)}${last4}`,
+    };
   }
 }
