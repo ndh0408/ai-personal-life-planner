@@ -1,21 +1,22 @@
 /**
- * The base URL is resolved in this order:
- *   1. process.env.LIFEOS_API_BASE_URL (baked at bundle time)
- *   2. Tailscale dev-box IP for non-production builds
- *   3. Hard fail in production with a non-localhost requirement
+ * Default API base URL — public HTTPS via Cloudflare Tunnel, served by the
+ * NestJS API on huy-server. No Tailscale dependency for the phone anymore.
+ *
+ * Override at bundle time with process.env.LIFEOS_API_BASE_URL when running
+ * against a different ingress (staging, local LAN, …).
  */
-const PROD_DEFAULT = 'https://api.lifeos.app/api'; // placeholder until prod ingress lands
-
-const DEV_DEFAULT = 'http://100.100.210.85:4000/api';
+const PUBLIC_DEFAULT = 'https://api.tothanhthuy.cloud/api';
 
 declare const __DEV__: boolean;
 
 function pickBaseUrl(): string {
-  // @ts-expect-error — process is shimmed by Metro
-  const fromEnv: string | undefined = typeof process !== 'undefined' ? process.env?.LIFEOS_API_BASE_URL : undefined;
+  // Metro shims `process.env.X` at bundle time; the global `process` may or
+  // may not be typed. Cast through globalThis to avoid pulling in @types/node.
+  const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
+    ?.env;
+  const fromEnv = env?.LIFEOS_API_BASE_URL;
   if (fromEnv && fromEnv.length > 0) return fromEnv;
-  if (typeof __DEV__ !== 'undefined' && __DEV__) return DEV_DEFAULT;
-  return PROD_DEFAULT;
+  return PUBLIC_DEFAULT;
 }
 
 export const API_BASE_URL = pickBaseUrl();
