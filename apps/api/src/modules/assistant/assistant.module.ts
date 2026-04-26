@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
+import { AssistantController } from './assistant.controller';
+import { AssistantService } from './assistant.service';
 
-/**
- * Round 4 will add: daily recommendations, free-time scheduler, AI chat (SSE).
- */
-@Module({})
+@Module({
+  controllers: [AssistantController],
+  providers: [AssistantService],
+})
 export class AssistantModule {}
