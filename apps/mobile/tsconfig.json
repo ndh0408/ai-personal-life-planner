@@ -1,12 +1,6 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
-    "strict": true,
-    "jsx": "react-native",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
@@ -14,6 +8,6 @@
       "@lifeos/shared/*": ["../../packages/shared/src/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  "exclude": ["node_modules", ".expo"]
+  "include": ["App.tsx", "index.js", "src/**/*", "__tests__/**/*"],
+  "exclude": ["node_modules", "android", "ios"]
 }

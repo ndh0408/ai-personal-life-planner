@@ -33,7 +33,9 @@
     "clean": "rm -rf node_modules apps/*/node_modules apps/*/dist packages/*/node_modules packages/*/dist",
     "android:connect": "bash scripts/connect-android.sh",
     "android:pair": "bash scripts/connect-android.sh --pair",
-    "android:start": "bash scripts/connect-android.sh --start"
+    "android:start": "bash scripts/connect-android.sh --start",
+    "android:deploy": "bash scripts/deploy-android.sh",
+    "android:deploy:release": "bash scripts/deploy-android.sh release"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",

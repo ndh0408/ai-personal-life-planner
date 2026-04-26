@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dev build: cleartext (HTTP) is permitted globally so we can hit the
+  Tailscale dev box (100.x.y.z:4000) without TLS. The release build will
+  ship a tighter config that allows cleartext only for explicit hosts and
+  forces HTTPS for the public API.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

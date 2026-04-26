@@ -2,37 +2,40 @@
   "name": "@lifeos/mobile",
   "version": "0.1.0",
   "private": true,
-  "description": "LifeOS AI mobile app — Expo React Native",
-  "main": "index.ts",
+  "description": "LifeOS AI mobile app — bare React Native (Android first, iOS later)",
   "scripts": {
-    "start": "expo start",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
-    "web": "expo start --web",
+    "start": "react-native start",
+    "android": "react-native run-android",
+    "android:dev": "cd android && ./gradlew installDebug",
+    "android:release": "cd android && ./gradlew assembleRelease",
+    "android:clean": "cd android && ./gradlew clean",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
     "test": "jest --passWithNoTests"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "1.23.1",
-    "expo": "~51.0.8",
-    "expo-constants": "~16.0.1",
-    "expo-localization": "~15.0.3",
-    "expo-secure-store": "~13.0.1",
-    "expo-status-bar": "~1.12.1",
-    "i18next": "^23.11.3",
     "react": "18.2.0",
-    "react-i18next": "^14.1.1",
-    "react-native": "0.74.1",
-    "react-native-safe-area-context": "4.10.1",
-    "zustand": "^4.5.2"
+    "react-native": "0.74.5",
+    "react-native-safe-area-context": "4.10.5"
   },
   "devDependencies": {
-    "@babel/core": "^7.24.5",
-    "@types/react": "~18.2.79",
-    "eslint": "^8.57.0",
-    "@typescript-eslint/eslint-plugin": "^7.7.0",
-    "@typescript-eslint/parser": "^7.7.0",
-    "typescript": "~5.3.3"
+    "@babel/core": "^7.20.0",
+    "@babel/preset-env": "^7.20.0",
+    "@babel/runtime": "^7.20.0",
+    "@react-native/babel-preset": "0.74.87",
+    "@react-native/eslint-config": "0.74.87",
+    "@react-native/metro-config": "0.74.87",
+    "@react-native/typescript-config": "0.74.87",
+    "@types/react": "^18.2.6",
+    "@types/react-test-renderer": "^18.0.0",
+    "babel-jest": "^29.6.3",
+    "eslint": "^8.19.0",
+    "jest": "^29.6.3",
+    "prettier": "2.8.8",
+    "react-test-renderer": "18.2.0",
+    "typescript": "5.0.4"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

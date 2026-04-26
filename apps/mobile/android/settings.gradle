@@ -1,0 +1,9 @@
+// Monorepo: node_modules is hoisted three levels up at the workspace root.
+//   apps/mobile/android  →  apps/mobile  →  apps  →  <repo root>
+def monorepoNodeModules = file("../../../node_modules")
+
+rootProject.name = 'LifeOS-AI'
+apply from: file("${monorepoNodeModules}/@react-native-community/cli-platform-android/native_modules.gradle")
+applyNativeModulesSettingsGradle(settings)
+include ':app'
+includeBuild("${monorepoNodeModules}/@react-native/gradle-plugin")

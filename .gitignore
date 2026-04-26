@@ -69,3 +69,12 @@ coverage/
 .cache/
 .turbo/
 .eslintcache
+
+# Claude Code (local-only state)
+.claude/
+
+# Android build artifacts (kept out — APKs are large + reproducible)
+apps/mobile/android/.gradle/
+apps/mobile/android/build/
+apps/mobile/android/app/build/
+apps/mobile/android/local.properties
