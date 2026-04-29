@@ -1,36 +1,20 @@
 import { AssistantStreamingService } from './assistant.streaming.service';
 import type { PrismaService } from '../../prisma/prisma.service';
-import type { EncryptionService } from '../../common/crypto/encryption.service';
-import type { ConfigService } from '@nestjs/config';
 import type { UserContextService } from '../intelligence/user-context.service';
-import OpenAI from 'openai';
+import type { LlmService } from '../../common/llm/llm.service';
+import type { LlmStreamEvent } from '../../common/llm/llm.types';
 
-jest.mock('openai');
-
-interface FakeChunk {
-  choices: { delta: { content?: string } }[];
-}
-
-function fakeOpenAiStream(chunks: string[]): AsyncIterable<FakeChunk> {
+/** Build a fake LlmService that yields a fixed series of stream events. */
+function fakeLlm(opts: { events: LlmStreamEvent[] }): LlmService {
   return {
-    [Symbol.asyncIterator]() {
-      let i = 0;
-      return {
-        next(): Promise<IteratorResult<FakeChunk>> {
-          if (i >= chunks.length) return Promise.resolve({ value: undefined as unknown as FakeChunk, done: true });
-          const chunk: FakeChunk = { choices: [{ delta: { content: chunks[i++] } }] };
-          return Promise.resolve({ value: chunk, done: false });
-        },
-        return() {
-          return Promise.resolve({ value: undefined as unknown as FakeChunk, done: true });
-        },
-      };
+    async *responsesStream() {
+      for (const ev of opts.events) yield ev;
     },
-  };
+  } as unknown as LlmService;
 }
 
-function makeService(opts: { llmChunks?: string[]; haveKey?: boolean }) {
-  const prisma = {
+function fakePrisma() {
+  return {
     aIMessage: {
       findMany: jest.fn(async () => []),
       create: jest.fn(async () => ({ id: 'msg-final' })),
@@ -38,20 +22,24 @@ function makeService(opts: { llmChunks?: string[]; haveKey?: boolean }) {
     aIConversation: {
       update: jest.fn(async () => undefined),
     },
-    userAiKey: {
-      findUnique: jest.fn(async () =>
-        opts.haveKey === false
-          ? null
-          : { encryptedApiKey: 'iv:ct:tag', isActive: true, baseUrl: 'https://api.openai.com/v1', defaultModel: 'gpt-4o-mini' },
-      ),
-    },
   } as unknown as PrismaService;
+}
 
-  const enc = { open: jest.fn(() => 'sk-test') } as unknown as EncryptionService;
-  const config = { get: jest.fn(() => 'gpt-4o-mini') } as unknown as ConfigService;
-  const userCtx = {
+function fakeUserCtx() {
+  return {
     build: jest.fn(async () => ({
-      profile: { preferredName: 'Nam', locale: 'vi', mainGoals: [], usualWakeTime: null, usualSleepTime: null, dislikes: [], allergies: [], monthlyGoal: null, workPattern: null, budgetMonthly: null },
+      profile: {
+        preferredName: 'Nam',
+        locale: 'vi',
+        mainGoals: [],
+        usualWakeTime: null,
+        usualSleepTime: null,
+        dislikes: [],
+        allergies: [],
+        monthlyGoal: null,
+        workPattern: null,
+        budgetMonthly: null,
+      },
       now: '2026-04-29T09:00:00.000Z',
       tz: 'Asia/Ho_Chi_Minh',
       lastSleepMinutes: null,
@@ -70,24 +58,19 @@ function makeService(opts: { llmChunks?: string[]; haveKey?: boolean }) {
       },
     })),
   } as unknown as UserContextService;
-
-  // Mock OpenAI client constructor to return a stub with chat.completions.create
-  // returning the desired stream.
-  (OpenAI as unknown as jest.Mock).mockImplementation(() => ({
-    chat: {
-      completions: {
-        create: jest.fn(async () => fakeOpenAiStream(opts.llmChunks ?? ['Hello', ' world'])),
-      },
-    },
-  }));
-
-  return new AssistantStreamingService(prisma, enc, config, userCtx);
 }
 
 describe('AssistantStreamingService', () => {
   it('emits started → progress(reading_snapshot) → progress(calling_llm) → delta × N → completed', async () => {
-    const svc = makeService({ llmChunks: ['Sáng nay', ' bạn nên', ' ưu tiên'] });
-    const events = [];
+    const events: LlmStreamEvent[] = [
+      { type: 'delta', delta: 'Sáng nay' },
+      { type: 'delta', delta: ' bạn nên' },
+      { type: 'delta', delta: ' ưu tiên' },
+      { type: 'done', finalText: 'Sáng nay bạn nên ưu tiên' },
+    ];
+    const svc = new AssistantStreamingService(fakePrisma(), fakeUserCtx(), fakeLlm({ events }));
+
+    const out = [];
     for await (const ev of svc.run({
       userId: 'u1',
       threadId: 'thr1',
@@ -95,22 +78,27 @@ describe('AssistantStreamingService', () => {
       conversationId: 'thr1',
       userText: 'hôm nay tôi nên làm gì?',
     })) {
-      events.push(ev);
+      out.push(ev);
     }
 
-    expect(events[0].type).toBe('assistant.stream.started');
-    expect(events[1].type).toBe('assistant.stream.progress');
-    expect((events[1] as { stage: string }).stage).toBe('reading_snapshot');
-    expect(events[2].type).toBe('assistant.stream.progress');
-    expect((events[2] as { stage: string }).stage).toBe('calling_llm');
-    expect(events[3].type).toBe('assistant.stream.delta');
-    expect((events[3] as { delta: string }).delta).toBe('Sáng nay');
-    expect(events.at(-1)!.type).toBe('assistant.stream.completed');
-    expect((events.at(-1) as { finalText: string }).finalText).toBe('Sáng nay bạn nên ưu tiên');
+    expect(out[0].type).toBe('assistant.stream.started');
+    expect(out[1].type).toBe('assistant.stream.progress');
+    expect((out[1] as { stage: string }).stage).toBe('reading_snapshot');
+    expect(out[2].type).toBe('assistant.stream.progress');
+    expect((out[2] as { stage: string }).stage).toBe('calling_llm');
+    expect(out[3].type).toBe('assistant.stream.delta');
+    expect((out[3] as { delta: string }).delta).toBe('Sáng nay');
+    expect(out.at(-1)!.type).toBe('assistant.stream.completed');
+    expect((out.at(-1) as { finalText: string }).finalText).toBe('Sáng nay bạn nên ưu tiên');
   });
 
   it('seq is monotonically increasing and 0-based', async () => {
-    const svc = makeService({ llmChunks: ['A', 'B'] });
+    const events: LlmStreamEvent[] = [
+      { type: 'delta', delta: 'A' },
+      { type: 'delta', delta: 'B' },
+      { type: 'done', finalText: 'AB' },
+    ];
+    const svc = new AssistantStreamingService(fakePrisma(), fakeUserCtx(), fakeLlm({ events }));
     const seqs: number[] = [];
     for await (const ev of svc.run({
       userId: 'u1',
@@ -125,9 +113,12 @@ describe('AssistantStreamingService', () => {
     for (let i = 1; i < seqs.length; i++) expect(seqs[i]).toBe(seqs[i - 1] + 1);
   });
 
-  it('emits an error event when the user has no AI key', async () => {
-    const svc = makeService({ haveKey: false });
-    const events = [];
+  it('forwards LlmService error events as assistant.stream.error', async () => {
+    const events: LlmStreamEvent[] = [
+      { type: 'error', code: 'AI_KEY_MISSING', message: 'No key' },
+    ];
+    const svc = new AssistantStreamingService(fakePrisma(), fakeUserCtx(), fakeLlm({ events }));
+    const out = [];
     for await (const ev of svc.run({
       userId: 'u1',
       threadId: 'thr1',
@@ -135,9 +126,10 @@ describe('AssistantStreamingService', () => {
       conversationId: 'thr1',
       userText: 'x',
     })) {
-      events.push(ev);
+      out.push(ev);
     }
-    const errorEv = events.find((e) => e.type === 'assistant.stream.error');
-    expect(errorEv).toBeDefined();
+    const err = out.find((e) => e.type === 'assistant.stream.error');
+    expect(err).toBeDefined();
+    expect((err as { code: string }).code).toBe('AI_KEY_MISSING');
   });
 });

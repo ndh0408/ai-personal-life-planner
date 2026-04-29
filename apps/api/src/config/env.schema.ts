@@ -41,7 +41,13 @@ export const envSchema = z.object({
     .regex(/^[0-9a-fA-F]{64}$/, 'USER_AI_KEY_ENCRYPTION_KEY must be 64 hex chars'),
 
   OPENAI_BASE_URL: stringWithDefault('https://api.openai.com/v1'),
-  OPENAI_DEFAULT_MODEL: stringWithDefault('gpt-4o-mini'),
+  // Round 29: feature-level model defaults. FAST is for high-volume, low-stakes
+  // calls (capture parser, memory extraction); SMART is for reasoning-heavy
+  // calls (assistant chat, planner, recommendations). DEFAULT_MODEL stays
+  // as a back-compat fallback for any legacy code path that didn't migrate.
+  OPENAI_FAST_MODEL: stringWithDefault('gpt-5.4-mini'),
+  OPENAI_SMART_MODEL: stringWithDefault('gpt-5.5'),
+  OPENAI_DEFAULT_MODEL: stringWithDefault('gpt-5.4-mini'),
 
   CORS_ORIGINS: stringWithDefault(''),
 

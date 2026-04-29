@@ -9,13 +9,12 @@
  * outbound call. Privacy toggles gate which signal classes are sent.
  */
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import OpenAI from 'openai';
 import type { Task, UserProfile } from '@prisma/client';
-import { EncryptionService } from '../../common/crypto/encryption.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { rangeFor } from '../../common/datetime/range';
 import { UserContextService } from '../intelligence/user-context.service';
+import { LlmService } from '../../common/llm/llm.service';
+import { LlmError } from '../../common/llm/llm.types';
 import type { DraftItem } from './planner.generator';
 
 const SYS_PROMPT = `You are LifeOS AI's personal day planner. You are NOT a generic
@@ -122,9 +121,8 @@ export class PlannerAiGenerator {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly enc: EncryptionService,
-    private readonly config: ConfigService,
     private readonly userCtx: UserContextService,
+    private readonly llm: LlmService,
   ) {}
 
   /**
@@ -134,16 +132,6 @@ export class PlannerAiGenerator {
   async generate(userId: string): Promise<{ items: DraftItem[]; summary: string | null } | null> {
     const privacy = await this.prisma.privacySetting.findUnique({ where: { userId } });
     if (!privacy?.personalizationEnabled) return null;
-
-    const keyRow = await this.prisma.userAiKey.findUnique({ where: { userId } });
-    if (!keyRow || !keyRow.isActive) return null;
-
-    let plain: string;
-    try {
-      plain = this.enc.open(keyRow.encryptedApiKey);
-    } catch {
-      return null;
-    }
 
     const snap = await this.snapshot(userId, privacy);
     // Round 18: enrich the legacy snapshot with the unified UserContext.
@@ -187,49 +175,42 @@ export class PlannerAiGenerator {
       memories: ctx.memories.slice(0, 6).map((m) => m.fact),
     });
 
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+    let parsed: { items?: LlmItem[]; summary?: string };
     try {
-      const client = new OpenAI({ apiKey: plain, baseURL: keyRow.baseUrl });
-      const model =
-        keyRow.defaultModel ??
-        this.config.get<string>('OPENAI_DEFAULT_MODEL') ??
-        'gpt-4o-mini';
-      const res = await client.chat.completions.create(
-        {
-          model,
-          messages: [
-            { role: 'system', content: SYS_PROMPT },
-            { role: 'user', content: userMsg },
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.45,
-          max_tokens: 1400,
-        },
-        { signal: ctrl.signal },
-      );
-      const raw = res.choices[0]?.message?.content;
-      if (!raw) return null;
-
-      const parsed = JSON.parse(raw) as { items?: LlmItem[]; summary?: string };
-      if (!Array.isArray(parsed.items) || parsed.items.length === 0) return null;
-      let items = mapToDrafts(parsed.items);
-      // Safety net: if the AI scheduled breakfast > 2h after the user's
-      // declared wake time, slide the whole meal grid earlier proportionally.
-      // Without this the LLM consistently anchors at "10:00 bữa sáng" even
-      // for a user who wakes at 06:30 — visible to the user as "đần".
-      items = enforceWakeAnchor(items, snap.profile?.usualWakeTime ?? null, snap.tz);
-      const summary =
-        typeof parsed.summary === 'string' && parsed.summary.trim().length > 0
-          ? parsed.summary.trim().slice(0, 240)
-          : null;
-      return { items, summary };
+      // Planner schema is large + free-form; we lean on instructions rather
+      // than strict JSON schema (the user-visible failure mode of a slightly
+      // weird item is acceptable; a missed plan is not). Caller still
+      // validates each item via mapToDrafts.
+      const text = await this.llm.responsesText({
+        userId,
+        feature: 'planner',
+        tier: 'smart',
+        instructions: SYS_PROMPT + '\n\nReturn STRICT JSON only — no prose around the object.',
+        input: userMsg,
+        temperature: 0.45,
+        maxOutputTokens: 1400,
+        timeoutMs: TIMEOUT_MS,
+      });
+      parsed = JSON.parse(text) as { items?: LlmItem[]; summary?: string };
     } catch (e) {
-      this.logger.warn(`AI plan generation failed for userId=${userId}: ${(e as Error).message}`);
+      if (e instanceof LlmError) {
+        this.logger.debug(`planner ${e.code}`);
+      } else {
+        this.logger.warn(`AI plan generation failed for userId=${userId}: ${(e as Error).message}`);
+      }
       return null;
-    } finally {
-      clearTimeout(timer);
     }
+
+    if (!Array.isArray(parsed.items) || parsed.items.length === 0) return null;
+    let items = mapToDrafts(parsed.items);
+    // Safety net: if the AI scheduled breakfast > 2h after the user's
+    // declared wake time, slide the whole meal grid earlier proportionally.
+    items = enforceWakeAnchor(items, snap.profile?.usualWakeTime ?? null, snap.tz);
+    const summary =
+      typeof parsed.summary === 'string' && parsed.summary.trim().length > 0
+        ? parsed.summary.trim().slice(0, 240)
+        : null;
+    return { items, summary };
   }
 
   private async snapshot(

@@ -1,18 +1,21 @@
 /**
  * Fallback parser that asks OpenAI to classify + extract a Quick Capture.
- * Uses the *user's* key (decrypted in-memory for the request only) so
- * billing follows the user — never the platform.
  *
- * Model is forced to JSON mode with a strict schema; on any error the parser
- * returns null and the orchestrator falls through to UNKNOWN.
+ * Round 29 rewrite:
+ *   - Routes through LlmService.responsesJson() instead of `new OpenAI(...)`
+ *     directly. Strict JSON schema enforced by the Responses API means the
+ *     model can't return a malformed shape — we get a typed object or a
+ *     `LlmError(AI_SCHEMA_VIOLATION)`.
+ *   - Few-shot user-correction examples from CorrectionsService still ride
+ *     in the user prompt (steers the model toward this user's idiolect).
+ *   - The `tier: 'fast'` hint picks `OPENAI_FAST_MODEL` because capture is
+ *     high-volume and latency-sensitive — assistant chat uses 'smart'.
  */
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import OpenAI from 'openai';
 import type { ParseContext, ParseHit } from './types';
-import { EncryptionService } from '../../../common/crypto/encryption.service';
-import { PrismaService } from '../../../prisma/prisma.service';
 import type { CorrectionExample } from '../corrections.service';
+import { LlmService } from '../../../common/llm/llm.service';
+import { LlmError } from '../../../common/llm/llm.types';
 
 const SYS_PROMPT = `You classify a single short user utterance about everyday life into ONE of:
 - EXPENSE: money the user SPENT on something (food, bills, transport, shopping, …)
@@ -28,34 +31,53 @@ Direction rule (critical):
 - "phở 60k", "trả tiền điện 280k", "mua sách 240k", "đổ xăng 100k" → EXPENSE
 - If the verb is missing, the bias is EXPENSE (people log spends more often).
 
-Return STRICT JSON with this shape (no commentary):
-{
-  "kind": "EXPENSE" | "INCOME" | "MEAL" | "TASK" | "SLEEP" | "MOOD" | "UNKNOWN",
-  "confidence": 0..1,
-  "title": "short human-readable label",
-  "amount": <integer in smallest unit, only for EXPENSE / INCOME / MEAL cost>,
-  "category": one of [food, transport, bills, shopping, health, learning, entertainment, family, other]  (EXPENSE),
-  "incomeCategory": one of [salary, bonus, freelance, gift, refund, investment, other]  (INCOME),
-  "mealType": "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK"  (MEAL only),
-  "priority": "LOW" | "MEDIUM" | "HIGH"  (TASK only),
-  "dueAt": "ISO 8601 in user TZ"  (TASK with time only),
-  "loggedAt": "ISO 8601 in user TZ"  (MEAL / MOOD),
-  "expenseDate": "ISO 8601 in user TZ"  (EXPENSE),
-  "incomeDate": "ISO 8601 in user TZ"  (INCOME),
-  "durationMinutes": <integer>  (SLEEP),
-  "sleepAt": "ISO 8601",
-  "wakeAt": "ISO 8601",
-  "quality": "GOOD" | "OK" | "BAD"  (SLEEP, optional),
-  "mood": "GREAT" | "GOOD" | "OK" | "TIRED" | "STRESSED" | "SAD"  (MOOD only),
-  "energy": "LOW" | "MEDIUM" | "HIGH"  (MOOD, optional)
-}
-
 Bias toward Vietnamese if the input is Vietnamese.`;
 
-const TIMEOUT_MS = 12_000;
+const KIND_VALUES = [
+  'EXPENSE',
+  'INCOME',
+  'MEAL',
+  'TASK',
+  'SLEEP',
+  'MOOD',
+  'UNKNOWN',
+] as const;
+
+const CAPTURE_SCHEMA = {
+  name: 'capture_extraction',
+  strict: true,
+  schema: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['kind', 'confidence'],
+    properties: {
+      kind: { type: 'string', enum: [...KIND_VALUES] },
+      confidence: { type: 'number', minimum: 0, maximum: 1 },
+      title: { type: 'string' },
+      amount: { type: 'number', minimum: 0 },
+      category: { type: 'string' },
+      incomeCategory: { type: 'string' },
+      mealType: { type: 'string', enum: ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'] },
+      priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
+      dueAt: { type: 'string', format: 'date-time' },
+      loggedAt: { type: 'string', format: 'date-time' },
+      expenseDate: { type: 'string', format: 'date-time' },
+      incomeDate: { type: 'string', format: 'date-time' },
+      durationMinutes: { type: 'integer', minimum: 0 },
+      sleepAt: { type: 'string', format: 'date-time' },
+      wakeAt: { type: 'string', format: 'date-time' },
+      quality: { type: 'string', enum: ['GOOD', 'OK', 'BAD'] },
+      mood: {
+        type: 'string',
+        enum: ['GREAT', 'GOOD', 'OK', 'TIRED', 'STRESSED', 'SAD'],
+      },
+      energy: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
+    },
+  },
+};
 
 interface LlmExtraction {
-  kind: 'EXPENSE' | 'INCOME' | 'MEAL' | 'TASK' | 'SLEEP' | 'MOOD' | 'UNKNOWN';
+  kind: (typeof KIND_VALUES)[number];
   confidence: number;
   title?: string;
   amount?: number;
@@ -79,11 +101,7 @@ interface LlmExtraction {
 export class OpenAiParser {
   private readonly logger = new Logger(OpenAiParser.name);
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly enc: EncryptionService,
-    private readonly config: ConfigService,
-  ) {}
+  constructor(private readonly llm: LlmService) {}
 
   /** Returns null if the user has no key, or the call fails for any reason. */
   async tryParse(
@@ -92,52 +110,36 @@ export class OpenAiParser {
     ctx: ParseContext,
     corrections: CorrectionExample[] = [],
   ): Promise<ParseHit | null> {
-    const row = await this.prisma.userAiKey.findUnique({ where: { userId } });
-    if (!row || !row.isActive) return null;
-    let plain: string;
+    const fewShot = renderFewShot(corrections);
+    const userInput =
+      `Now in user TZ ${ctx.tz}: ${ctx.now.toISOString()}` +
+      (fewShot
+        ? `\n\nPast corrections from this user (do not repeat their misclassifications):\n${fewShot}`
+        : '') +
+      `\n\nInput: ${text}`;
+
+    let extraction: LlmExtraction;
     try {
-      plain = this.enc.open(row.encryptedApiKey);
-    } catch {
-      return null;
-    }
-
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
-    let extraction: LlmExtraction | null = null;
-    try {
-      const client = new OpenAI({ apiKey: plain, baseURL: row.baseUrl });
-      const model =
-        row.defaultModel ?? this.config.get<string>('OPENAI_DEFAULT_MODEL') ?? 'gpt-4o-mini';
-
-      // Few-shot examples drawn from the user's own corrections so the model
-      // converges on this user's idiolect: brand names, work-context vs
-      // personal-context spending, etc. Empty array on first use.
-      const fewShot = renderFewShot(corrections);
-
-      const userMsg =
-        `Now in user TZ ${ctx.tz}: ${ctx.now.toISOString()}` +
-        (fewShot ? `\n\nPast corrections from this user (do not repeat their misclassifications):\n${fewShot}` : '') +
-        `\n\nInput: ${text}`;
-      const res = await client.chat.completions.create(
-        {
-          model,
-          messages: [
-            { role: 'system', content: SYS_PROMPT },
-            { role: 'user', content: userMsg },
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0,
-        },
-        { signal: ctrl.signal },
-      );
-      const raw = res.choices[0]?.message?.content;
-      if (!raw) return null;
-      extraction = JSON.parse(raw) as LlmExtraction;
+      extraction = await this.llm.responsesJson<LlmExtraction>({
+        userId,
+        feature: 'capture-parse',
+        tier: 'fast',
+        instructions: SYS_PROMPT,
+        input: userInput,
+        schema: CAPTURE_SCHEMA,
+        temperature: 0,
+        maxOutputTokens: 400,
+        timeoutMs: 12_000,
+      });
     } catch (e) {
-      this.logger.warn(`openai parse failed for userId=${userId}`);
+      // The orchestrator (CaptureService) treats null as "rule wins". A
+      // schema violation or missing key shouldn't 500 the whole request.
+      if (e instanceof LlmError) {
+        this.logger.debug(`capture-parse ${e.code}: ${e.message}`);
+      } else {
+        this.logger.warn(`capture-parse unexpected error: ${(e as Error).message}`);
+      }
       return null;
-    } finally {
-      clearTimeout(timer);
     }
 
     return mapToHit(extraction, ctx);
@@ -185,7 +187,7 @@ function mapToHit(x: LlmExtraction, ctx: ParseContext): ParseHit | null {
           category: x.category ?? 'other',
           expenseDateIso: x.expenseDate ?? nowIso,
         },
-        previewText: `💸 ${title} — ${x.amount.toLocaleString('vi-VN')} ₫`,
+        previewText: `${title} — ${x.amount.toLocaleString('vi-VN')} ₫`,
       };
     case 'INCOME':
       if (typeof x.amount !== 'number' || x.amount < 0) return null;
@@ -200,7 +202,7 @@ function mapToHit(x: LlmExtraction, ctx: ParseContext): ParseHit | null {
           category: x.incomeCategory ?? x.category ?? 'other',
           incomeDateIso: x.incomeDate ?? x.expenseDate ?? nowIso,
         },
-        previewText: `💰 ${title} — +${x.amount.toLocaleString('vi-VN')} ₫`,
+        previewText: `${title} — +${x.amount.toLocaleString('vi-VN')} ₫`,
       };
     case 'MEAL':
       return {
@@ -213,7 +215,7 @@ function mapToHit(x: LlmExtraction, ctx: ParseContext): ParseHit | null {
           cost: typeof x.amount === 'number' ? Math.round(x.amount) : null,
           loggedAtIso: x.loggedAt ?? nowIso,
         },
-        previewText: `🍚 ${title}`,
+        previewText: title,
       };
     case 'TASK':
       return {
@@ -225,7 +227,7 @@ function mapToHit(x: LlmExtraction, ctx: ParseContext): ParseHit | null {
           dueAtIso: x.dueAt ?? null,
           priority: x.priority ?? 'MEDIUM',
         },
-        previewText: `✓ ${title}`,
+        previewText: title,
       };
     case 'SLEEP':
       if (!x.sleepAt || !x.wakeAt || !x.durationMinutes) return null;
@@ -239,7 +241,7 @@ function mapToHit(x: LlmExtraction, ctx: ParseContext): ParseHit | null {
           durationMinutes: Math.round(x.durationMinutes),
           quality: x.quality ?? null,
         },
-        previewText: `💤 ${(x.durationMinutes / 60).toFixed(1)} tiếng`,
+        previewText: `${(x.durationMinutes / 60).toFixed(1)} tiếng`,
       };
     case 'MOOD':
       if (!x.mood) return null;
@@ -252,7 +254,7 @@ function mapToHit(x: LlmExtraction, ctx: ParseContext): ParseHit | null {
           energy: x.energy ?? 'MEDIUM',
           loggedAtIso: x.loggedAt ?? nowIso,
         },
-        previewText: `🎯 ${x.mood.toLowerCase()}`,
+        previewText: x.mood.toLowerCase(),
       };
     default:
       return null;

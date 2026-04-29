@@ -8,6 +8,7 @@ import { validateEnv } from './config/env.schema';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { EncryptionModule } from './common/crypto/encryption.module';
+import { LlmModule } from './common/llm/llm.module';
 import { ResponseEnvelopeInterceptor } from './common/http/response.interceptor';
 import { AllExceptionsFilter } from './common/http/all-exceptions.filter';
 import { RequestIdMiddleware } from './common/http/request-id.middleware';
@@ -55,6 +56,7 @@ import { IntelligenceModule } from './modules/intelligence/intelligence.module';
     PrismaModule,
     RedisModule,
     EncryptionModule,
+    LlmModule,
 
     AuthModule,
     UsersModule,

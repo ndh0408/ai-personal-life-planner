@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { EncryptionModule } from '../../common/crypto/encryption.module';
 import { EventLogService } from './event-log.service';
 import { BehaviorService } from './behavior.service';
 import { AssistantMemoryService } from './assistant-memory.service';
@@ -8,7 +7,7 @@ import { InsightGenerator } from './insight.generator';
 import { MemoryController } from './memory.controller';
 
 @Module({
-  imports: [EncryptionModule],
+  imports: [],
   controllers: [MemoryController],
   providers: [
     EventLogService,

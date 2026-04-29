@@ -76,6 +76,8 @@ async function bootstrap() {
       JWT_REFRESH_TTL: config.get('JWT_REFRESH_TTL', { infer: true }),
       USER_AI_KEY_ENCRYPTION_KEY: config.get('USER_AI_KEY_ENCRYPTION_KEY', { infer: true }),
       OPENAI_BASE_URL: config.get('OPENAI_BASE_URL', { infer: true }),
+      OPENAI_FAST_MODEL: config.get('OPENAI_FAST_MODEL', { infer: true }),
+      OPENAI_SMART_MODEL: config.get('OPENAI_SMART_MODEL', { infer: true }),
       OPENAI_DEFAULT_MODEL: config.get('OPENAI_DEFAULT_MODEL', { infer: true }),
       CORS_ORIGINS: config.get('CORS_ORIGINS', { infer: true }),
       THROTTLE_TTL: config.get('THROTTLE_TTL', { infer: true }),

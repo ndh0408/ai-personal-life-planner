@@ -10,11 +10,10 @@
  * a "Memory" pane in Settings to edit / delete).
  */
 import { Injectable, Logger } from '@nestjs/common';
-import OpenAI from 'openai';
-import { ConfigService } from '@nestjs/config';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { EncryptionService } from '../../common/crypto/encryption.service';
+import { LlmService } from '../../common/llm/llm.service';
+import { LlmError } from '../../common/llm/llm.types';
 
 const EXTRACT_SYS = `From the conversation snippet, extract NEW, durable user facts
 worth remembering across chats. Examples of good facts:
@@ -32,7 +31,36 @@ NOT facts (do NOT extract):
 Output STRICT JSON: { "facts": [{ "fact": "string", "kind": "preference"|"constraint"|"goal"|"fact" }] }
 At most 3 facts. If nothing durable, return { "facts": [] }.`;
 
-const EXTRACT_TIMEOUT_MS = 8000;
+const MEMORY_KINDS = ['preference', 'constraint', 'goal', 'fact'] as const;
+
+const MEMORY_SCHEMA = {
+  name: 'assistant_memory_extraction',
+  strict: true,
+  schema: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['facts'],
+    properties: {
+      facts: {
+        type: 'array',
+        maxItems: 3,
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['fact', 'kind'],
+          properties: {
+            fact: { type: 'string', minLength: 4, maxLength: 280 },
+            kind: { type: 'string', enum: [...MEMORY_KINDS] },
+          },
+        },
+      },
+    },
+  },
+};
+
+interface MemoryExtraction {
+  facts: Array<{ fact: string; kind: (typeof MEMORY_KINDS)[number] }>;
+}
 
 @Injectable()
 export class AssistantMemoryService {
@@ -40,8 +68,7 @@ export class AssistantMemoryService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly enc: EncryptionService,
-    private readonly config: ConfigService,
+    private readonly llm: LlmService,
   ) {}
 
   /** Top-weight memories newest-first, capped to N. */
@@ -79,15 +106,6 @@ export class AssistantMemoryService {
   ): Promise<void> {
     if (recentTurns.length < 2) return;
 
-    const keyRow = await this.prisma.userAiKey.findUnique({ where: { userId } });
-    if (!keyRow?.isActive) return;
-    let plain: string;
-    try {
-      plain = this.enc.open(keyRow.encryptedApiKey);
-    } catch {
-      return;
-    }
-
     const existing = await this.prisma.assistantMemory.findMany({
       where: { userId },
       select: { fact: true },
@@ -98,63 +116,48 @@ export class AssistantMemoryService {
       .map((t) => `${t.role === 'user' ? 'USER' : 'ASSISTANT'}: ${t.content}`)
       .join('\n');
 
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), EXTRACT_TIMEOUT_MS);
+    let parsed: MemoryExtraction;
     try {
-      const client = new OpenAI({ apiKey: plain, baseURL: keyRow.baseUrl });
-      const model =
-        keyRow.defaultModel ??
-        this.config.get<string>('OPENAI_DEFAULT_MODEL') ??
-        'gpt-4o-mini';
-      const res = await client.chat.completions.create(
-        {
-          model,
-          messages: [
-            { role: 'system', content: EXTRACT_SYS },
-            { role: 'user', content: transcript },
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.2,
-          max_tokens: 240,
-        },
-        { signal: ctrl.signal },
-      );
-      const raw = res.choices[0]?.message?.content;
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as {
-        facts?: Array<{ fact?: string; kind?: string }>;
-      };
-      const allowed = new Set(['preference', 'constraint', 'goal', 'fact']);
-
-      const toStore: Array<{ fact: string; kind: string }> = [];
-      for (const f of parsed.facts ?? []) {
-        if (!f?.fact) continue;
-        const fact = f.fact.trim().slice(0, 280);
-        if (fact.length < 4) continue;
-        if (existingSet.has(fact.toLowerCase())) continue;
-        const kind = allowed.has(f.kind ?? '') ? f.kind! : 'fact';
-        toStore.push({ fact, kind });
-      }
-      if (toStore.length === 0) return;
-
-      await this.prisma.$transaction(
-        toStore.map((m) =>
-          this.prisma.assistantMemory.create({
-            data: {
-              userId,
-              fact: m.fact,
-              kind: m.kind,
-              sourceConvId: conversationId,
-              weight: 0.5,
-            } as Prisma.AssistantMemoryUncheckedCreateInput,
-          }),
-        ),
-      );
+      parsed = await this.llm.responsesJson<MemoryExtraction>({
+        userId,
+        feature: 'memory-extraction',
+        tier: 'fast',
+        instructions: EXTRACT_SYS,
+        input: transcript,
+        schema: MEMORY_SCHEMA,
+        temperature: 0.2,
+        maxOutputTokens: 240,
+        timeoutMs: 8_000,
+      });
     } catch (e) {
-      this.logger.warn(`Memory extraction failed for ${userId}: ${(e as Error).message}`);
-    } finally {
-      clearTimeout(timer);
+      // No-key, schema violation, timeout — best-effort, swallow.
+      if (e instanceof LlmError) this.logger.debug(`memory-extraction ${e.code}`);
+      else this.logger.warn(`memory-extraction unexpected: ${(e as Error).message}`);
+      return;
     }
+
+    const toStore: Array<{ fact: string; kind: string }> = [];
+    for (const f of parsed.facts ?? []) {
+      const fact = f.fact?.trim().slice(0, 280) ?? '';
+      if (fact.length < 4) continue;
+      if (existingSet.has(fact.toLowerCase())) continue;
+      toStore.push({ fact, kind: f.kind });
+    }
+    if (toStore.length === 0) return;
+
+    await this.prisma.$transaction(
+      toStore.map((m) =>
+        this.prisma.assistantMemory.create({
+          data: {
+            userId,
+            fact: m.fact,
+            kind: m.kind,
+            sourceConvId: conversationId,
+            weight: 0.5,
+          } as Prisma.AssistantMemoryUncheckedCreateInput,
+        }),
+      ),
+    );
   }
 
   /** Bump weight when the user explicitly confirms a memory. */

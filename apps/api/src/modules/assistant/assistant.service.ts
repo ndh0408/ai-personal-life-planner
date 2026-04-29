@@ -14,9 +14,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { AiMessageRole, type AIConversation, type AIMessage } from '@prisma/client';
-import OpenAI from 'openai';
 import type {
   AiConversationPublic,
   AiMessagePublic,
@@ -24,12 +22,13 @@ import type {
   SendMessageRequest,
   SendMessageResponse,
 } from '@lifeos/shared';
-import { EncryptionService } from '../../common/crypto/encryption.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserContextService } from '../intelligence/user-context.service';
 import { AssistantMemoryService } from '../intelligence/assistant-memory.service';
+import { LlmService } from '../../common/llm/llm.service';
+import { LlmError } from '../../common/llm/llm.types';
 
-const SYS_PROMPT = `You are LifeOS AI — a personal assistant for everyday life.
+const SYS_INSTRUCTIONS = `You are LifeOS AI — a personal assistant for everyday life.
 
 Your priorities, in order:
 1. Answer concisely. One short paragraph by default; bullet lists for steps.
@@ -42,9 +41,7 @@ Your priorities, in order:
 
 Length budget: 80 words for casual chat, 200 max for advice with steps.`;
 
-const TIMEOUT_MS = 30_000;
 const MAX_HISTORY_MESSAGES = 24;
-const MAX_TOKENS = 600;
 
 @Injectable()
 export class AssistantService {
@@ -52,17 +49,14 @@ export class AssistantService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly enc: EncryptionService,
-    private readonly config: ConfigService,
     private readonly userCtx: UserContextService,
     private readonly memory: AssistantMemoryService,
+    private readonly llm: LlmService,
   ) {}
 
   // ── Send message (creates conversation if needed, calls LLM, stores) ─────
 
   async send(userId: string, input: SendMessageRequest): Promise<SendMessageResponse> {
-    const key = await this.userKeyOrThrow(userId);
-
     const conversation = input.conversationId
       ? await this.requireConversation(userId, input.conversationId)
       : await this.prisma.aIConversation.create({
@@ -93,7 +87,7 @@ export class AssistantService {
 
     let assistantContent: string;
     try {
-      assistantContent = await this.callLlm(key, history, ctxPrelude);
+      assistantContent = await this.callLlm(userId, history, ctxPrelude, input.content);
     } catch (e) {
       // Roll back: delete the user message we just wrote so the conversation
       // doesn't end with an unanswered turn the next call will misread.
@@ -198,95 +192,82 @@ export class AssistantService {
     return c;
   }
 
-  private async userKeyOrThrow(userId: string): Promise<{ apiKey: string; baseUrl: string; model: string }> {
-    const row = await this.prisma.userAiKey.findUnique({ where: { userId } });
-    if (!row || !row.isActive) {
-      throw new BadRequestException({
-        error: {
-          code: 'ASSISTANT_AI_KEY_MISSING',
-          message: 'Cần API key OpenAI. Vào Cài đặt để thêm.',
-        },
-      });
-    }
-    let apiKey: string;
-    try {
-      apiKey = this.enc.open(row.encryptedApiKey);
-    } catch {
-      throw new BadRequestException({
-        error: {
-          code: 'ASSISTANT_AI_KEY_FAILED',
-          message: 'Không giải mã được API key. Cài lại trong Cài đặt.',
-        },
-      });
-    }
-    return {
-      apiKey,
-      baseUrl: row.baseUrl,
-      model:
-        row.defaultModel ?? this.config.get<string>('OPENAI_DEFAULT_MODEL') ?? 'gpt-4o-mini',
-    };
-  }
-
   private async callLlm(
-    key: { apiKey: string; baseUrl: string; model: string },
+    userId: string,
     history: AIMessage[],
     ctxPrelude: string,
+    latestUserText: string,
   ): Promise<string> {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+    // Compose the conversation into a single Responses-API input. The
+    // streaming path does the same — kept consistent so both surfaces feed
+    // the model the exact same prompt structure.
+    const lines: string[] = [];
+    if (ctxPrelude) {
+      lines.push('Background facts:', ctxPrelude, '');
+    }
+    for (const m of history) {
+      const role = m.role.toLowerCase() === 'assistant' ? 'Assistant' : 'User';
+      lines.push(`${role}: ${m.content}`);
+    }
+    const last = history[history.length - 1];
+    if (!last || last.role !== 'USER' || last.content !== latestUserText) {
+      lines.push(`User: ${latestUserText}`);
+    }
+
     try {
-      const client = new OpenAI({ apiKey: key.apiKey, baseURL: key.baseUrl });
-      const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-        { role: 'system', content: SYS_PROMPT },
-        // Round 18: inject the user context as a second system message so the
-        // assistant can reference profile + behaviour + long-term memories.
-        ...(ctxPrelude ? [{ role: 'system' as const, content: ctxPrelude }] : []),
-        ...history.map((m) => ({
-          role: m.role.toLowerCase() as 'user' | 'assistant' | 'system',
-          content: m.content,
-        })),
-      ];
-      const res = await client.chat.completions.create(
-        {
-          model: key.model,
-          messages,
-          temperature: 0.7,
-          max_tokens: MAX_TOKENS,
-        },
-        { signal: ctrl.signal },
-      );
-      const text = res.choices[0]?.message?.content?.trim();
-      if (!text) throw new Error('empty completion');
-      return text;
-    } catch (e: unknown) {
-      const err = e as { status?: number; name?: string; message?: string };
-      if (err?.name === 'AbortError') {
-        throw new ServiceUnavailableException({
-          error: { code: 'ASSISTANT_TIMEOUT', message: 'OpenAI phản hồi quá lâu.' },
-        });
+      return await this.llm.responsesText({
+        userId,
+        feature: 'assistant-chat',
+        tier: 'smart',
+        instructions: SYS_INSTRUCTIONS,
+        input: lines.join('\n'),
+        temperature: 0.7,
+        maxOutputTokens: 600,
+        timeoutMs: 30_000,
+      });
+    } catch (e) {
+      // Translate LlmError → HTTP envelope so existing clients keep their
+      // error codes (ASSISTANT_AI_KEY_MISSING etc).
+      if (e instanceof LlmError) {
+        const map: Record<string, [() => Error, string]> = {
+          AI_KEY_MISSING: [
+            () => new BadRequestException({
+              error: { code: 'ASSISTANT_AI_KEY_MISSING', message: 'Cần API key OpenAI. Vào Cài đặt để thêm.' },
+            }),
+            '',
+          ],
+          AI_KEY_DECRYPT_FAILED: [
+            () => new BadRequestException({
+              error: { code: 'ASSISTANT_AI_KEY_FAILED', message: 'Không giải mã được API key. Cài lại trong Cài đặt.' },
+            }),
+            '',
+          ],
+          AI_KEY_REJECTED: [
+            () => new BadRequestException({
+              error: { code: 'ASSISTANT_AI_KEY_FAILED', message: 'API key đã bị từ chối. Cài lại trong Cài đặt.' },
+            }),
+            '',
+          ],
+          AI_QUOTA_EXCEEDED: [
+            () => new ServiceUnavailableException({
+              error: { code: 'ASSISTANT_QUOTA_EXCEEDED', message: 'Key đã hết quota hoặc bị rate-limit.' },
+            }),
+            '',
+          ],
+          AI_TIMEOUT: [
+            () => new ServiceUnavailableException({
+              error: { code: 'ASSISTANT_TIMEOUT', message: 'OpenAI phản hồi quá lâu.' },
+            }),
+            '',
+          ],
+        };
+        const entry = map[e.code];
+        if (entry) throw entry[0]();
       }
-      if (err?.status === 401) {
-        throw new BadRequestException({
-          error: {
-            code: 'ASSISTANT_AI_KEY_FAILED',
-            message: 'API key đã bị từ chối. Cài lại trong Cài đặt.',
-          },
-        });
-      }
-      if (err?.status === 429) {
-        throw new ServiceUnavailableException({
-          error: {
-            code: 'ASSISTANT_QUOTA_EXCEEDED',
-            message: 'Key đã hết quota hoặc bị rate-limit.',
-          },
-        });
-      }
-      this.logger.warn(`assistant call failed: status=${err?.status} name=${err?.name}`);
+      this.logger.warn(`assistant call failed: ${(e as Error).message}`);
       throw new ServiceUnavailableException({
         error: { code: 'ASSISTANT_TIMEOUT', message: 'Không kết nối được tới OpenAI.' },
       });
-    } finally {
-      clearTimeout(timer);
     }
   }
 }

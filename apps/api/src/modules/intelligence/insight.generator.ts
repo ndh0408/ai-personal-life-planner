@@ -7,12 +7,10 @@
  * Falls through to the rule-based generator on no-key / failure.
  */
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import OpenAI from 'openai';
-import { PrismaService } from '../../prisma/prisma.service';
-import { EncryptionService } from '../../common/crypto/encryption.service';
 import { UserContextService, type UserContext } from './user-context.service';
 import type { DraftRec } from '../assistant/recommendations.generator';
+import { LlmService } from '../../common/llm/llm.service';
+import { LlmError } from '../../common/llm/llm.types';
 
 const SYS = `You are LifeOS AI's personal insight engine. From the user's full
 context, emit 1-3 ACTIONABLE nudges that are specific to THIS user, RIGHT NOW.
@@ -36,8 +34,6 @@ Output STRICT JSON: { "items": [
 ] }
 0 items if there's nothing useful to say. Quality > quantity.`;
 
-const TIMEOUT_MS = 15_000;
-
 interface LlmInsight {
   type?: string;
   title?: string;
@@ -45,85 +41,86 @@ interface LlmInsight {
   priority?: 'LOW' | 'MEDIUM' | 'HIGH';
 }
 
-const VALID_TYPES = new Set([
-  'SCHEDULE',
-  'TASK',
-  'MEAL',
-  'SLEEP',
-  'MOOD',
-  'FINANCE',
-  'GENERAL',
-]);
+interface InsightOutput {
+  items: LlmInsight[];
+}
+
+const INSIGHT_TYPES = ['SCHEDULE', 'TASK', 'MEAL', 'SLEEP', 'MOOD', 'FINANCE', 'GENERAL'] as const;
+const PRIO_VALUES = ['LOW', 'MEDIUM', 'HIGH'] as const;
+
+const INSIGHT_SCHEMA = {
+  name: 'insights',
+  strict: true,
+  schema: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['items'],
+    properties: {
+      items: {
+        type: 'array',
+        maxItems: 3,
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['type', 'title', 'content', 'priority'],
+          properties: {
+            type: { type: 'string', enum: [...INSIGHT_TYPES] },
+            title: { type: 'string', maxLength: 80 },
+            content: { type: 'string', maxLength: 240 },
+            priority: { type: 'string', enum: [...PRIO_VALUES] },
+          },
+        },
+      },
+    },
+  },
+};
 
 @Injectable()
 export class InsightGenerator {
   private readonly logger = new Logger(InsightGenerator.name);
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly enc: EncryptionService,
-    private readonly config: ConfigService,
     private readonly context: UserContextService,
+    private readonly llm: LlmService,
   ) {}
 
   /**
    * Returns drafts (same shape as the rule generator) when AI is available
-   * and emits something. Returns null when caller should fall through.
+   * and emits something. Returns null when the rule engine should run instead.
    */
   async generate(userId: string): Promise<DraftRec[] | null> {
-    const keyRow = await this.prisma.userAiKey.findUnique({ where: { userId } });
-    if (!keyRow?.isActive) return null;
-    let plain: string;
-    try {
-      plain = this.enc.open(keyRow.encryptedApiKey);
-    } catch {
-      return null;
-    }
-
     const ctx = await this.context.build(userId);
-    const userMsg = packContext(ctx);
-
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+    let parsed: InsightOutput;
     try {
-      const client = new OpenAI({ apiKey: plain, baseURL: keyRow.baseUrl });
-      const model =
-        keyRow.defaultModel ??
-        this.config.get<string>('OPENAI_DEFAULT_MODEL') ??
-        'gpt-4o-mini';
-      const res = await client.chat.completions.create(
-        {
-          model,
-          messages: [
-            { role: 'system', content: SYS },
-            { role: 'user', content: userMsg },
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.5,
-          max_tokens: 600,
-        },
-        { signal: ctrl.signal },
-      );
-      const raw = res.choices[0]?.message?.content;
-      if (!raw) return null;
-      const parsed = JSON.parse(raw) as { items?: LlmInsight[] };
-      if (!Array.isArray(parsed.items)) return null;
-      return parsed.items
-        .filter((i) => i?.title && i?.content && VALID_TYPES.has(i.type ?? ''))
-        .slice(0, 3)
-        .map((i) => ({
-          type: i.type as DraftRec['type'],
-          title: i.title!.slice(0, 80),
-          content: i.content!.slice(0, 240),
-          priority: i.priority ?? 'MEDIUM',
-          evidence: { source: 'AI', model },
-        }));
+      parsed = await this.llm.responsesJson<InsightOutput>({
+        userId,
+        feature: 'insight-generator',
+        tier: 'smart',
+        instructions: SYS,
+        input: packContext(ctx),
+        schema: INSIGHT_SCHEMA,
+        temperature: 0.5,
+        maxOutputTokens: 600,
+        timeoutMs: 15_000,
+      });
     } catch (e) {
-      this.logger.warn(`Insight generation failed for ${userId}: ${(e as Error).message}`);
+      // No-key, schema violation, or timeout — caller falls back to rules.
+      if (e instanceof LlmError) this.logger.debug(`insight ${e.code}`);
+      else this.logger.warn(`insight unexpected: ${(e as Error).message}`);
       return null;
-    } finally {
-      clearTimeout(timer);
     }
+
+    if (!Array.isArray(parsed.items)) return null;
+    return parsed.items
+      .filter((i) => i?.title && i?.content)
+      .slice(0, 3)
+      .map((i) => ({
+        type: i.type as DraftRec['type'],
+        title: i.title!.slice(0, 80),
+        content: i.content!.slice(0, 240),
+        priority: (i.priority ?? 'MEDIUM') as DraftRec['priority'],
+        evidence: { source: 'AI' },
+      }));
   }
 }
 
