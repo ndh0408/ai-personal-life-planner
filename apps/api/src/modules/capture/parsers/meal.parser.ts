@@ -79,7 +79,7 @@ export class MealParser implements RuleParser {
         cost: money?.amount ?? null,
         loggedAtIso,
       },
-      previewText: `🍚 ${title}${money ? ` — ${money.amount.toLocaleString('vi-VN')} ₫` : ''}`,
+      previewText: `${title}${money ? ` — ${money.amount.toLocaleString('vi-VN')} ₫` : ''}`,
     };
   }
 }

@@ -12,7 +12,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { BottomSheet, Button, Chip, Text } from '../ui';
+import { BottomSheet, Button, Chip, Icon, Text } from '../ui';
 import { spacing, colors } from '../../theme';
 import { KindBadge } from './KindBadge';
 import { CaptureFieldEditor, type FieldsState } from './CaptureFieldEditor';
@@ -89,9 +89,10 @@ export function CapturePreviewSheet({ visible, parsed, busy = false, onConfirm, 
         {/* When the parser was unsure, surface the badge so the user knows to
             double-check before saving. */}
         {needsReview ? (
-          <View style={styles.reviewBanner}>
-            <Text variant="caption" style={{ color: colors.status.warning, fontWeight: '700' }}>
-              {t('capture.needsReview') ?? '⚠️ Cần kiểm tra lại trước khi lưu'}
+          <View style={[styles.reviewBanner, { flexDirection: 'row', alignItems: 'center', gap: spacing.sm }]}>
+            <Icon name="alert-circle-outline" size={16} color={colors.status.warning} />
+            <Text variant="caption" style={{ color: colors.status.warning, fontWeight: '700', flex: 1 }}>
+              {t('capture.needsReview', { defaultValue: 'Cần kiểm tra lại trước khi lưu' })}
             </Text>
           </View>
         ) : null}

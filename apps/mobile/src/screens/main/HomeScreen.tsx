@@ -7,6 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   AppScreen,
   Card,
+  Icon,
   InsightCard,
   LoadingState,
   Text,
@@ -262,7 +263,7 @@ function HomeHeader({
             variant="caption"
             style={{ color: aiEnabled ? colors.accent.base : colors.text.muted }}
           >
-            {aiEnabled ? '✨ AI' : t('home.heroNoAi.cta')}
+            {aiEnabled ? 'AI' : t('home.heroNoAi.cta')}
           </Text>
         </View>
       </View>
@@ -309,7 +310,7 @@ function TodayPlanCard({
         <Text variant="bodyEm">{t('home.cards.todayPlanTitle')}</Text>
         {summary.aiGenerated ? (
           <Text variant="caption" style={{ color: colors.accent.base, fontWeight: '700' }}>
-            ✨ AI
+            AI
           </Text>
         ) : null}
       </View>
@@ -439,22 +440,22 @@ function NudgeCard({
           onPress={() => onApply(nudge.id)}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Useful"
-          style={{ padding: 4 }}
+          accessibilityLabel={t('common.useful')}
+          style={{ paddingHorizontal: spacing.md, paddingVertical: 8, minHeight: 44, justifyContent: 'center' }}
         >
           <Text variant="caption" style={{ color: colors.status.success, fontWeight: '700' }}>
-            👍 Useful
+            {t('common.useful')}
           </Text>
         </Pressable>
         <Pressable
           onPress={() => onDismiss(nudge.id)}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Dismiss"
-          style={{ padding: 4 }}
+          accessibilityLabel={t('common.dismiss')}
+          style={{ paddingHorizontal: spacing.md, paddingVertical: 8, minHeight: 44, justifyContent: 'center' }}
         >
           <Text variant="caption" style={{ color: colors.text.muted, fontWeight: '700' }}>
-            ✕ Dismiss
+            {t('common.dismiss')}
           </Text>
         </Pressable>
       </View>
@@ -483,8 +484,8 @@ function MoodSleepCard({
         <View style={{ flexDirection: 'row', gap: spacing.lg, marginTop: spacing.xs }}>
           {summary.lastSleepMinutes != null ? (
             <View>
-              <Text variant="caption">💤</Text>
-              <Text variant="bodyEm">
+              <Icon name="moon-outline" size={16} color={colors.text.muted} />
+              <Text variant="bodyEm" style={{ marginTop: 2 }}>
                 {`${Math.floor(summary.lastSleepMinutes / 60)}h${String(
                   summary.lastSleepMinutes % 60,
                 ).padStart(2, '0')}`}
@@ -496,8 +497,8 @@ function MoodSleepCard({
           ) : null}
           {summary.lastMood ? (
             <View>
-              <Text variant="caption">🎯</Text>
-              <Text variant="bodyEm">{summary.lastMood}</Text>
+              <Icon name="happy-outline" size={16} color={colors.text.muted} />
+              <Text variant="bodyEm" style={{ marginTop: 2 }}>{summary.lastMood}</Text>
               {summary.lastEnergy ? (
                 <Text variant="caption">{summary.lastEnergy}</Text>
               ) : null}

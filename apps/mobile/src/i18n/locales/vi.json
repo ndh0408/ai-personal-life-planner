@@ -17,7 +17,18 @@
     "hideKey": "Ẩn key",
     "empty": "Chưa có gì",
     "errorTitle": "Có lỗi xảy ra",
-    "errorBody": "Thử lại nhé. Nếu vẫn lỗi, kiểm tra kết nối."
+    "errorBody": "Thử lại nhé. Nếu vẫn lỗi, kiểm tra kết nối.",
+    "undo": "Hoàn tác",
+    "useful": "Hữu ích",
+    "dismiss": "Bỏ qua",
+    "now": "Bây giờ",
+    "yesterday": "Hôm qua",
+    "today": "Hôm nay",
+    "minusOneHour": "−1 giờ",
+    "plusOneHour": "+1 giờ",
+    "remove": "Xoá",
+    "edit": "Sửa",
+    "error": "Đã xảy ra lỗi"
   },
   "auth": {
     "loginTitle": "Chào mừng trở lại",
@@ -167,6 +178,23 @@
       "goalsTitle": "Mục tiêu",
       "goalsEmpty": "Chưa đặt — vào Cài đặt để cập nhật."
     },
+    "smartBrief": {
+      "label": "Brief hôm nay",
+      "from": "Từ {{source}}",
+      "sourceAi": "AI",
+      "sourceRule": "Quy tắc",
+      "noBrief": "Hôm nay yên — không có gì cần báo gấp.",
+      "primaryAction": "Mở"
+    },
+    "suggestedCaptures": {
+      "label": "Gợi ý ghi nhanh",
+      "empty": ""
+    },
+    "privacyLimited": {
+      "title": "AI đang bị giới hạn",
+      "body": "Bạn đã ẩn: {{domains}}. Các gợi ý có thể không đầy đủ.",
+      "cta": "Mở quyền riêng tư"
+    },
     "stats": {
       "tasksToday": "Task hôm nay",
       "spendToday": "Chi tiêu hôm nay",
@@ -181,6 +209,8 @@
     "send": "Gửi",
     "parsing": "Đang hiểu…",
     "previewTitle": "Đúng ý bạn chưa?",
+    "needsReview": "Cần kiểm tra lại trước khi lưu",
+    "undone": "Đã hoàn tác",
     "kinds": {
       "EXPENSE": "Chi tiêu",
       "INCOME": "Thu nhập",
@@ -190,14 +220,20 @@
       "MOOD": "Cảm xúc",
       "UNKNOWN": "Chưa rõ"
     },
+    "alternatives": {
+      "title": "Hay là…?",
+      "asKind": "Lưu như {{kind}}"
+    },
     "fields": {
+      "kind": "Loại",
       "title": "Tên",
       "amount": "Số tiền (₫)",
       "category": "Danh mục",
+      "date": "Ngày giờ",
       "mealType": "Bữa",
       "cost": "Số tiền (₫)",
       "priority": "Ưu tiên",
-      "dueAt": "Lúc",
+      "dueAt": "Hạn",
       "durationHours": "Số tiếng",
       "quality": "Chất lượng",
       "mood": "Cảm xúc",
@@ -232,13 +268,34 @@
       "MEDIUM": "Vừa",
       "HIGH": "Cao"
     },
+    "expenseCategories": {
+      "food": "Ăn uống",
+      "transport": "Di chuyển",
+      "bills": "Hóa đơn",
+      "shopping": "Mua sắm",
+      "health": "Sức khoẻ",
+      "learning": "Học tập",
+      "entertainment": "Giải trí",
+      "family": "Gia đình",
+      "other": "Khác"
+    },
+    "incomeCategories": {
+      "salary": "Lương",
+      "bonus": "Thưởng",
+      "freelance": "Freelance",
+      "gift": "Quà",
+      "refund": "Hoàn tiền",
+      "investment": "Đầu tư",
+      "other": "Khác"
+    },
     "confirm": "Xác nhận",
     "discard": "Huỷ",
     "saved": "Đã lưu",
     "errors": {
       "network": "Không gửi được. Thử lại nhé.",
       "AI_KEY_MISSING": "Cần API key AI để hiểu câu phức tạp. Vào Cài đặt để thêm.",
-      "unknown": "Chưa hiểu — gõ rõ hơn hoặc thử lại."
+      "unknown": "Chưa hiểu — gõ rõ hơn hoặc thử lại.",
+      "undoFailed": "Hoàn tác thất bại"
     }
   },
   "today": {
@@ -252,11 +309,63 @@
     "title": "Trợ lý",
     "empty": "Hỏi mình bất kỳ điều gì.",
     "inputPlaceholder": "Hỏi gì đó…",
+    "stop": "Dừng",
+    "regenerate": "Hỏi lại",
+    "stages": {
+      "reading_snapshot": "Đang đọc dữ liệu hôm nay…",
+      "calling_llm": "Đang suy nghĩ…",
+      "summarising": "Đang tổng hợp…"
+    },
+    "actions": {
+      "OPEN_SMART_ENTRY": "Lưu vào sổ",
+      "GENERATE_TODAY_PLAN": "Lập kế hoạch hôm nay",
+      "REFRESH_RECOMMENDATIONS": "Cập nhật gợi ý",
+      "OPEN_SCREEN": "Mở màn hình"
+    },
     "errors": {
       "network": "Không gửi được tin. Kiểm tra mạng rồi thử lại.",
       "AI_KEY_MISSING": "Cần API key AI để chat. Vào Cài đặt để thêm.",
       "RATE_LIMITED": "Bạn gửi quá nhanh. Đợi một chút rồi thử lại.",
       "unknown": "AI không trả lời được. Thử lại sau nhé."
+    }
+  },
+  "privacy": {
+    "title": "Quyền riêng tư",
+    "intro": "Tắt một mục để dữ liệu của mục đó không được dùng cho AI. Dữ liệu vẫn được giữ trên thiết bị + máy chủ — chỉ là không gửi cho mô hình.",
+    "savedToast": "Đã cập nhật quyền riêng tư",
+    "personalization": {
+      "title": "Cá nhân hoá",
+      "body": "Tổng công tắc. Tắt sẽ làm trợ lý không tham chiếu hồ sơ + hành vi của bạn."
+    },
+    "finance": {
+      "title": "Tài chính",
+      "body": "Chi tiêu, thu nhập, ví, ngân sách."
+    },
+    "health": {
+      "title": "Giấc ngủ + tâm trạng",
+      "body": "Sleep log, mood log, năng lượng."
+    },
+    "meals": {
+      "title": "Bữa ăn",
+      "body": "Lịch sử món + giờ ăn."
+    },
+    "tasks": {
+      "title": "Công việc",
+      "body": "Task list, độ ưu tiên, hạn hoàn thành."
+    },
+    "memory": {
+      "title": "Ký ức trợ lý",
+      "body": "Trợ lý học các sự kiện bạn kể trong chat. Tắt sẽ ngừng ghi mới."
+    },
+    "proactive": {
+      "title": "Gợi ý chủ động",
+      "body": "Trợ lý đề xuất hành động tiếp theo trên Home."
+    },
+    "limited": {
+      "finance": "ẩn tài chính",
+      "health": "ẩn sức khoẻ",
+      "meals": "ẩn bữa ăn",
+      "tasks": "ẩn công việc"
     }
   },
   "smart": {
@@ -272,6 +381,14 @@
     "unknownBody": "Gõ rõ hơn nhé. Ví dụ thêm số tiền, hoặc thêm động từ (ăn / mua / nhận lương / ngủ).",
     "sourceRule": "Luật cứng",
     "sourceAi": "AI",
+    "modeTitle": {
+      "EXPENSE": "Ghi chi tiêu",
+      "INCOME": "Ghi thu nhập",
+      "TASK": "Thêm việc cần làm",
+      "MEAL": "Ghi bữa ăn",
+      "SLEEP": "Ghi giấc ngủ",
+      "MOOD": "Ghi tâm trạng"
+    },
     "kindLabels": {
       "EXPENSE": "Chi tiêu",
       "INCOME": "Thu nhập",
@@ -459,6 +576,7 @@
     "preferences": "Tuỳ chọn",
     "preferencesEntry": "Hiểu bạn hơn",
     "memoryEntry": "Trí nhớ AI",
+    "privacyEntry": "Quyền riêng tư",
     "language": "Ngôn ngữ",
     "languageVi": "Tiếng Việt",
     "languageEn": "English",
@@ -474,6 +592,7 @@
     "buildHint": "Bấm 7 lần để mở Developer",
     "developer": {
       "title": "Developer",
+      "env": "Môi trường",
       "apiBaseUrl": "API base URL",
       "appVersion": "App version",
       "rnVersion": "RN version",
@@ -482,6 +601,8 @@
       "tokens": "Tokens",
       "tokensPresent": "Đã có",
       "tokensMissing": "Chưa có",
+      "lastParse": "Lần parse gần nhất",
+      "lastError": "Lỗi gần nhất",
       "close": "Đóng"
     }
   },

@@ -330,10 +330,14 @@ function PreviewEditor({
             borderWidth: 1,
             borderRadius: 10,
             padding: spacing.sm,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing.sm,
           }}
         >
-          <Text variant="caption" style={{ color: colors.status.warning, fontWeight: '700' }}>
-            {t('capture.needsReview', { defaultValue: '⚠️ Cần kiểm tra lại trước khi lưu' })}
+          <Icon name="alert-circle-outline" size={16} color={colors.status.warning} />
+          <Text variant="caption" style={{ color: colors.status.warning, fontWeight: '700', flex: 1 }}>
+            {t('capture.needsReview', { defaultValue: 'Cần kiểm tra lại trước khi lưu' })}
           </Text>
         </View>
       ) : null}

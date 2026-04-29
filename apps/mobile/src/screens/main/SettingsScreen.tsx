@@ -206,7 +206,7 @@ function DevPanel({ onClose, userId }: { onClose: () => void; userId: string }) 
 
   const lastParseLine = lastParse
     ? `${lastParse.kind} · ${lastParse.source} · ${(lastParse.confidence * 100).toFixed(0)}%${
-        lastParse.needsReview ? ' · ⚠️' : ''
+        lastParse.needsReview ? ' · review' : ''
       }`
     : '—';
   const lastErrorLine = lastApiError

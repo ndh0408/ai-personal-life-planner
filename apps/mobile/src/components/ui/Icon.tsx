@@ -52,7 +52,23 @@ export type IconName =
   | 'mic-outline'
   | 'send'
   | 'chatbubbles-outline'
-  | 'pricetag-outline';
+  | 'pricetag-outline'
+  // Round 31 — alerts, navigation, AI
+  | 'alert-circle-outline'
+  | 'warning-outline'
+  | 'information-circle-outline'
+  | 'help-circle-outline'
+  | 'lock-closed-outline'
+  | 'eye-off'
+  | 'refresh-outline'
+  | 'open-outline'
+  | 'play-outline'
+  | 'stop-outline'
+  | 'thumbs-up-outline'
+  | 'thumbs-down-outline'
+  | 'arrow-forward-outline'
+  | 'bookmark-outline'
+  | 'bulb-outline';
 
 interface Props {
   name: IconName;

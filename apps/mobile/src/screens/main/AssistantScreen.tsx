@@ -8,6 +8,7 @@ import {
   Card,
   EmptyState,
   ErrorState,
+  Icon,
   LoadingState,
   Text,
   useToast,
@@ -188,9 +189,16 @@ export function AssistantScreen() {
         {/* Regenerate button when the last turn finished and we have a
             seed prompt to retry. Hidden during active streams. */}
         {!stream.isStreaming && lastUserTextRef.current && !stream.error ? (
-          <Pressable onPress={handleRegenerate} style={styles.regenerateBtn} hitSlop={8}>
+          <Pressable
+            onPress={handleRegenerate}
+            style={[styles.regenerateBtn, { flexDirection: 'row', alignItems: 'center', gap: 6 }]}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('assistant.regenerate', { defaultValue: 'Hỏi lại' })}
+          >
+            <Icon name="refresh-outline" size={14} color={colors.accent.base} />
             <Text variant="caption" style={{ color: colors.accent.base }}>
-              ↻ {t('assistant.regenerate', { defaultValue: 'Hỏi lại' })}
+              {t('assistant.regenerate', { defaultValue: 'Hỏi lại' })}
             </Text>
           </Pressable>
         ) : null}
@@ -206,13 +214,16 @@ function StreamControls({ onStop, compact }: { onStop: () => void; compact?: boo
       onPress={onStop}
       hitSlop={8}
       accessibilityRole="button"
+      accessibilityLabel={t('assistant.stop', { defaultValue: 'Dừng' })}
       style={[
         styles.stopBtn,
+        { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36 },
         compact ? { paddingHorizontal: spacing.sm, marginTop: 4 } : { marginTop: spacing.xs },
       ]}
     >
+      <Icon name="stop-outline" size={14} color={colors.status.danger} />
       <Text variant="caption" style={{ color: colors.status.danger, fontWeight: '700' }}>
-        ■ {t('assistant.stop', { defaultValue: 'Dừng' })}
+        {t('assistant.stop', { defaultValue: 'Dừng' })}
       </Text>
     </Pressable>
   );

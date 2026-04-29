@@ -17,7 +17,18 @@
     "hideKey": "Hide key",
     "empty": "Nothing here yet",
     "errorTitle": "Something went wrong",
-    "errorBody": "Try again. If it keeps failing, check your connection."
+    "errorBody": "Try again. If it keeps failing, check your connection.",
+    "undo": "Undo",
+    "useful": "Useful",
+    "dismiss": "Dismiss",
+    "now": "Now",
+    "yesterday": "Yesterday",
+    "today": "Today",
+    "minusOneHour": "−1h",
+    "plusOneHour": "+1h",
+    "remove": "Remove",
+    "edit": "Edit",
+    "error": "Something went wrong"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -167,6 +178,23 @@
       "goalsTitle": "Goals",
       "goalsEmpty": "Not set — update in Settings."
     },
+    "smartBrief": {
+      "label": "Today's brief",
+      "from": "From {{source}}",
+      "sourceAi": "AI",
+      "sourceRule": "Rules",
+      "noBrief": "Quiet today — nothing urgent.",
+      "primaryAction": "Open"
+    },
+    "suggestedCaptures": {
+      "label": "Quick log suggestions",
+      "empty": ""
+    },
+    "privacyLimited": {
+      "title": "AI is partial",
+      "body": "You've hidden: {{domains}}. Suggestions may be incomplete.",
+      "cta": "Open privacy"
+    },
     "stats": {
       "tasksToday": "Tasks today",
       "spendToday": "Spend today",
@@ -181,6 +209,8 @@
     "send": "Send",
     "parsing": "Parsing…",
     "previewTitle": "Looks right?",
+    "needsReview": "Worth a second look before saving",
+    "undone": "Undone",
     "kinds": {
       "EXPENSE": "Expense",
       "INCOME": "Income",
@@ -190,14 +220,20 @@
       "MOOD": "Mood",
       "UNKNOWN": "Not sure"
     },
+    "alternatives": {
+      "title": "Or maybe…?",
+      "asKind": "Save as {{kind}}"
+    },
     "fields": {
+      "kind": "Kind",
       "title": "Title",
       "amount": "Amount (₫)",
       "category": "Category",
+      "date": "Date / time",
       "mealType": "Meal",
       "cost": "Cost (₫)",
       "priority": "Priority",
-      "dueAt": "When",
+      "dueAt": "Due",
       "durationHours": "Hours",
       "quality": "Quality",
       "mood": "Mood",
@@ -232,20 +268,42 @@
       "MEDIUM": "Medium",
       "HIGH": "High"
     },
+    "expenseCategories": {
+      "food": "Food",
+      "transport": "Transport",
+      "bills": "Bills",
+      "shopping": "Shopping",
+      "health": "Health",
+      "learning": "Learning",
+      "entertainment": "Entertainment",
+      "family": "Family",
+      "other": "Other"
+    },
+    "incomeCategories": {
+      "salary": "Salary",
+      "bonus": "Bonus",
+      "freelance": "Freelance",
+      "gift": "Gift",
+      "refund": "Refund",
+      "investment": "Investment",
+      "other": "Other"
+    },
     "confirm": "Confirm",
     "discard": "Discard",
     "saved": "Saved",
     "errors": {
       "network": "Couldn't send. Try again.",
       "AI_KEY_MISSING": "Need an AI key to understand complex sentences. Add one in Settings.",
-      "unknown": "Didn't catch that — be more specific or try again."
+      "unknown": "Didn't catch that — be more specific or try again.",
+      "undoFailed": "Undo failed"
     }
   },
   "today": {
     "title": "Today's schedule",
     "empty": "Nothing scheduled. Quick Capture to add.",
     "openTasks": "Open list",
-    "openMeals": "Meal log"
+    "openMeals": "Meal log",
+    "regeneratePlan": "Regenerate plan"
   },
   "smart": {
     "kicker": "Add anything",
@@ -260,6 +318,14 @@
     "unknownBody": "Try again with more detail — add an amount, or a verb (ate / bought / received salary / slept).",
     "sourceRule": "Rule",
     "sourceAi": "AI",
+    "modeTitle": {
+      "EXPENSE": "Log an expense",
+      "INCOME": "Log income",
+      "TASK": "Add a task",
+      "MEAL": "Log a meal",
+      "SLEEP": "Log sleep",
+      "MOOD": "Log mood"
+    },
     "kindLabels": {
       "EXPENSE": "Expense",
       "INCOME": "Income",
@@ -402,11 +468,63 @@
     "title": "Assistant",
     "empty": "Ask me anything.",
     "inputPlaceholder": "Ask something…",
+    "stop": "Stop",
+    "regenerate": "Ask again",
+    "stages": {
+      "reading_snapshot": "Reading your day…",
+      "calling_llm": "Thinking…",
+      "summarising": "Summarising…"
+    },
+    "actions": {
+      "OPEN_SMART_ENTRY": "Save it",
+      "GENERATE_TODAY_PLAN": "Plan today",
+      "REFRESH_RECOMMENDATIONS": "Refresh suggestions",
+      "OPEN_SCREEN": "Open screen"
+    },
     "errors": {
       "network": "Message didn't go through. Check your connection.",
       "AI_KEY_MISSING": "Add an AI key in Settings to chat.",
       "RATE_LIMITED": "You're sending too fast. Wait a moment.",
       "unknown": "AI didn't reply. Try again later."
+    }
+  },
+  "privacy": {
+    "title": "Privacy",
+    "intro": "Disabling a domain stops it from being sent to the AI. Data stays on your device + server — it just isn't shared with the model.",
+    "savedToast": "Privacy updated",
+    "personalization": {
+      "title": "Personalization",
+      "body": "Master switch. When off the assistant won't reference your profile or behaviour."
+    },
+    "finance": {
+      "title": "Finance",
+      "body": "Expenses, incomes, wallets, budget."
+    },
+    "health": {
+      "title": "Sleep + mood",
+      "body": "Sleep log, mood log, energy."
+    },
+    "meals": {
+      "title": "Meals",
+      "body": "Meal history + timing."
+    },
+    "tasks": {
+      "title": "Tasks",
+      "body": "Task list, priorities, due dates."
+    },
+    "memory": {
+      "title": "Assistant memory",
+      "body": "Assistant learns durable facts from chats. Off pauses new entries."
+    },
+    "proactive": {
+      "title": "Proactive suggestions",
+      "body": "Assistant proposes next actions on Home."
+    },
+    "limited": {
+      "finance": "finance hidden",
+      "health": "health hidden",
+      "meals": "meals hidden",
+      "tasks": "tasks hidden"
     }
   },
   "preferences": {
@@ -458,6 +576,7 @@
     "preferences": "Preferences",
     "preferencesEntry": "Personal preferences",
     "memoryEntry": "AI memory",
+    "privacyEntry": "Privacy",
     "language": "Language",
     "languageVi": "Tiếng Việt",
     "languageEn": "English",
@@ -473,6 +592,7 @@
     "buildHint": "Tap 7 times to open Developer",
     "developer": {
       "title": "Developer",
+      "env": "Environment",
       "apiBaseUrl": "API base URL",
       "appVersion": "App version",
       "rnVersion": "RN version",
@@ -481,6 +601,8 @@
       "tokens": "Tokens",
       "tokensPresent": "Present",
       "tokensMissing": "None",
+      "lastParse": "Last parse",
+      "lastError": "Last error",
       "close": "Close"
     }
   },

@@ -99,10 +99,9 @@ export function SmartNudges({
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={t('nudges.dismiss')}
+              style={{ padding: 8, minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center' }}
             >
-              <Text variant="caption" style={{ color: colors.text.muted, fontWeight: '700' }}>
-                ✕
-              </Text>
+              <Icon name="close" size={18} color={colors.text.muted} />
             </Pressable>
           </View>
           <Text variant="caption" style={{ marginTop: 4 }}>

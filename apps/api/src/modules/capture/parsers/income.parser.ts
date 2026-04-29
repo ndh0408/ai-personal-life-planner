@@ -88,7 +88,7 @@ export class IncomeParser implements RuleParser {
         category,
         incomeDateIso,
       },
-      previewText: `💰 ${title} — +${formatVnd(money.amount)}`,
+      previewText: `${title} — +${formatVnd(money.amount)}`,
     };
   }
 }

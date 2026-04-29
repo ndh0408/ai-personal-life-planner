@@ -66,7 +66,7 @@ export function TodayScreen({ navigation }: Props) {
               }}
             >
               <Text variant="caption" style={{ color: '#C97B4A', fontWeight: '700' }}>
-                ✨ AI
+                AI
               </Text>
               <Text variant="caption">— Lên kế hoạch theo dữ liệu của bạn</Text>
             </View>
@@ -101,7 +101,7 @@ export function TodayScreen({ navigation }: Props) {
         <View style={{ marginBottom: spacing['2xl'], gap: spacing.md }}>
           <EmptyState title={t('today.empty')} />
           <Button
-            label={gen.isPending ? t('common.loading') : '✨ ' + t('common.next')}
+            label={gen.isPending ? t('common.loading') : t('common.next')}
             onPress={() => gen.mutate()}
             disabled={gen.isPending}
             loading={gen.isPending}

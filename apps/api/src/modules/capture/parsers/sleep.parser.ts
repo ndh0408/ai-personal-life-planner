@@ -104,7 +104,7 @@ export class SleepParser implements RuleParser {
           durationMinutes,
           quality,
         },
-        previewText: `💤 ${pad(sleepHour)}:${pad(sleepMin)} → ${pad(wakeHour)}:${pad(wakeMin)} (${hours}h)`,
+        previewText: `${pad(sleepHour)}:${pad(sleepMin)} → ${pad(wakeHour)}:${pad(wakeMin)} (${hours}h)`,
       };
     }
 
@@ -129,7 +129,7 @@ export class SleepParser implements RuleParser {
       source: 'RULE',
       confidence: 0.9,
       fields: { sleepAtIso, wakeAtIso, durationMinutes, quality },
-      previewText: `💤 ${hours} tiếng${quality ? ` (${quality === 'GOOD' ? 'ngon' : 'tệ'})` : ''}`,
+      previewText: `${hours} tiếng${quality ? ` (${quality === 'GOOD' ? 'ngon' : 'tệ'})` : ''}`,
     };
   }
 }

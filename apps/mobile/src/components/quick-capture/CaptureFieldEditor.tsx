@@ -273,9 +273,18 @@ function DateTimeField({
         <Chip label="Hôm qua" tone="accent" onPress={() => setOffsetMs(-24 * 60 * 60_000)} />
         <Chip label="+1h" tone="accent" onPress={() => setOffsetMs(60 * 60_000)} />
         {allowClear ? (
-          <Pressable onPress={() => onChange(null)} hitSlop={8} accessibilityRole="button">
-            <Text variant="caption" style={{ color: colors.text.muted, padding: 6 }}>
-              ✕ Xoá
+          <Pressable
+            onPress={() => onChange(null)}
+            hitSlop={8}
+            accessibilityRole="button"
+            style={{ paddingHorizontal: spacing.md, paddingVertical: 8, minHeight: 44, justifyContent: 'center' }}
+          >
+            <Text variant="caption" style={{ color: colors.text.muted }}>
+              {/* keep label only — no leading glyph */}
+              {/* i18n provided via parent; component is generic so we
+                  hardcode Vietnamese-first label that matches the rest of
+                  this surface */}
+              Xoá
             </Text>
           </Pressable>
         ) : null}

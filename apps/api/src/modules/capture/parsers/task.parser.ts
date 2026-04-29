@@ -46,7 +46,7 @@ export class TaskParser implements RuleParser {
       source: 'RULE',
       confidence,
       fields: { title, dueAtIso, priority },
-      previewText: `✓ ${title}${dueAtIso ? ` — ${formatLocalTime(dueAtIso, ctx.tz)}` : ''}`,
+      previewText: `${title}${dueAtIso ? ` — ${formatLocalTime(dueAtIso, ctx.tz)}` : ''}`,
     };
   }
 }
