@@ -4,6 +4,7 @@ import {
   type CaptureConfirmRequest,
   type CaptureConfirmResponse,
   type CaptureParseResponse,
+  type CaptureUndoResponse,
 } from '../services/api/capture.service';
 
 export function useCaptureParse() {
@@ -15,5 +16,11 @@ export function useCaptureParse() {
 export function useCaptureConfirm() {
   return useMutation<CaptureConfirmResponse, unknown, CaptureConfirmRequest>({
     mutationFn: (input) => captureService.confirm(input),
+  });
+}
+
+export function useCaptureUndo() {
+  return useMutation<CaptureUndoResponse, unknown, { quickCaptureId: string; reason?: string }>({
+    mutationFn: ({ quickCaptureId, reason }) => captureService.undo(quickCaptureId, reason),
   });
 }

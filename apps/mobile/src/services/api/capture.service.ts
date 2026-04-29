@@ -51,11 +51,24 @@ function deviceTz(): string {
   }
 }
 
+export interface CaptureUndoResponse {
+  quickCaptureId: string;
+  reversedEntityType: string;
+  reversedEntityId: string;
+}
+
 export const captureService = {
   parse(text: string, tz: string = deviceTz()) {
     return apiClient.request<CaptureParseResponse>('POST', '/capture/parse', { text, tz });
   },
   confirm(input: CaptureConfirmRequest) {
     return apiClient.request<CaptureConfirmResponse>('POST', '/capture/confirm', input);
+  },
+  undo(quickCaptureId: string, reason?: string) {
+    return apiClient.request<CaptureUndoResponse>(
+      'POST',
+      `/capture/${encodeURIComponent(quickCaptureId)}/undo`,
+      { reason },
+    );
   },
 };

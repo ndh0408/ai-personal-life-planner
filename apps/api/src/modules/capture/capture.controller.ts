@@ -1,4 +1,4 @@
-import { Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
@@ -7,6 +7,7 @@ import {
 } from '../../common/decorators/current-user.decorator';
 import { CaptureService } from './capture.service';
 import { ConfirmService } from './confirm.service';
+import { UndoService } from './undo.service';
 import {
   ConfirmBody,
   ParseBody,
@@ -21,6 +22,7 @@ export class CaptureController {
   constructor(
     private readonly capture: CaptureService,
     private readonly confirm: ConfirmService,
+    private readonly undoSvc: UndoService,
   ) {}
 
   @Throttle({ default: { ttl: 60_000, limit: 30 } })
@@ -38,5 +40,16 @@ export class CaptureController {
     @ConfirmBody() body: CaptureConfirmRequest,
   ) {
     return this.confirm.confirm(user.id, body);
+  }
+
+  @Throttle({ default: { ttl: 60_000, limit: 30 } })
+  @Post(':quickCaptureId/undo')
+  @HttpCode(HttpStatus.OK)
+  undo(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('quickCaptureId') quickCaptureId: string,
+    @Body() body: { reason?: string } = {},
+  ) {
+    return this.undoSvc.undo(user.id, quickCaptureId, body.reason);
   }
 }

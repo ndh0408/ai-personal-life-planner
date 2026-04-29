@@ -25,7 +25,7 @@ import { CapturePreviewSheet } from '../../components/quick-capture/CapturePrevi
 import { HomeHero } from '../../components/home/HomeHero';
 import { QuickActionsRow } from '../../components/home/QuickActionsRow';
 import { SmartNudges } from '../../components/home/SmartNudges';
-import type { CaptureParseResponse } from '../../services/api/capture.service';
+import { captureService, type CaptureParseResponse } from '../../services/api/capture.service';
 import { formatMoney } from '../../utils/format';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
 
@@ -71,12 +71,33 @@ export function HomeScreen({ navigation }: Props) {
     // audit row (powers "what did I capture today" later).
     const enriched = lastRawText ? { ...req, rawText: lastRawText } : req;
     confirm.mutate(enriched, {
-      onSuccess: () => {
+      onSuccess: (res) => {
         setSheetOpen(false);
         setParsed(null);
-        toast.show(t('capture.saved'), 'success');
         invalidateFeed();
         void summary.refetch();
+        if (res.quickCaptureId) {
+          toast.showWithAction(t('capture.saved'), {
+            tone: 'success',
+            action: {
+              label: t('common.undo', { defaultValue: 'Hoàn tác' }),
+              onPress: () => {
+                captureService
+                  .undo(res.quickCaptureId!)
+                  .then(() => {
+                    invalidateFeed();
+                    void summary.refetch();
+                    toast.show(t('capture.undone', { defaultValue: 'Đã hoàn tác' }), 'info');
+                  })
+                  .catch(() =>
+                    toast.show(t('capture.errors.undoFailed', { defaultValue: 'Hoàn tác thất bại' }), 'danger'),
+                  );
+              },
+            },
+          });
+        } else {
+          toast.show(t('capture.saved'), 'success');
+        }
       },
       onError: () => toast.show(t('capture.errors.network'), 'danger'),
     });

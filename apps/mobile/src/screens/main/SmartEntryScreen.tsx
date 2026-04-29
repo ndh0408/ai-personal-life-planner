@@ -147,16 +147,39 @@ export function SmartEntryScreen({ navigation, route }: Props) {
       });
     },
     onSuccess: (res) => {
-      toast.show(t(`smart.savedKinds.${res.kind}`), 'success');
-      qc.invalidateQueries({ queryKey: ['expenses'] });
-      qc.invalidateQueries({ queryKey: ['incomes'] });
-      qc.invalidateQueries({ queryKey: ['finance'] });
-      qc.invalidateQueries({ queryKey: ['tasks'] });
-      qc.invalidateQueries({ queryKey: ['meals'] });
-      qc.invalidateQueries({ queryKey: ['sleep'] });
-      qc.invalidateQueries({ queryKey: ['mood'] });
-      qc.invalidateQueries({ queryKey: ['dashboard'] });
-      qc.invalidateQueries({ queryKey: ['wallets'] });
+      const invalidate = () => {
+        qc.invalidateQueries({ queryKey: ['expenses'] });
+        qc.invalidateQueries({ queryKey: ['incomes'] });
+        qc.invalidateQueries({ queryKey: ['finance'] });
+        qc.invalidateQueries({ queryKey: ['tasks'] });
+        qc.invalidateQueries({ queryKey: ['meals'] });
+        qc.invalidateQueries({ queryKey: ['sleep'] });
+        qc.invalidateQueries({ queryKey: ['mood'] });
+        qc.invalidateQueries({ queryKey: ['dashboard'] });
+        qc.invalidateQueries({ queryKey: ['wallets'] });
+      };
+      invalidate();
+      // Snackbar with an undo button — the server gives us a 60 s window.
+      // The action runs the reverse and re-invalidates the same query keys.
+      if (res.quickCaptureId) {
+        toast.showWithAction(t(`smart.savedKinds.${res.kind}`), {
+          tone: 'success',
+          action: {
+            label: t('common.undo', { defaultValue: 'Hoàn tác' }),
+            onPress: () => {
+              captureService
+                .undo(res.quickCaptureId!)
+                .then(() => {
+                  invalidate();
+                  toast.show(t('capture.undone', { defaultValue: 'Đã hoàn tác' }), 'info');
+                })
+                .catch(() => toast.show(t('capture.errors.undoFailed', { defaultValue: 'Hoàn tác thất bại' }), 'danger'));
+            },
+          },
+        });
+      } else {
+        toast.show(t(`smart.savedKinds.${res.kind}`), 'success');
+      }
       navigation.goBack();
     },
     onError: (e) => toast.show((e as Error).message, 'danger'),
