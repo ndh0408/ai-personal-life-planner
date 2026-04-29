@@ -610,17 +610,22 @@ model AIMessage {
 }
 
 model AIRecommendation {
-  id        String                   @id @default(cuid())
-  userId    String
-  type      AiRecommendationType
-  title     String
-  content   String
-  priority  AiRecommendationPriority @default(MEDIUM)
-  status    AiRecommendationStatus   @default(NEW)
+  id          String                   @id @default(cuid())
+  userId      String
+  type        AiRecommendationType
+  title       String
+  content     String
+  priority    AiRecommendationPriority @default(MEDIUM)
+  status      AiRecommendationStatus   @default(NEW)
   // Free-form: the rows / aggregates the LLM looked at when generating this.
-  evidence  Json?
-  createdAt DateTime                 @default(now())
-  updatedAt DateTime                 @updatedAt
+  evidence    Json?
+  /// Round 37: short one-line "Why this?" rationale shown in the UI sheet.
+  /// Up to 240 chars, plain text. Distinct from `content` which is the
+  /// nudge body — `explainText` is the meta-explanation of *why* the
+  /// nudge surfaced ("Bạn ngủ < 6h ba đêm liên tiếp").
+  explainText String?
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

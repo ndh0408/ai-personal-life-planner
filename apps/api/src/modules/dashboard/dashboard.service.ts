@@ -72,7 +72,17 @@ export class DashboardService {
           status: { in: [AiRecommendationStatus.NEW, AiRecommendationStatus.VIEWED] },
         },
         orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
-        select: { id: true, type: true, title: true, content: true, priority: true },
+        // Round 37: include the rationale fields so Home can render the
+        // "Why this?" sheet without a second round-trip.
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          content: true,
+          priority: true,
+          explainText: true,
+          evidence: true,
+        },
       }),
       this.prisma.sleepLog.findFirst({
         where: { userId },
@@ -113,6 +123,20 @@ export class DashboardService {
     const suggestedCaptures = this.smartBrief.suggestCaptures(briefInput);
     const privacyLimitedDomains = this.smartBrief.privacyLimitedDomains(ctx);
 
+    // Round 37: adaptive Home card ordering. Each card gets a score based
+    // on recency-of-need; the highest-scoring card surfaces first. Stable
+    // within the snapshot's 60 s TTL (UserContextService caches the
+    // upstream signals) so the UI doesn't shuffle on a refresh.
+    const homeOrder = this.computeHomeOrder({
+      monthSpend: ctx.monthSpendVnd,
+      budgetMonthly: briefInput.budgetMonthly,
+      overdueTasks: ctx.openHighPriorityTaskCount ?? 0,
+      lastSleepMinutes: ctx.lastSleepMinutes,
+      lastMood: ctx.lastMood,
+      todayPlanRemaining: Math.max(0, totalItems - doneItems),
+      privacyLimited: privacyLimitedDomains,
+    });
+
     return {
       aiEnabled: !!aiKey?.isActive,
       todayPlan: {
@@ -142,6 +166,8 @@ export class DashboardService {
             title: topRec.title,
             content: topRec.content,
             priority: topRec.priority,
+            explainText: topRec.explainText ?? null,
+            evidence: liftEvidenceItems(topRec.evidence),
           }
         : null,
       moodSleep: {
@@ -154,6 +180,101 @@ export class DashboardService {
       smartBrief,
       suggestedCaptures,
       privacyLimitedDomains,
+      homeOrder,
     };
   }
+
+  /**
+   * Score-and-order the Home cards. Highest-scoring card surfaces first.
+   * Cards belonging to a privacy-hidden domain are dropped — UI handles
+   * the absence by showing the privacy banner.
+   */
+  private computeHomeOrder(args: {
+    monthSpend: number | null;
+    budgetMonthly: number | null;
+    overdueTasks: number;
+    lastSleepMinutes: number | null;
+    lastMood: string | null;
+    todayPlanRemaining: number;
+    privacyLimited: Array<'finance' | 'health' | 'meals' | 'tasks'>;
+  }): Array<'plan' | 'money' | 'task' | 'health' | 'mood' | 'meal'> {
+    const scores: Record<'plan' | 'money' | 'task' | 'health' | 'mood' | 'meal', number> = {
+      plan: 10, // baseline — Today plan is always reasonably useful
+      money: 5,
+      task: 5,
+      health: 5,
+      mood: 3,
+      meal: 2,
+    };
+
+    // Money — over budget bumps it to the top.
+    if (args.budgetMonthly && args.monthSpend != null && args.budgetMonthly > 0) {
+      const ratio = args.monthSpend / args.budgetMonthly;
+      if (ratio >= 1) scores.money += 30;
+      else if (ratio >= 0.85) scores.money += 15;
+      else if (ratio >= 0.7) scores.money += 5;
+    }
+
+    // Tasks — overdue counts pile on weight quickly.
+    if (args.overdueTasks >= 3) scores.task += 25;
+    else if (args.overdueTasks >= 1) scores.task += 10;
+
+    // Plan — if there's a plan and remaining items, plan stays salient.
+    if (args.todayPlanRemaining > 0) scores.plan += 5;
+
+    // Sleep — < 6h last night promotes the health card.
+    if (args.lastSleepMinutes != null) {
+      if (args.lastSleepMinutes < 5 * 60) scores.health += 25;
+      else if (args.lastSleepMinutes < 6 * 60) scores.health += 12;
+      else if (args.lastSleepMinutes < 7 * 60) scores.health += 4;
+    }
+
+    // Mood — TIRED / STRESSED / SAD bumps mood to the front of the row.
+    if (args.lastMood === 'TIRED' || args.lastMood === 'STRESSED' || args.lastMood === 'SAD') {
+      scores.mood += 15;
+    }
+
+    // Apply privacy filter — drop hidden domains.
+    const hiddenFinance = args.privacyLimited.includes('finance');
+    const hiddenHealth = args.privacyLimited.includes('health');
+    const hiddenMeals = args.privacyLimited.includes('meals');
+    const hiddenTasks = args.privacyLimited.includes('tasks');
+
+    type Card = 'plan' | 'money' | 'task' | 'health' | 'mood' | 'meal';
+    const all: Card[] = ['plan', 'money', 'task', 'health', 'mood', 'meal'];
+    const visible = all.filter((c) => {
+      if (c === 'money' && hiddenFinance) return false;
+      if ((c === 'health' || c === 'mood') && hiddenHealth) return false;
+      if (c === 'meal' && hiddenMeals) return false;
+      if (c === 'task' && hiddenTasks) return false;
+      return true;
+    });
+
+    return visible.sort((a, b) => scores[b] - scores[a]);
+  }
+}
+
+/**
+ * Pull the structured evidence items out of the recommendation's free-form
+ * JSON. Returns undefined when not present so the wire response stays
+ * compact.
+ */
+function liftEvidenceItems(
+  raw: unknown,
+):
+  | Array<{ label: string; value: string; source?: 'MANUAL' | 'DEVICE' | 'INFERRED' | 'COMPUTED' }>
+  | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const items = (raw as { items?: unknown }).items;
+  if (!Array.isArray(items)) return undefined;
+  return items
+    .filter(
+      (i): i is { label: string; value: string; source?: string } =>
+        !!i && typeof i === 'object' && typeof (i as { label?: unknown }).label === 'string',
+    )
+    .map((i) => ({
+      label: i.label,
+      value: i.value,
+      source: i.source as 'MANUAL' | 'DEVICE' | 'INFERRED' | 'COMPUTED' | undefined,
+    }));
 }

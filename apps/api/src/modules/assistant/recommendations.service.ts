@@ -85,6 +85,20 @@ export class RecommendationsService {
 
     const created: AIRecommendation[] = [];
     for (const d of drafts) {
+      const draftWithExtras = d as typeof d & {
+        explainText?: string;
+        evidenceItems?: Array<{ label: string; value: string; source?: string }>;
+      };
+      // Round 37: persist explainText + structured evidence items so the
+      // mobile "Why this?" sheet can render without re-deriving anything.
+      // Items live alongside the legacy free-form `evidence` JSON.
+      const evidenceJson =
+        draftWithExtras.evidenceItems && draftWithExtras.evidenceItems.length > 0
+          ? {
+              ...((d.evidence as Record<string, unknown>) ?? {}),
+              items: draftWithExtras.evidenceItems,
+            }
+          : d.evidence;
       const row = await this.prisma.aIRecommendation.create({
         data: {
           userId,
@@ -93,7 +107,8 @@ export class RecommendationsService {
           content: d.content,
           priority: d.priority as AiRecommendationPriority,
           status: AiRecommendationStatus.NEW,
-          evidence: d.evidence,
+          evidence: evidenceJson,
+          explainText: draftWithExtras.explainText ?? null,
         },
       });
       created.push(row);
@@ -103,6 +118,9 @@ export class RecommendationsService {
 }
 
 function toPublic(r: AIRecommendation): RecommendationPublic {
+  // Round 37: lift the structured evidence items out of the JSON blob.
+  const ev = r.evidence as { items?: Array<{ label: string; value: string; source?: string }> } | null;
+  const items = Array.isArray(ev?.items) ? ev!.items : undefined;
   return {
     id: r.id,
     type: r.type,
@@ -110,6 +128,12 @@ function toPublic(r: AIRecommendation): RecommendationPublic {
     content: r.content,
     priority: r.priority,
     status: r.status,
+    explainText: (r as unknown as { explainText: string | null }).explainText ?? null,
+    evidence: items?.map((i) => ({
+      label: i.label,
+      value: i.value,
+      source: i.source as 'MANUAL' | 'DEVICE' | 'INFERRED' | 'COMPUTED' | undefined,
+    })),
     createdAt: r.createdAt.toISOString(),
     updatedAt: r.updatedAt.toISOString(),
   };

@@ -11,6 +11,12 @@ export type RecommendationType =
 export type RecommendationPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 export type RecommendationStatus = 'NEW' | 'VIEWED' | 'DISMISSED' | 'APPLIED';
 
+export interface RecommendationEvidenceItem {
+  label: string;
+  value: string;
+  source?: 'MANUAL' | 'DEVICE' | 'INFERRED' | 'COMPUTED';
+}
+
 export interface RecommendationPublic {
   id: string;
   type: RecommendationType;
@@ -18,6 +24,10 @@ export interface RecommendationPublic {
   content: string;
   priority: RecommendationPriority;
   status: RecommendationStatus;
+  /** Round 37: one-line "Why this surfaced". Null on older rows. */
+  explainText?: string | null;
+  /** Round 37: structured evidence behind the nudge. */
+  evidence?: RecommendationEvidenceItem[];
   createdAt: string;
   updatedAt: string;
 }

@@ -481,11 +481,23 @@
       "REFRESH_RECOMMENDATIONS": "Refresh suggestions",
       "OPEN_SCREEN": "Open screen"
     },
+    "prompts": {
+      "dayPlan": "What should I do today?",
+      "spendReview": "Where did I spend most this week?",
+      "sleepCheck": "How was my sleep last week?"
+    },
     "errors": {
       "network": "Message didn't go through. Check your connection.",
       "AI_KEY_MISSING": "Add an AI key in Settings to chat.",
       "RATE_LIMITED": "You're sending too fast. Wait a moment.",
       "unknown": "AI didn't reply. Try again later."
+    }
+  },
+  "insights": {
+    "whyThis": "Why this?",
+    "why": {
+      "kicker": "Why this suggestion?",
+      "noEvidence": "Surfaced from general context — no concrete numbers behind this one."
     }
   },
   "privacy": {

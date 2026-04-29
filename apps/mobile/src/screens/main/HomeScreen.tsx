@@ -29,6 +29,7 @@ import { SmartNudges } from '../../components/home/SmartNudges';
 import { SmartBriefHero } from '../../components/home/SmartBriefHero';
 import { SuggestedCapturesStrip } from '../../components/home/SuggestedCapturesStrip';
 import { PrivacyLimitedCard } from '../../components/home/PrivacyLimitedCard';
+import { InsightWhySheet } from '../../components/home/InsightWhySheet';
 import type {
   SmartBriefAction,
   SuggestedCapture,
@@ -50,6 +51,8 @@ export function HomeScreen({ navigation }: Props) {
   const [parsed, setParsed] = useState<CaptureParseResponse | null>(null);
   const [lastRawText, setLastRawText] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  // Round 37: rationale sheet for the top recommendation.
+  const [whyOpen, setWhyOpen] = useState(false);
 
   const summary = useDashboardSummary();
   const meals = useTodayMeals();
@@ -246,25 +249,54 @@ export function HomeScreen({ navigation }: Props) {
             <LoadingState />
           ) : summary.data ? (
             <View style={{ gap: spacing.md }}>
-              <TodayPlanCard
-                summary={summary.data.todayPlan}
-                onPress={() => navigation.getParent()?.navigate('MainTabs', { screen: 'Today' })}
-              />
-              <MoneyCard
-                summary={summary.data.money}
-                onPress={() => navigation.getParent()?.navigate('MainTabs', { screen: 'Money' })}
-              />
-              <NextTaskCard task={summary.data.nextTask} />
+              {(summary.data.homeOrder ?? ['plan', 'money', 'task', 'health']).map((cardKey) => {
+                switch (cardKey) {
+                  case 'plan':
+                    return (
+                      <TodayPlanCard
+                        key={cardKey}
+                        summary={summary.data!.todayPlan}
+                        onPress={() => navigation.getParent()?.navigate('MainTabs', { screen: 'Today' })}
+                      />
+                    );
+                  case 'money':
+                    return (
+                      <MoneyCard
+                        key={cardKey}
+                        summary={summary.data!.money}
+                        onPress={() => navigation.getParent()?.navigate('MainTabs', { screen: 'Money' })}
+                      />
+                    );
+                  case 'task':
+                    return <NextTaskCard key={cardKey} task={summary.data!.nextTask} />;
+                  case 'health':
+                  case 'mood':
+                    return <MoodSleepCard key={cardKey} summary={summary.data!.moodSleep} />;
+                  default:
+                    return null;
+                }
+              })}
               <NudgeCard
                 nudge={summary.data.topRecommendation}
                 onDismiss={(id) => updateRec.mutate({ id, status: 'DISMISSED' })}
                 onApply={(id) => updateRec.mutate({ id, status: 'APPLIED' })}
+                onWhyThis={() => setWhyOpen(true)}
               />
-              <MoodSleepCard summary={summary.data.moodSleep} />
             </View>
           ) : null}
         </ScrollView>
       </AppScreen>
+
+      {/* Round 37: rationale sheet for the topRecommendation. */}
+      {summary.data?.topRecommendation ? (
+        <InsightWhySheet
+          visible={whyOpen}
+          onClose={() => setWhyOpen(false)}
+          title={summary.data.topRecommendation.title}
+          explainText={summary.data.topRecommendation.explainText}
+          evidence={summary.data.topRecommendation.evidence}
+        />
+      ) : null}
 
       <CapturePreviewSheet
         visible={sheetOpen}
@@ -459,17 +491,28 @@ function NextTaskCard({
   );
 }
 
-function NudgeCard({
-  nudge,
-  onDismiss,
-  onApply,
-}: {
+interface NudgeCardProps {
   nudge:
-    | { id: string; type: string; title: string; content: string; priority: string }
+    | {
+        id: string;
+        type: string;
+        title: string;
+        content: string;
+        priority: string;
+        explainText?: string | null;
+        evidence?: Array<{
+          label: string;
+          value: string;
+          source?: 'MANUAL' | 'DEVICE' | 'INFERRED' | 'COMPUTED';
+        }>;
+      }
     | null;
   onDismiss: (id: string) => void;
   onApply: (id: string) => void;
-}) {
+  onWhyThis?: () => void;
+}
+
+function NudgeCard({ nudge, onDismiss, onApply, onWhyThis }: NudgeCardProps) {
   const { t } = useTranslation();
   if (!nudge) {
     return (
@@ -495,6 +538,27 @@ function NudgeCard({
         tone={tone as 'info' | 'success' | 'warning' | 'danger'}
       />
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 6 }}>
+        {/* Round 37: "Why this?" button — opens the rationale sheet
+            with explainText + evidence. Only renders when there's
+            something to show. */}
+        {onWhyThis && (nudge.explainText || (nudge.evidence && nudge.evidence.length > 0)) ? (
+          <Pressable
+            onPress={onWhyThis}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('insights.whyThis', { defaultValue: 'Vì sao có gợi ý này?' })}
+            style={{
+              paddingHorizontal: spacing.md,
+              paddingVertical: 8,
+              minHeight: 44,
+              justifyContent: 'center',
+            }}
+          >
+            <Text variant="caption" style={{ color: colors.text.muted, fontWeight: '700' }}>
+              {t('insights.whyThis', { defaultValue: 'Vì sao?' })}
+            </Text>
+          </Pressable>
+        ) : null}
         <Pressable
           onPress={() => onApply(nudge.id)}
           hitSlop={8}

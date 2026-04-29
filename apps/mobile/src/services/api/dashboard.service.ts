@@ -21,12 +21,21 @@ export interface NextTask {
   priority: 'LOW' | 'MEDIUM' | 'HIGH';
 }
 
+export interface RecommendationEvidenceLite {
+  label: string;
+  value: string;
+  source?: 'MANUAL' | 'DEVICE' | 'INFERRED' | 'COMPUTED';
+}
+
 export interface TopRecommendation {
   id: string;
   type: 'SCHEDULE' | 'TASK' | 'MEAL' | 'SLEEP' | 'MOOD' | 'FINANCE' | 'GENERAL';
   title: string;
   content: string;
   priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  /** Round 37: surface "Why this?" + evidence for the rationale sheet. */
+  explainText?: string | null;
+  evidence?: RecommendationEvidenceLite[];
 }
 
 export interface MoodSleepSummary {
@@ -73,6 +82,8 @@ export interface SuggestedCapture {
 
 export type PrivacyLimitedDomain = 'finance' | 'health' | 'meals' | 'tasks';
 
+export type HomeCardKey = 'plan' | 'money' | 'task' | 'health' | 'mood' | 'meal';
+
 export interface DashboardSummary {
   aiEnabled: boolean;
   todayPlan: TodayPlanSummary;
@@ -87,6 +98,8 @@ export interface DashboardSummary {
   suggestedCaptures?: SuggestedCapture[];
   /** Round 30 — domains the user has hidden from AI. */
   privacyLimitedDomains?: PrivacyLimitedDomain[];
+  /** Round 37 — adaptive Home card ordering. */
+  homeOrder?: HomeCardKey[];
 }
 
 export const dashboardService = {

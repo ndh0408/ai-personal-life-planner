@@ -9,11 +9,29 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
 import { rangeFor } from '../../common/datetime/range';
 
+/**
+ * Structured evidence row — one bullet in the "Why this?" sheet.
+ * `value` carries the formatted string the UI shows directly.
+ */
+export interface DraftEvidenceItem {
+  label: string;
+  value: string;
+  source?: 'MANUAL' | 'DEVICE' | 'INFERRED' | 'COMPUTED';
+}
+
 export interface DraftRec {
   type: 'SCHEDULE' | 'TASK' | 'MEAL' | 'SLEEP' | 'MOOD' | 'FINANCE' | 'GENERAL';
   title: string;
   content: string;
   priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  /**
+   * Round 37: structured "Why this?" payload.
+   * - explainText: one-line rationale ("Bạn ngủ < 6h ba đêm liên tiếp").
+   * - evidenceItems: bullet list rendered in the rationale sheet.
+   * - evidence: raw JSON kept for backward compat / model audits.
+   */
+  explainText?: string;
+  evidenceItems?: DraftEvidenceItem[];
   evidence: Prisma.InputJsonValue;
 }
 
@@ -63,6 +81,14 @@ export async function generateForUser(
           (todayTotal / dailyAvg - 1) * 100,
         )}% so với mức trung bình ${fmt(Math.round(dailyAvg))}/ngày của tuần này.`,
         priority: todayTotal > dailyAvg * 2 ? 'HIGH' : 'MEDIUM',
+        explainText: `Chi hôm nay (${fmt(todayTotal)}) vượt ~${Math.round(
+          (todayTotal / dailyAvg - 1) * 100,
+        )}% so với trung bình 6 ngày qua.`,
+        evidenceItems: [
+          { label: 'Chi hôm nay', value: fmt(todayTotal), source: 'MANUAL' },
+          { label: 'Trung bình 6 ngày', value: `${fmt(Math.round(dailyAvg))}/ngày`, source: 'COMPUTED' },
+          { label: 'Chi cả tuần', value: fmt(weekTotal), source: 'COMPUTED' },
+        ],
         evidence: { todayTotal, dailyAvg: Math.round(dailyAvg), weekTotal },
       });
     }
@@ -97,6 +123,14 @@ export async function generateForUser(
             ? 'Hoàn thành ngay hôm nay hoặc dời lịch — đừng để treo lâu hơn.'
             : `Cũ nhất: "${first.title}" (quá hạn ${daysLate} ngày). Mở Today để xem hết.`,
         priority: daysLate >= 3 || overdue.length >= 2 ? 'HIGH' : 'MEDIUM',
+        explainText:
+          overdue.length === 1
+            ? `1 việc quá hạn ${daysLate} ngày.`
+            : `${overdue.length} việc quá hạn, cũ nhất ${daysLate} ngày.`,
+        evidenceItems: [
+          { label: 'Số việc quá hạn', value: String(overdue.length), source: 'COMPUTED' },
+          { label: 'Cũ nhất', value: `${first.title} (${daysLate} ngày)`, source: 'MANUAL' },
+        ],
         evidence: { overdueIds: overdue.map((t) => t.id), daysLate },
       });
     }
@@ -113,14 +147,23 @@ export async function generateForUser(
       const shortNights = recent.filter((s) => s.durationMinutes < 6 * 60).length;
       if (shortNights >= 2) {
         const lastDur = (recent[0].durationMinutes / 60).toFixed(1);
+        const last = recent[0];
+        const lastSrc =
+          (last as unknown as { source?: 'MANUAL' | 'DEVICE' | 'INFERRED' }).source ?? 'MANUAL';
         drafts.push({
           type: 'SLEEP',
           title: `Ngủ ít hơn 6 tiếng ${shortNights} đêm gần đây`,
           content: `Đêm qua bạn ngủ ${lastDur} tiếng. Cân nhắc đi ngủ trước 23:00 tối nay — mình sẽ thêm vào kế hoạch hôm nay nếu muốn.`,
           priority: shortNights >= 3 ? 'HIGH' : 'MEDIUM',
+          explainText: `${shortNights}/${recent.length} đêm ngủ < 6h, đêm qua ${lastDur}h.`,
+          evidenceItems: [
+            { label: 'Đêm qua', value: `${lastDur}h`, source: lastSrc },
+            { label: `Đêm thiếu ngủ / ${recent.length}`, value: String(shortNights), source: 'COMPUTED' },
+          ],
           evidence: {
             shortNights,
             lastDurationMinutes: recent[0].durationMinutes,
+            lastSource: lastSrc,
           },
         });
       }
@@ -145,6 +188,11 @@ export async function generateForUser(
           title: 'Đã ghi bữa trưa chưa?',
           content: 'Một dòng "ăn cơm tấm 75k" ở Quick Capture là đủ.',
           priority: 'LOW',
+          explainText: `Hiện đã ${localHour}h hôm nay nhưng chưa thấy bữa trưa nào.`,
+          evidenceItems: [
+            { label: 'Giờ hiện tại', value: `${localHour}:00`, source: 'COMPUTED' },
+            { label: 'Bữa trưa hôm nay', value: 'chưa ghi', source: 'MANUAL' },
+          ],
           evidence: { hour: localHour },
         });
       }
@@ -166,6 +214,11 @@ export async function generateForUser(
         content:
           'Cân nhắc một buổi đi bộ 20 phút hoặc nghỉ sớm. Mình có thể nhắc 22:30 nếu muốn.',
         priority: 'MEDIUM',
+        explainText: `${lowMood}/${recent.length} mood gần nhất là TIRED hoặc STRESSED.`,
+        evidenceItems: [
+          { label: 'Mood gần nhất', value: recent[0].mood, source: 'MANUAL' },
+          { label: 'Số mood low / 3', value: String(lowMood), source: 'COMPUTED' },
+        ],
         evidence: { lowMoodCount: lowMood },
       });
     }

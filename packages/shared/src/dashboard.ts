@@ -33,6 +33,18 @@ export const TopRecommendationSchema = z
     title: z.string(),
     content: z.string(),
     priority: z.enum(['LOW', 'MEDIUM', 'HIGH']),
+    /** Round 37: one-line "Why this?" rationale. */
+    explainText: z.string().nullable().optional(),
+    /** Round 37: structured evidence rendered in the rationale sheet. */
+    evidence: z
+      .array(
+        z.object({
+          label: z.string(),
+          value: z.string(),
+          source: z.enum(['MANUAL', 'DEVICE', 'INFERRED', 'COMPUTED']).optional(),
+        }),
+      )
+      .optional(),
   })
   .nullable();
 export type TopRecommendation = z.infer<typeof TopRecommendationSchema>;
@@ -107,5 +119,15 @@ export const DashboardSummarySchema = z.object({
   suggestedCaptures: z.array(SuggestedCaptureSchema).max(3).default([]),
   /** Round 30: domains the user has hidden — UI can say "AI doesn't see X". */
   privacyLimitedDomains: z.array(z.enum(['finance', 'health', 'meals', 'tasks'])).default([]),
+  /**
+   * Round 37: adaptive Home card ordering. The server scores each domain
+   * by recency-of-need (over budget? sleep deficit? overdue task?) and
+   * returns the priority order. Older mobile builds ignore the field and
+   * keep their static layout.
+   */
+  homeOrder: z
+    .array(z.enum(['plan', 'money', 'task', 'health', 'mood', 'meal']))
+    .default(['plan', 'money', 'task', 'health']),
 });
 export type DashboardSummary = z.infer<typeof DashboardSummarySchema>;
+export type HomeCardKey = z.infer<typeof DashboardSummarySchema>['homeOrder'][number];

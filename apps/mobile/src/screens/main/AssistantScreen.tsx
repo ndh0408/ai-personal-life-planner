@@ -216,7 +216,43 @@ export function AssistantScreen() {
           <ChatBubble key={m.id} msg={m} />
         ))}
         {!activeId && !stream.isStreaming ? (
-          <Text variant="caption">{t('assistant.empty')}</Text>
+          <View style={{ gap: spacing.md, paddingHorizontal: spacing.lg }}>
+            <Text variant="caption">{t('assistant.empty')}</Text>
+            {/* Round 37: suggested prompts. Static list of 3 — keeps the
+                empty Assistant screen useful without making another LLM
+                call. Tapping a chip pre-fills the composer through
+                lastUserTextRef + a manual send. */}
+            <View
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: spacing.sm,
+                marginTop: spacing.xs,
+              }}
+            >
+              {[
+                t('assistant.prompts.dayPlan', { defaultValue: 'Hôm nay tôi nên làm gì?' }),
+                t('assistant.prompts.spendReview', { defaultValue: 'Tuần này tôi tiêu vào đâu nhiều nhất?' }),
+                t('assistant.prompts.sleepCheck', { defaultValue: 'Tôi ngủ thế nào tuần qua?' }),
+              ].map((prompt) => (
+                <Pressable
+                  key={prompt}
+                  onPress={() => handleSend(prompt)}
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityLabel={prompt}
+                  style={({ pressed }) => [
+                    styles.suggestedChip,
+                    pressed && { opacity: 0.7 },
+                  ]}
+                >
+                  <Text variant="caption" style={{ color: colors.accent.base, fontWeight: '700' }}>
+                    {prompt}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
         ) : null}
 
         {/* Streaming surface: shows progress label *or* the live token feed,
@@ -327,5 +363,16 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     marginTop: spacing.sm,
     marginLeft: spacing.lg,
+  },
+  // Round 37: empty-state suggested prompt chips.
+  suggestedChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    minHeight: 44,
+    justifyContent: 'center',
+    backgroundColor: colors.accent.soft,
+    borderRadius: radius.pill,
+    borderColor: colors.accent.base,
+    borderWidth: 1,
   },
 });
