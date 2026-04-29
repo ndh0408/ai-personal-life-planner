@@ -17,3 +17,6 @@ export { QuickActionButton } from './QuickActionButton';
 export { InsightCard } from './InsightCard';
 export { StatCard } from './StatCard';
 export { Text } from './Text';
+export { Icon, type IconName } from './Icon';
+export { Avatar } from './Avatar';
+export { Sparkline } from './Sparkline';

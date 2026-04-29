@@ -120,6 +120,13 @@
   "home": {
     "kicker": "Today",
     "greeting": "Hi {{name}}",
+    "greetingFallback": "Hello",
+    "timeOfDay": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening",
+      "night": "Good night"
+    },
     "ready": "Tell me anything — a meal, a spend, a task, last night's sleep.",
     "apiHealthy": "Connected",
     "apiDegraded": "Degraded",

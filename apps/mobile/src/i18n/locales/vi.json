@@ -120,6 +120,13 @@
   "home": {
     "kicker": "Hôm nay",
     "greeting": "Chào {{name}}",
+    "greetingFallback": "Chào bạn",
+    "timeOfDay": {
+      "morning": "Buổi sáng",
+      "afternoon": "Buổi chiều",
+      "evening": "Buổi tối",
+      "night": "Đêm khuya"
+    },
     "ready": "Nói gì với mình đi — bữa ăn, chi tiêu, task, giấc ngủ.",
     "apiHealthy": "Đã kết nối",
     "apiDegraded": "Một phần",

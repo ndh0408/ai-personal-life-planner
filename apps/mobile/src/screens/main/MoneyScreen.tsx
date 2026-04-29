@@ -13,12 +13,13 @@ import {
   ConfirmModal,
   EmptyState,
   ErrorState,
+  Icon,
   LoadingState,
-  StatCard,
+  Sparkline,
   Text,
   useToast,
 } from '../../components/ui';
-import { spacing } from '../../theme';
+import { colors, spacing } from '../../theme';
 import { useResponsive } from '../../hooks/useResponsive';
 import {
   financeService,
@@ -98,19 +99,29 @@ export function MoneyScreen({ navigation }: Props) {
           marginBottom: spacing.lg,
         }}
       >
-        <StatCard
+        <FinanceStatCard
+          icon="arrow-up-circle"
           label={t('money.totalIncome')}
           value={'+' + formatMoney(timeline.data?.totalIncome ?? 0)}
+          tone={colors.income.base}
+          haloBg={colors.income.soft}
+          spark={buildSpark(timeline.data?.rows ?? [], 'INCOME')}
         />
-        <StatCard
+        <FinanceStatCard
+          icon="arrow-down-circle"
           label={t('money.totalExpense')}
-          value={'-' + formatMoney(timeline.data?.totalExpense ?? 0)}
+          value={'−' + formatMoney(timeline.data?.totalExpense ?? 0)}
+          tone={colors.expense.base}
+          haloBg={colors.expense.soft}
+          spark={buildSpark(timeline.data?.rows ?? [], 'EXPENSE')}
         />
       </View>
       <Card
+        emphasis="elevated"
         style={{
           marginBottom: spacing.xl,
-          backgroundColor: (timeline.data?.net ?? 0) >= 0 ? '#E8F5EE' : '#FBE9E7',
+          borderColor:
+            (timeline.data?.net ?? 0) >= 0 ? colors.income.base + '55' : colors.expense.base + '55',
         }}
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -118,8 +129,9 @@ export function MoneyScreen({ navigation }: Props) {
           <Text
             variant="bodyEm"
             style={{
-              color: (timeline.data?.net ?? 0) >= 0 ? '#2E8B57' : '#C24A3F',
+              color: (timeline.data?.net ?? 0) >= 0 ? colors.income.base : colors.expense.base,
               fontSize: 18,
+              fontVariant: ['tabular-nums'],
             }}
           >
             {(timeline.data?.net ?? 0) >= 0 ? '+' : ''}
@@ -185,21 +197,38 @@ function TimelineRow({
 }) {
   const { t } = useTranslation();
   const isIncome = row.kind === 'INCOME';
-  const tone = isIncome ? '#2E8B57' : '#C24A3F';
+  const tone = isIncome ? colors.income.base : colors.expense.base;
+  const haloBg = isIncome ? colors.income.soft : colors.expense.soft;
   return (
     <Card style={{ borderLeftWidth: 3, borderLeftColor: tone, paddingLeft: spacing.md }}>
-      <View
-        style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
-      >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+        <View
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: haloBg,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Icon
+            name={isIncome ? 'arrow-up-circle' : 'arrow-down-circle'}
+            size={20}
+            color={tone}
+          />
+        </View>
         <View style={{ flex: 1 }}>
-          <Text variant="bodyEm">{row.title}</Text>
+          <Text variant="bodyEm" numberOfLines={1}>
+            {row.title}
+          </Text>
           <Text variant="caption">
             {t(`money.categories.${row.category}`, { defaultValue: row.category })} ·{' '}
             {relativeTime(row.occurredAt, locale)}
           </Text>
         </View>
-        <Text variant="bodyEm" style={{ color: tone }}>
-          {isIncome ? '+' : '-'}
+        <Text variant="bodyEm" style={{ color: tone, fontVariant: ['tabular-nums'] }}>
+          {isIncome ? '+' : '−'}
           {formatMoney(row.amount)}
         </Text>
       </View>
@@ -208,4 +237,74 @@ function TimelineRow({
       </View>
     </Card>
   );
+}
+
+function FinanceStatCard({
+  icon,
+  label,
+  value,
+  tone,
+  haloBg,
+  spark,
+}: {
+  icon: 'arrow-up-circle' | 'arrow-down-circle';
+  label: string;
+  value: string;
+  tone: string;
+  haloBg: string;
+  spark: number[];
+}) {
+  return (
+    <Card style={{ flex: 1, paddingVertical: spacing.md }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+        <View
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            backgroundColor: haloBg,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Icon name={icon} size={18} color={tone} />
+        </View>
+        <Text variant="kicker" style={{ flex: 1 }}>
+          {label}
+        </Text>
+      </View>
+      <Text
+        variant="bodyEm"
+        style={{ color: tone, fontSize: 20, fontVariant: ['tabular-nums'], marginTop: 4 }}
+      >
+        {value}
+      </Text>
+      {spark.length >= 2 ? (
+        <View style={{ marginTop: 6, marginLeft: -4 }}>
+          <Sparkline values={spark} width={140} height={28} color={tone} fillFrom={tone + '22'} fillTo={tone + '02'} />
+        </View>
+      ) : null}
+    </Card>
+  );
+}
+
+/**
+ * Build a 7-bucket spark series of daily totals for the requested kind from
+ * the timeline rows. Buckets are local-day. If there are no rows, returns [].
+ */
+function buildSpark(rows: TimelineEntry[], kind: 'INCOME' | 'EXPENSE'): number[] {
+  if (rows.length === 0) return [];
+  const days = 7;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const buckets = new Array<number>(days).fill(0);
+  for (const r of rows) {
+    if (r.kind !== kind) continue;
+    const d = new Date(r.occurredAt);
+    d.setHours(0, 0, 0, 0);
+    const diff = Math.floor((today.getTime() - d.getTime()) / (24 * 60 * 60_000));
+    if (diff >= 0 && diff < days) buckets[days - 1 - diff] += r.amount;
+  }
+  if (buckets.every((v) => v === 0)) return [];
+  return buckets;
 }

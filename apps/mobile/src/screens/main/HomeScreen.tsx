@@ -117,6 +117,7 @@ export function HomeScreen({ navigation }: Props) {
 
           <HomeHero
             aiEnabled={aiEnabled}
+            userName={greetingName}
             onAddKey={() => navigation.navigate('AISettings')}
             onCapture={() => navigation.navigate('SmartEntry')}
             onPlan={() => navigation.getParent()?.navigate('MainTabs', { screen: 'Today' })}
@@ -124,13 +125,12 @@ export function HomeScreen({ navigation }: Props) {
 
           <QuickActionsRow
             actions={[
-              { key: 'capture', glyph: '✎', onPress: () => navigation.navigate('SmartEntry') },
-              { key: 'expense', glyph: '💸', onPress: () => navigation.navigate('SmartEntry') },
-              { key: 'task', glyph: '✓', onPress: () => navigation.navigate('SmartEntry') },
-              { key: 'checkin', glyph: '✦', onPress: () => navigation.navigate('SleepMoodCheckin') },
+              { key: 'capture', onPress: () => navigation.navigate('SmartEntry') },
+              { key: 'expense', onPress: () => navigation.navigate('SmartEntry') },
+              { key: 'task', onPress: () => navigation.navigate('SmartEntry') },
+              { key: 'checkin', onPress: () => navigation.navigate('SleepMoodCheckin') },
               {
                 key: 'askAi',
-                glyph: '✨',
                 onPress: () =>
                   navigation.getParent()?.navigate('MainTabs', { screen: 'Assistant' }),
                 disabled: !aiEnabled,

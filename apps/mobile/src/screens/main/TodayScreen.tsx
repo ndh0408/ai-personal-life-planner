@@ -71,13 +71,23 @@ export function TodayScreen({ navigation }: Props) {
               <Text variant="caption">— Lên kế hoạch theo dữ liệu của bạn</Text>
             </View>
           ) : null}
-          {plan.data.items.map((item) => (
-            <PlanItemRow
-              key={item.id}
-              item={item}
-              onToggle={(status) => setStatus.mutate({ id: item.id, status })}
-            />
-          ))}
+          {plan.data.items.map((item, idx) => {
+            const now = Date.now();
+            const isCurrent =
+              !!item.startAt &&
+              !!item.endAt &&
+              new Date(item.startAt).getTime() <= now &&
+              new Date(item.endAt).getTime() >= now;
+            return (
+              <PlanItemRow
+                key={item.id}
+                item={item}
+                isLast={idx === plan.data!.items.length - 1}
+                isCurrent={isCurrent}
+                onToggle={(status) => setStatus.mutate({ id: item.id, status })}
+              />
+            );
+          })}
           <View style={{ marginTop: spacing.md }}>
             <Button
               label={gen.isPending ? t('common.loading') : t('today.regeneratePlan')}

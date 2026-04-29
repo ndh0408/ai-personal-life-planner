@@ -6,6 +6,7 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   AppScreen,
+  Avatar,
   Button,
   Card,
   ConfirmModal,
@@ -86,12 +87,23 @@ export function SettingsScreen({ navigation }: Props) {
       <Text variant="kicker" style={{ marginBottom: spacing.sm }}>
         {t('settings.account')}
       </Text>
-      <Card style={{ marginBottom: spacing.xl }}>
-        <Text variant="bodyEm">{user?.displayName ?? user?.email}</Text>
-        <Text variant="caption">{user?.email}</Text>
-        {user ? (
-          <Text variant="caption">{t('settings.memberSince', { date: memberSince })}</Text>
-        ) : null}
+      <Card style={{ marginBottom: spacing.xl }} emphasis="elevated">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+          <Avatar name={user?.displayName ?? user?.email ?? null} size={56} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text variant="title" numberOfLines={1}>
+              {user?.displayName ?? user?.email}
+            </Text>
+            <Text variant="caption" numberOfLines={1}>
+              {user?.email}
+            </Text>
+            {user ? (
+              <Text variant="caption" style={{ opacity: 0.7 }}>
+                {t('settings.memberSince', { date: memberSince })}
+              </Text>
+            ) : null}
+          </View>
+        </View>
       </Card>
 
       {/* Preferences */}

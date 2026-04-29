@@ -25,7 +25,7 @@ import {
   TextField,
   useToast,
 } from '../../components/ui';
-import { spacing } from '../../theme';
+import { colors, spacing } from '../../theme';
 import {
   captureService,
   type CaptureKind,
@@ -33,28 +33,30 @@ import {
 } from '../../services/api/capture.service';
 import { formatMoney } from '../../utils/format';
 import { makeIdempotencyKey } from '../../utils/idempotency';
+import type { IconName } from '../../components/ui';
+import { Icon } from '../../components/ui';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SmartEntry'>;
 
-const KIND_GLYPH: Record<CaptureKind, string> = {
-  EXPENSE: '💸',
-  INCOME: '💰',
-  MEAL: '🍚',
-  TASK: '✓',
-  SLEEP: '💤',
-  MOOD: '🎯',
-  UNKNOWN: '?',
+const KIND_ICON: Record<CaptureKind, IconName> = {
+  EXPENSE: 'cash-outline',
+  INCOME: 'trending-up-outline',
+  MEAL: 'restaurant-outline',
+  TASK: 'checkmark-circle-outline',
+  SLEEP: 'moon-outline',
+  MOOD: 'happy-outline',
+  UNKNOWN: 'flash-outline',
 };
 
 const KIND_TONE: Record<CaptureKind, string> = {
-  EXPENSE: '#C24A3F',
-  INCOME: '#2E8B57',
-  MEAL: '#C97B4A',
-  TASK: '#3F6FB1',
-  SLEEP: '#5D4FA8',
-  MOOD: '#B47A30',
-  UNKNOWN: '#7A7A7A',
+  EXPENSE: colors.expense.base,
+  INCOME: colors.income.base,
+  MEAL: colors.status.success,
+  TASK: colors.status.info,
+  SLEEP: '#9085C7',
+  MOOD: colors.status.warning,
+  UNKNOWN: colors.text.muted,
 };
 
 export function SmartEntryScreen({ navigation }: Props) {
@@ -202,9 +204,10 @@ function PreviewCard({
   if (preview.kind === 'UNKNOWN') {
     return (
       <Card>
-        <Text variant="bodyEm" style={{ marginBottom: spacing.xs }}>
-          {KIND_GLYPH.UNKNOWN} {t('smart.unknownTitle')}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs }}>
+          <Icon name={KIND_ICON.UNKNOWN} size={18} color={KIND_TONE.UNKNOWN} />
+          <Text variant="bodyEm">{t('smart.unknownTitle')}</Text>
+        </View>
         <Text variant="caption">
           {preview.hint ?? t('smart.unknownBody')}
         </Text>
@@ -218,10 +221,19 @@ function PreviewCard({
 
   return (
     <Card style={{ borderLeftWidth: 4, borderLeftColor: tone, paddingLeft: spacing.md }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <Text variant="bodyEm" style={{ fontSize: 18 }}>
-          {KIND_GLYPH[preview.kind]}
-        </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+        <View
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            backgroundColor: tone + '22',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Icon name={KIND_ICON[preview.kind]} size={18} color={tone} />
+        </View>
         <Text variant="bodyEm" style={{ color: tone }}>
           {t(`smart.kindLabels.${preview.kind}`)}
         </Text>
