@@ -1,9 +1,23 @@
 /**
- * Takes a (kind, fields) pair previously produced by CaptureService.parse(),
- * validates against the per-kind Zod schema, and inserts into the matching
- * table. Idempotency-key-aware where the model supports it.
+ * Confirm a parsed capture and write the underlying entity.
+ *
+ * Round 21 contract:
+ *   - The QuickCapture audit row is created **inside the same transaction**
+ *     as the entity it spawned, with full parse provenance + applied refs.
+ *     This makes undo (round 22) deterministic — the audit row knows exactly
+ *     what to reverse.
+ *   - If `originalKind` / `originalFields` are present and differ from the
+ *     final kind / fields, a CaptureCorrection row is appended (post-tx) so
+ *     the OpenAI parser can pick it up as a few-shot example next time.
+ *   - The response carries `quickCaptureId` + `undoAvailableUntil` so the
+ *     mobile snackbar can offer a Hoàn tác button. Older clients that don't
+ *     read those fields keep working — the schema marks them optional.
+ *
+ * Caveat: idempotency check (round 15) still runs first; a duplicate confirm
+ * returns the existing row without creating a new QuickCapture, since there
+ * is nothing new to undo.
  */
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   type CaptureConfirmRequest,
   type CaptureConfirmResponse,
@@ -19,6 +33,17 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { EventLogService } from '../intelligence/event-log.service';
 import { BehaviorService } from '../intelligence/behavior.service';
 import { UserContextService } from '../intelligence/user-context.service';
+import { CorrectionsService } from './corrections.service';
+
+const UNDO_WINDOW_SECONDS = 60;
+
+type CaptureKindStr = CaptureConfirmRequest['kind'];
+
+interface InsertResult {
+  entityId: string;
+  entityCreatedAt: Date;
+  quickCaptureId: string;
+}
 
 @Injectable()
 export class ConfirmService {
@@ -27,28 +52,29 @@ export class ConfirmService {
     private readonly events: EventLogService,
     private readonly behavior: BehaviorService,
     private readonly userCtx: UserContextService,
+    private readonly corrections: CorrectionsService,
   ) {}
 
   async confirm(userId: string, input: CaptureConfirmRequest): Promise<CaptureConfirmResponse> {
-    let response: CaptureConfirmResponse;
+    let result: InsertResult;
     switch (input.kind) {
       case 'EXPENSE':
-        response = await this.insertExpense(userId, input);
+        result = await this.insertExpense(userId, input);
         break;
       case 'INCOME':
-        response = await this.insertIncome(userId, input);
+        result = await this.insertIncome(userId, input);
         break;
       case 'MEAL':
-        response = await this.insertMeal(userId, input);
+        result = await this.insertMeal(userId, input);
         break;
       case 'TASK':
-        response = await this.insertTask(userId, input);
+        result = await this.insertTask(userId, input);
         break;
       case 'SLEEP':
-        response = await this.insertSleep(userId, input);
+        result = await this.insertSleep(userId, input);
         break;
       case 'MOOD':
-        response = await this.insertMood(userId, input);
+        result = await this.insertMood(userId, input);
         break;
       default:
         throw new BadRequestException({
@@ -56,80 +82,70 @@ export class ConfirmService {
         });
     }
 
-    // Audit: persist the original sentence + parsed action so we can later
-    // power "what did I capture today" / "undo last capture" without needing
-    // to reverse-engineer rows. Best-effort — failure here is logged but
-    // doesn't fail the user-visible insert (which already succeeded).
-    if (input.rawText) {
-      // Prisma's Json column wants InputJsonValue; the action shape is
-      // plain JSON-safe so the cast is safe.
-      const parsedActions = {
-        kind: input.kind,
-        fields: input.fields,
-        targetId: response.id,
-      } as Prisma.InputJsonValue;
-      await this.prisma.quickCapture
-        .create({
-          data: {
-            userId,
-            rawText: input.rawText,
-            status: 'CONFIRMED',
-            parsedActions,
-          },
+    // Persist the user's correction (if any) outside the transaction. We
+    // don't fail the confirm if this fails; the entity already exists.
+    if (this.isCorrection(input)) {
+      await this.corrections
+        .record({
+          userId,
+          quickCaptureId: result.quickCaptureId,
+          rawText: input.rawText ?? '',
+          originalSource: mapSource(input.parseSource),
+          originalKind: input.originalKind ?? null,
+          originalConfidence: input.parseConfidence ?? null,
+          originalPayload: input.originalFields ?? null,
+          correctedKind: input.kind,
+          correctedPayload: input.fields,
         })
         .catch(() => undefined);
     }
 
-    // Round 18: feed the intelligence layer.
-    // - EventLog gives the AI a rolling stream of "what just happened".
-    // - Behaviour summary stays fresh after sleep/expense/income confirms.
+    // EventLog feeds the assistant the rolling "what just happened" stream.
     const summaryText = (input.rawText ?? input.kind).slice(0, 280);
     await this.events.log(userId, 'CAPTURE_CONFIRMED', summaryText, {
       kind: input.kind,
-      targetId: response.id,
+      targetId: result.entityId,
+      quickCaptureId: result.quickCaptureId,
     });
     if (input.kind === 'SLEEP' || input.kind === 'EXPENSE' || input.kind === 'INCOME') {
-      // Behaviour patterns shift on these — recompute now so the next plan/
-      // insight call sees fresh numbers.
       void this.behavior.recompute(userId).catch(() => undefined);
     }
 
-    // Round 20: drop the snapshot cache so the next AI call (assistant /
-    // planner / insights) sees the row we just inserted instead of waiting
-    // for the 60 s TTL.
+    // Drop the snapshot cache so the next AI call sees the new row instead
+    // of waiting for the 60 s TTL to elapse.
     await this.userCtx.invalidate(userId);
 
-    // Mid-day soft adapt: when the user logs sleep or mood, the AI should
-    // know to soften today's remaining items (e.g. user logs 4h sleep at
-    // 09:00 → next plan generation will see this and shorten blocks).
-    // We DON'T regenerate here (would discard pending status); instead the
-    // EventLog + recompute means the next time the user pulls Today, the
-    // generate call uses the fresh signals.
-
-    return response;
+    const undoUntil = new Date(result.entityCreatedAt.getTime() + UNDO_WINDOW_SECONDS * 1000);
+    return {
+      kind: input.kind,
+      id: result.entityId,
+      createdAt: result.entityCreatedAt.toISOString(),
+      quickCaptureId: result.quickCaptureId,
+      undoAvailableUntil: undoUntil.toISOString(),
+    };
   }
 
-  // ── Expense ──────────────────────────────────────────────────────────────
+  // ── Per-kind inserts ─────────────────────────────────────────────────────
 
-  private async insertExpense(
-    userId: string,
-    input: CaptureConfirmRequest,
-  ): Promise<CaptureConfirmResponse> {
+  private async insertExpense(userId: string, input: CaptureConfirmRequest): Promise<InsertResult> {
     const fields = parseOrThrow(ExpenseFieldsSchema, input.fields);
-    const wallet = await this.defaultWallet(userId);
 
     if (input.idempotencyKey) {
       const existing = await this.prisma.expense.findUnique({
         where: { userId_idempotencyKey: { userId, idempotencyKey: input.idempotencyKey } },
       });
-      if (existing) return done('EXPENSE', existing.id, existing.createdAt);
+      if (existing) {
+        // Idempotent retry — find the QuickCapture we created the first time.
+        const qc = await this.findQc(userId, 'EXPENSE', existing.id);
+        return { entityId: existing.id, entityCreatedAt: existing.createdAt, quickCaptureId: qc };
+      }
     }
 
-    // Insert the expense AND decrement the wallet balance in one transaction
-    // so the running balance never drifts from the sum of expenses + incomes.
+    const wallet = await this.defaultWallet(userId);
     const amount = new Prisma.Decimal(fields.amount);
-    const [row] = await this.prisma.$transaction([
-      this.prisma.expense.create({
+
+    return this.prisma.$transaction(async (tx) => {
+      const expense = await tx.expense.create({
         data: {
           userId,
           walletId: wallet.id,
@@ -139,36 +155,34 @@ export class ConfirmService {
           expenseDate: new Date(fields.expenseDateIso),
           idempotencyKey: input.idempotencyKey ?? null,
         },
-      }),
-      this.prisma.wallet.update({
+      });
+      await tx.wallet.update({
         where: { id: wallet.id },
         data: { balance: { decrement: amount } },
-      }),
-    ]);
-    return done('EXPENSE', row.id, row.createdAt);
+      });
+      const qc = await this.writeQc(tx, userId, input, 'EXPENSE', expense.id);
+      return { entityId: expense.id, entityCreatedAt: expense.createdAt, quickCaptureId: qc.id };
+    });
   }
 
-  // ── Income ───────────────────────────────────────────────────────────────
-
-  private async insertIncome(
-    userId: string,
-    input: CaptureConfirmRequest,
-  ): Promise<CaptureConfirmResponse> {
+  private async insertIncome(userId: string, input: CaptureConfirmRequest): Promise<InsertResult> {
     const fields = parseOrThrow(IncomeFieldsSchema, input.fields);
-    const wallet = await this.defaultWallet(userId);
 
     if (input.idempotencyKey) {
       const existing = await this.prisma.income.findUnique({
         where: { userId_idempotencyKey: { userId, idempotencyKey: input.idempotencyKey } },
       });
-      if (existing) return done('INCOME', existing.id, existing.createdAt);
+      if (existing) {
+        const qc = await this.findQc(userId, 'INCOME', existing.id);
+        return { entityId: existing.id, entityCreatedAt: existing.createdAt, quickCaptureId: qc };
+      }
     }
 
-    // Mirror of insertExpense but **increment** the wallet — a paycheck or
-    // refund should make the balance go up.
+    const wallet = await this.defaultWallet(userId);
     const amount = new Prisma.Decimal(fields.amount);
-    const [row] = await this.prisma.$transaction([
-      this.prisma.income.create({
+
+    return this.prisma.$transaction(async (tx) => {
+      const income = await tx.income.create({
         data: {
           userId,
           walletId: wallet.id,
@@ -178,91 +192,157 @@ export class ConfirmService {
           incomeDate: new Date(fields.incomeDateIso),
           idempotencyKey: input.idempotencyKey ?? null,
         },
-      }),
-      this.prisma.wallet.update({
+      });
+      await tx.wallet.update({
         where: { id: wallet.id },
         data: { balance: { increment: amount } },
-      }),
-    ]);
-    return done('INCOME', row.id, row.createdAt);
+      });
+      const qc = await this.writeQc(tx, userId, input, 'INCOME', income.id);
+      return { entityId: income.id, entityCreatedAt: income.createdAt, quickCaptureId: qc.id };
+    });
   }
 
-  // ── Meal ─────────────────────────────────────────────────────────────────
-
-  private async insertMeal(
-    userId: string,
-    input: CaptureConfirmRequest,
-  ): Promise<CaptureConfirmResponse> {
+  private async insertMeal(userId: string, input: CaptureConfirmRequest): Promise<InsertResult> {
     const fields = parseOrThrow(MealFieldsSchema, input.fields);
-    const row = await this.prisma.mealLog.create({
-      data: {
-        userId,
-        title: fields.title,
-        mealType: fields.mealType,
-        cost: fields.cost != null ? new Prisma.Decimal(fields.cost) : null,
-        loggedAt: new Date(fields.loggedAtIso),
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const meal = await tx.mealLog.create({
+        data: {
+          userId,
+          title: fields.title,
+          mealType: fields.mealType,
+          cost: fields.cost != null ? new Prisma.Decimal(fields.cost) : null,
+          loggedAt: new Date(fields.loggedAtIso),
+        },
+      });
+      const qc = await this.writeQc(tx, userId, input, 'MEAL', meal.id);
+      return { entityId: meal.id, entityCreatedAt: meal.createdAt, quickCaptureId: qc.id };
     });
-    return done('MEAL', row.id, row.createdAt);
   }
 
-  // ── Task ─────────────────────────────────────────────────────────────────
-
-  private async insertTask(
-    userId: string,
-    input: CaptureConfirmRequest,
-  ): Promise<CaptureConfirmResponse> {
+  private async insertTask(userId: string, input: CaptureConfirmRequest): Promise<InsertResult> {
     const fields = parseOrThrow(TaskFieldsSchema, input.fields);
-    const row = await this.prisma.task.create({
-      data: {
-        userId,
-        title: fields.title,
-        dueAt: fields.dueAtIso ? new Date(fields.dueAtIso) : null,
-        priority: fields.priority,
-        status: 'TODO',
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const task = await tx.task.create({
+        data: {
+          userId,
+          title: fields.title,
+          dueAt: fields.dueAtIso ? new Date(fields.dueAtIso) : null,
+          priority: fields.priority,
+          status: 'TODO',
+        },
+      });
+      const qc = await this.writeQc(tx, userId, input, 'TASK', task.id);
+      return { entityId: task.id, entityCreatedAt: task.createdAt, quickCaptureId: qc.id };
     });
-    return done('TASK', row.id, row.createdAt);
   }
 
-  // ── Sleep ────────────────────────────────────────────────────────────────
-
-  private async insertSleep(
-    userId: string,
-    input: CaptureConfirmRequest,
-  ): Promise<CaptureConfirmResponse> {
+  private async insertSleep(userId: string, input: CaptureConfirmRequest): Promise<InsertResult> {
     const fields = parseOrThrow(SleepFieldsSchema, input.fields);
-    const row = await this.prisma.sleepLog.create({
-      data: {
-        userId,
-        sleepAt: new Date(fields.sleepAtIso),
-        wakeAt: new Date(fields.wakeAtIso),
-        durationMinutes: fields.durationMinutes,
-        quality: fields.quality ?? null,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const sleep = await tx.sleepLog.create({
+        data: {
+          userId,
+          sleepAt: new Date(fields.sleepAtIso),
+          wakeAt: new Date(fields.wakeAtIso),
+          durationMinutes: fields.durationMinutes,
+          quality: fields.quality ?? null,
+        },
+      });
+      const qc = await this.writeQc(tx, userId, input, 'SLEEP', sleep.id);
+      return { entityId: sleep.id, entityCreatedAt: sleep.createdAt, quickCaptureId: qc.id };
     });
-    return done('SLEEP', row.id, row.createdAt);
   }
 
-  // ── Mood ─────────────────────────────────────────────────────────────────
+  private async insertMood(userId: string, input: CaptureConfirmRequest): Promise<InsertResult> {
+    const fields = parseOrThrow(MoodFieldsSchema, input.fields);
+    return this.prisma.$transaction(async (tx) => {
+      const mood = await tx.moodLog.create({
+        data: {
+          userId,
+          mood: fields.mood,
+          energy: fields.energy,
+          loggedAt: new Date(fields.loggedAtIso),
+        },
+      });
+      const qc = await this.writeQc(tx, userId, input, 'MOOD', mood.id);
+      return { entityId: mood.id, entityCreatedAt: mood.createdAt, quickCaptureId: qc.id };
+    });
+  }
 
-  private async insertMood(
+  // ── QuickCapture audit + lookup helpers ──────────────────────────────────
+
+  private async writeQc(
+    tx: Prisma.TransactionClient,
     userId: string,
     input: CaptureConfirmRequest,
-  ): Promise<CaptureConfirmResponse> {
-    const fields = parseOrThrow(MoodFieldsSchema, input.fields);
-    const row = await this.prisma.moodLog.create({
+    kind: CaptureKindStr,
+    entityId: string,
+  ) {
+    const parseSource = mapSource(input.parseSource);
+    const parsedActions = {
+      kind: input.kind,
+      fields: input.fields,
+      targetId: entityId,
+      originalKind: input.originalKind,
+      originalFields: input.originalFields,
+    } as Prisma.InputJsonValue;
+    return tx.quickCapture.create({
       data: {
         userId,
-        mood: fields.mood,
-        energy: fields.energy,
-        loggedAt: new Date(fields.loggedAtIso),
+        rawText: input.rawText ?? '',
+        status: 'CONFIRMED',
+        parsedActions,
+        parseSource,
+        parseConfidence:
+          input.parseConfidence != null ? new Prisma.Decimal(input.parseConfidence) : null,
+        parseNeedsReview: input.parseConfidence != null && input.parseConfidence < 0.55,
+        parsedKind: input.originalKind ?? input.kind,
+        parsedPayload: (input.originalFields ?? input.fields) as Prisma.InputJsonValue,
+        finalKind: input.kind,
+        finalPayload: input.fields as Prisma.InputJsonValue,
+        appliedEntityType: kind,
+        appliedEntityId: entityId,
+        appliedAt: new Date(),
       },
     });
-    return done('MOOD', row.id, row.createdAt);
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  /** Locate the QuickCapture row that was written when this entity was first
+   *  confirmed (for idempotent retries). Throws to surface the inconsistency
+   *  if missing — callers expect a real id back. */
+  private async findQc(userId: string, kind: CaptureKindStr, entityId: string): Promise<string> {
+    const qc = await this.prisma.quickCapture.findFirst({
+      where: { userId, appliedEntityType: kind, appliedEntityId: entityId },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (qc) return qc.id;
+    // Pre-R21 rows didn't carry applied refs. Stamp a fresh QuickCapture so
+    // the response still has a handle (undo just won't work for the legacy row).
+    const created = await this.prisma.quickCapture.create({
+      data: {
+        userId,
+        rawText: '',
+        status: 'CONFIRMED',
+        parsedActions: { kind, targetId: entityId } as Prisma.InputJsonValue,
+        appliedEntityType: kind,
+        appliedEntityId: entityId,
+        appliedAt: new Date(),
+      },
+    });
+    return created.id;
+  }
+
+  // ── Correction detection ─────────────────────────────────────────────────
+
+  /** True iff the user actually changed something between parse and confirm. */
+  private isCorrection(input: CaptureConfirmRequest): boolean {
+    if (!input.originalKind && !input.originalFields) return false;
+    if (input.originalKind && input.originalKind !== input.kind) return true;
+    if (input.originalFields && JSON.stringify(input.originalFields) !== JSON.stringify(input.fields)) {
+      return true;
+    }
+    return false;
+  }
 
   /** Returns the user's default wallet, creating one if none exists. */
   private async defaultWallet(userId: string) {
@@ -276,7 +356,16 @@ export class ConfirmService {
   }
 }
 
-function parseOrThrow<T>(schema: { safeParse: (i: unknown) => { success: boolean; data?: T; error?: { issues: unknown[] } } }, input: unknown): T {
+function mapSource(s: CaptureConfirmRequest['parseSource'] | undefined): 'RULE' | 'LLM' | 'HYBRID' | 'MANUAL' {
+  if (!s) return 'MANUAL';
+  if (s === 'OPENAI') return 'LLM';
+  return s;
+}
+
+function parseOrThrow<T>(
+  schema: { safeParse: (i: unknown) => { success: boolean; data?: T; error?: { issues: unknown[] } } },
+  input: unknown,
+): T {
   const r = schema.safeParse(input);
   if (!r.success) {
     throw new BadRequestException({
@@ -289,14 +378,3 @@ function parseOrThrow<T>(schema: { safeParse: (i: unknown) => { success: boolean
   }
   return r.data as T;
 }
-
-function done(
-  kind: CaptureConfirmResponse['kind'],
-  id: string,
-  createdAt: Date,
-): CaptureConfirmResponse {
-  return { kind, id, createdAt: createdAt.toISOString() };
-}
-
-// Quiet the unused-NotFoundException import — reserved for future endpoints.
-void NotFoundException;

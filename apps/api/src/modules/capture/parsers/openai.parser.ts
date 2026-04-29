@@ -12,6 +12,7 @@ import OpenAI from 'openai';
 import type { ParseContext, ParseHit } from './types';
 import { EncryptionService } from '../../../common/crypto/encryption.service';
 import { PrismaService } from '../../../prisma/prisma.service';
+import type { CorrectionExample } from '../corrections.service';
 
 const SYS_PROMPT = `You classify a single short user utterance about everyday life into ONE of:
 - EXPENSE: money the user SPENT on something (food, bills, transport, shopping, …)
@@ -85,7 +86,12 @@ export class OpenAiParser {
   ) {}
 
   /** Returns null if the user has no key, or the call fails for any reason. */
-  async tryParse(userId: string, text: string, ctx: ParseContext): Promise<ParseHit | null> {
+  async tryParse(
+    userId: string,
+    text: string,
+    ctx: ParseContext,
+    corrections: CorrectionExample[] = [],
+  ): Promise<ParseHit | null> {
     const row = await this.prisma.userAiKey.findUnique({ where: { userId } });
     if (!row || !row.isActive) return null;
     let plain: string;
@@ -102,7 +108,16 @@ export class OpenAiParser {
       const client = new OpenAI({ apiKey: plain, baseURL: row.baseUrl });
       const model =
         row.defaultModel ?? this.config.get<string>('OPENAI_DEFAULT_MODEL') ?? 'gpt-4o-mini';
-      const userMsg = `Now in user TZ ${ctx.tz}: ${ctx.now.toISOString()}\n\nInput: ${text}`;
+
+      // Few-shot examples drawn from the user's own corrections so the model
+      // converges on this user's idiolect: brand names, work-context vs
+      // personal-context spending, etc. Empty array on first use.
+      const fewShot = renderFewShot(corrections);
+
+      const userMsg =
+        `Now in user TZ ${ctx.tz}: ${ctx.now.toISOString()}` +
+        (fewShot ? `\n\nPast corrections from this user (do not repeat their misclassifications):\n${fewShot}` : '') +
+        `\n\nInput: ${text}`;
       const res = await client.chat.completions.create(
         {
           model,
@@ -127,6 +142,17 @@ export class OpenAiParser {
 
     return mapToHit(extraction, ctx);
   }
+}
+
+function renderFewShot(corrections: CorrectionExample[]): string {
+  return corrections
+    .filter((c) => c.correctedKind && c.originalKind && c.correctedKind !== c.originalKind)
+    .slice(0, 5)
+    .map(
+      (c) =>
+        `- "${c.rawText}" — was classified ${c.originalKind} but the user changed it to ${c.correctedKind}.`,
+    )
+    .join('\n');
 }
 
 function mapToHit(x: LlmExtraction, ctx: ParseContext): ParseHit | null {

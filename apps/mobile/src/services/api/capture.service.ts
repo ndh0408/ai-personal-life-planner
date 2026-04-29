@@ -1,7 +1,7 @@
 import { apiClient } from './client';
 
 export type CaptureKind = 'EXPENSE' | 'INCOME' | 'MEAL' | 'TASK' | 'SLEEP' | 'MOOD' | 'UNKNOWN';
-export type ParserSource = 'RULE' | 'OPENAI';
+export type ParserSource = 'RULE' | 'OPENAI' | 'HYBRID' | 'MANUAL';
 
 export interface CaptureParseResponse {
   kind: CaptureKind;
@@ -10,6 +10,8 @@ export interface CaptureParseResponse {
   previewText: string;
   fields: Record<string, unknown>;
   hint?: string;
+  /** Round 21: signal that the parser is unsure — UI should highlight before save. */
+  needsReview?: boolean;
 }
 
 export interface CaptureConfirmRequest {
@@ -18,12 +20,21 @@ export interface CaptureConfirmRequest {
   idempotencyKey?: string;
   /** Original user text — server writes a QuickCapture audit row when present. */
   rawText?: string;
+  /** Parse provenance forwarded so the server can persist a correction. */
+  parseSource?: ParserSource;
+  parseConfidence?: number;
+  /** What the parser originally returned, before the user edited. */
+  originalKind?: CaptureKind;
+  originalFields?: Record<string, unknown>;
 }
 
 export interface CaptureConfirmResponse {
   kind: Exclude<CaptureKind, 'UNKNOWN'>;
   id: string;
   createdAt: string;
+  /** Round 22: handle for the undo button. */
+  quickCaptureId?: string;
+  undoAvailableUntil?: string;
 }
 
 /**

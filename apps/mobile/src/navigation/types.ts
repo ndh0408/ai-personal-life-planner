@@ -22,11 +22,25 @@ export type MainTabParamList = {
   Settings: undefined;
 };
 
+/**
+ * SmartEntry preselects a kind when launched from a quick action chip on
+ * Home. `auto` lets the parser decide and is the default when navigating
+ * from anywhere else.
+ */
+export type SmartEntryMode =
+  | 'auto'
+  | 'EXPENSE'
+  | 'INCOME'
+  | 'TASK'
+  | 'MEAL'
+  | 'SLEEP'
+  | 'MOOD';
+
 /** Modals / detail screens reachable from any tab. */
 export type RootStackParamList = {
   MainTabs: undefined;
   AISettings: undefined;
-  SmartEntry: undefined;
+  SmartEntry: { mode?: SmartEntryMode } | undefined;
   Tasks: undefined;
   MealLog: undefined;
   SleepMoodCheckin: undefined;

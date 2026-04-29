@@ -11,7 +11,10 @@ export const CaptureKindSchema = z.enum([
 ]);
 export type CaptureKind = z.infer<typeof CaptureKindSchema>;
 
-export const ParserSourceSchema = z.enum(['RULE', 'OPENAI']);
+// HYBRID = LLM was consulted because rule confidence sat in the medium tier
+// (0.55-0.89) and the LLM agreed with the rule (or beat it). MANUAL = the user
+// changed the kind in the preview before confirming. RULE / OPENAI as before.
+export const ParserSourceSchema = z.enum(['RULE', 'OPENAI', 'HYBRID', 'MANUAL']);
 export type ParserSource = z.infer<typeof ParserSourceSchema>;
 
 // ── Parse: input ──────────────────────────────────────────────────────────────
@@ -89,6 +92,15 @@ export const CaptureParseResponseSchema = z.object({
   /** Per-kind shape; UNKNOWN means an empty object plus a hint. */
   fields: z.record(z.string(), z.unknown()),
   hint: z.string().max(200).optional(),
+  /**
+   * The parser is uncertain — UI should highlight the preview as needing a
+   * second look before save. True for confidence < ~0.55 with rule only and
+   * for UNKNOWN. Default false keeps callers backward-compatible.
+   */
+  needsReview: z.boolean().default(false),
+  /** Stable handle to look this parse up later (e.g. when persisting an edit
+   *  as a CaptureCorrection on confirm). */
+  parseId: z.string().optional(),
 });
 export type CaptureParseResponse = z.infer<typeof CaptureParseResponseSchema>;
 
@@ -106,6 +118,15 @@ export const CaptureConfirmRequestSchema = z.object({
    * for undo / activity log later.
    */
   rawText: z.string().min(1).max(2000).optional(),
+  /**
+   * Round 21: parse provenance. Lets the server persist a CaptureCorrection
+   * row when the user changed the kind or fields between parse and confirm.
+   */
+  parseSource: ParserSourceSchema.optional(),
+  parseConfidence: z.number().min(0).max(1).optional(),
+  /** What the parser originally said before the user edited. */
+  originalKind: CaptureKindSchema.optional(),
+  originalFields: z.record(z.string(), z.unknown()).optional(),
 });
 export type CaptureConfirmRequest = z.infer<typeof CaptureConfirmRequestSchema>;
 
@@ -113,6 +134,10 @@ export const CaptureConfirmResponseSchema = z.object({
   kind: z.enum(['EXPENSE', 'INCOME', 'MEAL', 'TASK', 'SLEEP', 'MOOD']),
   id: z.string(),
   createdAt: z.string().datetime(),
+  /** Round 22: handle to a /capture/:id/undo call. Optional for older clients. */
+  quickCaptureId: z.string().optional(),
+  /** ISO timestamp after which the undo button should be hidden. */
+  undoAvailableUntil: z.string().datetime().optional(),
 });
 export type CaptureConfirmResponse = z.infer<typeof CaptureConfirmResponseSchema>;
 

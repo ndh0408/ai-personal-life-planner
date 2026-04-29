@@ -605,6 +605,13 @@ model NotificationSetting {
 
 // ---------- Quick Capture -------------------------------------------------------
 
+enum CaptureParseSource {
+  RULE
+  LLM
+  HYBRID
+  MANUAL
+}
+
 model QuickCapture {
   id            String             @id @default(cuid())
   userId        String
@@ -612,11 +619,56 @@ model QuickCapture {
   // The structured outputs returned by the parser; kept verbatim until confirmed.
   parsedActions Json
   status        QuickCaptureStatus @default(DRAFT)
+
+  // Round 21: parse provenance + audit trail.
+  parseSource       CaptureParseSource?
+  parseConfidence   Decimal?            @db.Decimal(5, 4)
+  parseNeedsReview  Boolean             @default(false)
+  parsedKind        String?             // EXPENSE|INCOME|TASK|MEAL|SLEEP|MOOD|UNKNOWN
+  parsedPayload     Json?
+  finalKind         String?
+  finalPayload      Json?
+  appliedEntityType String? // e.g. EXPENSE, INCOME, ...
+  appliedEntityId   String?
+  appliedAt         DateTime?
+  undoneAt          DateTime?
+  undoReason        String?
+  correctionCount   Int                 @default(0)
+  reviewedAt        DateTime?
+
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  corrections CaptureCorrection[]
 
   @@index([userId])
   @@index([userId, status])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, appliedAt(sort: Desc)])
+  @@index([userId, parseNeedsReview, createdAt(sort: Desc)])
+}
+
+// Append-only record of every time a user edited the parser's preview
+// before confirming. The OpenAI parser reads the most recent N corrections
+// as few-shot examples on subsequent ambiguous parses, so the system gets
+// better the more the user uses it.
+model CaptureCorrection {
+  id                 String              @id @default(cuid())
+  userId             String
+  quickCaptureId     String
+  rawText            String
+  originalSource     CaptureParseSource
+  originalKind       String?
+  originalConfidence Decimal?            @db.Decimal(5, 4)
+  originalPayload    Json?
+  correctedKind      String?
+  correctedPayload   Json?
+  confirmed          Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+
+  quickCapture QuickCapture @relation(fields: [quickCaptureId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([quickCaptureId])
 }
