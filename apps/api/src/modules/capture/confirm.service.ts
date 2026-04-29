@@ -18,6 +18,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventLogService } from '../intelligence/event-log.service';
 import { BehaviorService } from '../intelligence/behavior.service';
+import { UserContextService } from '../intelligence/user-context.service';
 
 @Injectable()
 export class ConfirmService {
@@ -25,6 +26,7 @@ export class ConfirmService {
     private readonly prisma: PrismaService,
     private readonly events: EventLogService,
     private readonly behavior: BehaviorService,
+    private readonly userCtx: UserContextService,
   ) {}
 
   async confirm(userId: string, input: CaptureConfirmRequest): Promise<CaptureConfirmResponse> {
@@ -91,6 +93,11 @@ export class ConfirmService {
       // insight call sees fresh numbers.
       void this.behavior.recompute(userId).catch(() => undefined);
     }
+
+    // Round 20: drop the snapshot cache so the next AI call (assistant /
+    // planner / insights) sees the row we just inserted instead of waiting
+    // for the 60 s TTL.
+    await this.userCtx.invalidate(userId);
 
     // Mid-day soft adapt: when the user logs sleep or mood, the AI should
     // know to soften today's remaining items (e.g. user logs 4h sleep at

@@ -5,5 +5,6 @@ export * from './capture';
 export * from './common';
 export * from './dashboard';
 export * from './planner';
+export * from './privacy';
 export * from './profile';
 export * from './recommendations';

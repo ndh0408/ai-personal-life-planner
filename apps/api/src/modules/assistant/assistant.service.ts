@@ -321,15 +321,25 @@ function buildContextPrelude(ctx: import('../intelligence/user-context.service')
   if (p.monthlyGoal) lines.push(`- Monthly goal: ${p.monthlyGoal}`);
   if (p.dislikes.length) lines.push(`- Dislikes (avoid suggesting): ${p.dislikes.join(', ')}`);
   if (p.allergies.length) lines.push(`- Allergies (NEVER suggest): ${p.allergies.join(', ')}`);
-  if (p.budgetMonthly != null) {
+  if (p.budgetMonthly != null && ctx.todaySpendVnd != null && ctx.monthSpendVnd != null) {
     lines.push(`- Monthly budget: ${p.budgetMonthly} VND (today: ${ctx.todaySpendVnd}, month: ${ctx.monthSpendVnd})`);
   }
   if (ctx.lastSleepMinutes != null) {
     lines.push(`- Last sleep: ${(ctx.lastSleepMinutes / 60).toFixed(1)}h`);
   }
   if (ctx.lastMood) lines.push(`- Last mood: ${ctx.lastMood}`);
-  if (ctx.openHighPriorityTaskCount > 0) {
+  if (ctx.openHighPriorityTaskCount != null && ctx.openHighPriorityTaskCount > 0) {
     lines.push(`- ${ctx.openHighPriorityTaskCount} HIGH-priority task(s) still open`);
+  }
+  // Privacy hint so the LLM can answer truthfully when a domain is hidden
+  // instead of inventing numbers it doesn't have.
+  const hidden: string[] = [];
+  if (!ctx.privacy.useFinanceForAI) hidden.push('finance');
+  if (!ctx.privacy.useHealthForAI) hidden.push('sleep/mood');
+  if (!ctx.privacy.useMealsForAI) hidden.push('meals');
+  if (!ctx.privacy.useTasksForAI) hidden.push('tasks');
+  if (hidden.length) {
+    lines.push(`- The user has hidden these domains from AI: ${hidden.join(', ')}. Don't speculate about them.`);
   }
   if (ctx.behavior.peakFocus) {
     lines.push(`- Peak focus window: ${ctx.behavior.peakFocus.start}:00–${ctx.behavior.peakFocus.end}:00`);
