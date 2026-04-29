@@ -30,7 +30,6 @@ interface AuthState {
   signOut: () => Promise<void>;
 
   // ── onboarding helpers ──
-  markBasicSetupDone: () => void;
   markAiKeyConfigured: (configured: boolean) => void;
   finishOnboarding: () => void;
 }
@@ -87,12 +86,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     apiClient.setTokens(null);
     set({ stage: 'unauthenticated', user: null, hasAiKey: null });
-  },
-
-  markBasicSetupDone: () => {
-    // No server-side step yet; the screen has already saved the profile.
-    // Stage stays 'onboarding' until AI key step finishes.
-    void get();
   },
 
   markAiKeyConfigured: (configured) => {

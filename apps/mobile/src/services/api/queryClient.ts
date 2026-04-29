@@ -16,8 +16,6 @@ export const queryClient = new QueryClient({
 });
 
 export const QK = {
-  me: ['me'] as const,
   health: ['health'] as const,
   aiKeyStatus: ['ai-key', 'status'] as const,
-  homeStats: ['home', 'stats'] as const,
 };

@@ -2,10 +2,13 @@ import React from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useForm, Controller } from 'react-hook-form';
+import { useMutation } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AppHeader, AppScreen, Button, Chip, Text, TextField } from '../../components/ui';
+import { AppHeader, AppScreen, Button, Chip, Text, TextField, useToast } from '../../components/ui';
 import { spacing } from '../../theme';
 import type { OnboardingStackParamList } from '../../navigation/types';
+import { profileService } from '../../services/api/profile.service';
+import { readableError } from '../../utils/error';
 
 const WAKE_PRESETS = ['05:30', '06:00', '06:30', '07:00', '07:30', '08:00'];
 const SLEEP_PRESETS = ['22:00', '22:30', '23:00', '23:30', '00:00'];
@@ -20,16 +23,36 @@ type Props = NativeStackScreenProps<OnboardingStackParamList, 'BasicSetup'>;
 
 export function BasicSetupScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const toast = useToast();
   const { control, handleSubmit, watch, setValue } = useForm<FormValues>({
     defaultValues: { preferredName: '', wakeTime: '06:30', sleepTime: '23:00' },
   });
   const wake = watch('wakeTime');
   const sleep = watch('sleepTime');
 
-  const onNext = handleSubmit(async () => {
-    // Profile persistence wires up in the next round; for now move forward.
-    navigation.navigate('AISetup');
+  // PATCH /profile so wakeTime / sleepTime / preferredName actually reach the
+  // server. completeOnboarding marks the profile row done so the next launch
+  // doesn't re-send the user through this step.
+  const save = useMutation({
+    mutationFn: (values: FormValues) =>
+      profileService.update({
+        preferredName: values.preferredName.trim() || null,
+        usualWakeTime: values.wakeTime,
+        usualSleepTime: values.sleepTime,
+        completeOnboarding: true,
+      }),
   });
+
+  const onNext = handleSubmit(async (values) => {
+    try {
+      await save.mutateAsync(values);
+      navigation.navigate('AISetup');
+    } catch (e) {
+      toast.show(readableError(e, t, 'onboarding'), 'danger');
+    }
+  });
+
+  const onSkip = () => navigation.navigate('AISetup');
 
   return (
     <AppScreen>
@@ -89,7 +112,13 @@ export function BasicSetupScreen({ navigation }: Props) {
           </View>
         </View>
 
-        <Button label={t('onboarding.basicSetup.cta')} onPress={onNext} />
+        <Button
+          label={save.isPending ? t('common.loading') : t('onboarding.basicSetup.cta')}
+          onPress={onNext}
+          loading={save.isPending}
+          disabled={save.isPending}
+        />
+        <Button label={t('common.skip')} variant="ghost" onPress={onSkip} disabled={save.isPending} />
       </View>
     </AppScreen>
   );

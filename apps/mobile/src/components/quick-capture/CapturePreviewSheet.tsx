@@ -7,12 +7,13 @@
  * are editable in the sheet; deeper editing happens in the per-feature screen
  * later. Parsed fields the user doesn't change are sent back verbatim.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { BottomSheet, Button, Chip, TextField, Text } from '../ui';
 import { spacing } from '../../theme';
 import { KindBadge } from './KindBadge';
+import { makeIdempotencyKey } from '../../utils/idempotency';
 import {
   type CaptureConfirmRequest,
   type CaptureKind,
@@ -37,20 +38,22 @@ export function CapturePreviewSheet({ visible, parsed, busy = false, onConfirm, 
   const { t } = useTranslation();
   const [fields, setFields] = useState<FieldsState>({});
 
-  // Reset editable state when a new parse arrives.
+  // Idempotency key — stable per "open of the sheet for this parse result".
+  // Resetting on a *new* parse is correct (different submission); the user
+  // editing fields inline must NOT change the key, otherwise a retry after a
+  // network blip would create a duplicate row instead of returning the existing.
+  const idemKeyRef = useRef<string | undefined>(undefined);
+
   useEffect(() => {
-    if (parsed) setFields({ ...parsed.fields });
+    if (parsed) {
+      setFields({ ...parsed.fields });
+      idemKeyRef.current = makeIdempotencyKey();
+    } else {
+      idemKeyRef.current = undefined;
+    }
   }, [parsed]);
 
-  const idempotencyKey = useMemo(
-    () =>
-      parsed
-        ? `${parsed.kind}-${(parsed.fields as Record<string, string>).title ?? 'item'}-${Date.now()}`
-            .slice(0, 80)
-            .replace(/\s+/g, '_')
-        : undefined,
-    [parsed],
-  );
+  const idempotencyKey = idemKeyRef.current;
 
   if (!parsed) return null;
 

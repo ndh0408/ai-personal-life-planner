@@ -9,8 +9,6 @@ import { MainTabs } from './MainTabs';
 import { AISettingsScreen } from '../screens/main/AISettingsScreen';
 import { SmartEntryScreen } from '../screens/main/SmartEntryScreen';
 import { TasksScreen } from '../screens/main/TasksScreen';
-import { AddTaskScreen } from '../screens/main/AddTaskScreen';
-import { AddExpenseScreen } from '../screens/main/AddExpenseScreen';
 import { MealLogScreen } from '../screens/main/MealLogScreen';
 import { SleepMoodCheckinScreen } from '../screens/main/SleepMoodCheckinScreen';
 import type { RootStackParamList } from './types';
@@ -52,8 +50,6 @@ function MainStack() {
         options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
       />
       <Stack.Screen name="Tasks" component={TasksScreen} />
-      <Stack.Screen name="AddTask" component={AddTaskScreen} />
-      <Stack.Screen name="AddExpense" component={AddExpenseScreen} />
       <Stack.Screen name="MealLog" component={MealLogScreen} />
       <Stack.Screen name="SleepMoodCheckin" component={SleepMoodCheckinScreen} />
     </Stack.Navigator>

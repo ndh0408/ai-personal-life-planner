@@ -19,6 +19,7 @@ import {
   useToast,
 } from '../../components/ui';
 import { spacing } from '../../theme';
+import { useResponsive } from '../../hooks/useResponsive';
 import {
   financeService,
   incomeService,
@@ -63,6 +64,9 @@ export function MoneyScreen({ navigation }: Props) {
   });
 
   const refreshing = timeline.isFetching && !timeline.isLoading;
+  // On phones < 360dp the two stat cards squeeze; stack vertically there.
+  const { device } = useResponsive();
+  const stackStats = device === 'smallPhone';
 
   return (
     <AppScreen
@@ -87,7 +91,13 @@ export function MoneyScreen({ navigation }: Props) {
         ))}
       </View>
 
-      <View style={{ flexDirection: 'row', gap: spacing.md, marginBottom: spacing.lg }}>
+      <View
+        style={{
+          flexDirection: stackStats ? 'column' : 'row',
+          gap: spacing.md,
+          marginBottom: spacing.lg,
+        }}
+      >
         <StatCard
           label={t('money.totalIncome')}
           value={'+' + formatMoney(timeline.data?.totalIncome ?? 0)}

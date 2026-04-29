@@ -28,8 +28,6 @@ export type RootStackParamList = {
   AISettings: undefined;
   SmartEntry: undefined;
   Tasks: undefined;
-  AddTask: undefined;
-  AddExpense: undefined;
   MealLog: undefined;
   SleepMoodCheckin: undefined;
 };

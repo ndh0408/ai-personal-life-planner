@@ -5,10 +5,12 @@ import {
   ScrollView,
   StatusBar,
   StyleSheet,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '../../theme';
+import { useResponsive } from '../../hooks/useResponsive';
 
 interface Props {
   children: React.ReactNode;
@@ -34,10 +36,27 @@ export function AppScreen({
   footer,
   refreshControl,
 }: Props) {
-  const padding = edgeToEdge ? styles.paddingNone : styles.paddingDefault;
+  // Tablet / large-phone landscape: cap the readable column width so a card
+  // doesn't span 1024dp. Phones below the breakpoint stay edge-to-edge.
+  const { width } = useWindowDimensions();
+  const { device, contentMaxWidth, horizontalPadding } = useResponsive();
+  const horizontalPad = edgeToEdge ? 0 : horizontalPadding;
+  const lateralMargin = Math.max(0, (width - contentMaxWidth) / 2);
+
+  // KAV: iOS uses padding, Android uses 'height' (the older 'undefined'
+  // value made it a no-op and the keyboard covered Save buttons). On Android
+  // we also defer to the OS adjustResize where possible.
+  const kavBehavior = Platform.OS === 'ios' ? 'padding' : 'height';
+
+  const containerStyle = {
+    paddingHorizontal: horizontalPad,
+    paddingLeft: horizontalPad + lateralMargin,
+    paddingRight: horizontalPad + lateralMargin,
+  };
+
   const inner = scroll ? (
     <ScrollView
-      contentContainerStyle={[padding, styles.contentVertical]}
+      contentContainerStyle={[containerStyle, styles.contentVertical]}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
       refreshControl={refreshControl}
@@ -45,7 +64,7 @@ export function AppScreen({
       {children}
     </ScrollView>
   ) : (
-    <View style={[padding, styles.contentVertical, styles.flex]}>{children}</View>
+    <View style={[containerStyle, styles.contentVertical, styles.flex]}>{children}</View>
   );
 
   return (
@@ -53,10 +72,17 @@ export function AppScreen({
       <StatusBar barStyle="light-content" backgroundColor={colors.canvas} />
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={kavBehavior}
+        // Tablet / large device: lean toward 'padding' which feels less jumpy
+        // on bigger screens.
+        keyboardVerticalOffset={device === 'tablet' ? 0 : Platform.OS === 'ios' ? 0 : 0}
       >
         {inner}
-        {footer ? <View style={styles.footer}>{footer}</View> : null}
+        {footer ? (
+          <View style={[styles.footer, { paddingHorizontal: horizontalPad + lateralMargin }]}>
+            {footer}
+          </View>
+        ) : null}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -65,11 +91,8 @@ export function AppScreen({
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.canvas },
   flex: { flex: 1 },
-  paddingNone: { paddingHorizontal: 0 },
-  paddingDefault: { paddingHorizontal: spacing.xl },
   contentVertical: { paddingTop: spacing['2xl'], paddingBottom: spacing.xl, flexGrow: 1 },
   footer: {
-    paddingHorizontal: spacing.xl,
     paddingTop: spacing.md,
     paddingBottom: spacing.md,
     borderTopWidth: 1,

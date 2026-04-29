@@ -62,6 +62,7 @@ export function RegisterScreen({ navigation }: Props) {
               placeholder={t('auth.emailPlaceholder')}
               keyboardType="email-address"
               autoComplete="email"
+              textContentType="emailAddress"
               value={field.value}
               onChangeText={field.onChange}
               error={fieldState.error ? t('auth.errors.validation_failed') : null}
@@ -89,6 +90,7 @@ export function RegisterScreen({ navigation }: Props) {
               label={t('auth.password')}
               placeholder={t('auth.passwordPlaceholder')}
               autoComplete="new-password"
+              textContentType="newPassword"
               value={field.value}
               onChangeText={field.onChange}
               secret

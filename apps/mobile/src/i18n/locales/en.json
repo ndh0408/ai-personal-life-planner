@@ -82,6 +82,11 @@
       "skip": "Skip",
       "cta": "Continue"
     },
+    "errors": {
+      "network": "Couldn't save. Check your connection and try again.",
+      "validation_failed": "Some fields aren't valid.",
+      "unknown": "Something went wrong. Try again."
+    },
     "aiSetup": {
       "kicker": "Step 2 / 2",
       "title": "Connect your AI",
@@ -389,7 +394,13 @@
   "assistant": {
     "title": "Assistant",
     "empty": "Ask me anything.",
-    "inputPlaceholder": "Ask something…"
+    "inputPlaceholder": "Ask something…",
+    "errors": {
+      "network": "Message didn't go through. Check your connection.",
+      "AI_KEY_MISSING": "Add an AI key in Settings to chat.",
+      "RATE_LIMITED": "You're sending too fast. Wait a moment.",
+      "unknown": "AI didn't reply. Try again later."
+    }
   },
   "settings": {
     "title": "Settings",

@@ -5,7 +5,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   AppScreen,
-  Badge,
   Button,
   Card,
   Chip,
@@ -18,8 +17,8 @@ import {
   useToast,
 } from '../../components/ui';
 import { spacing } from '../../theme';
-import { journalService, type MealRow, type MealType } from '../../services/api/journal.service';
-import { formatMoney } from '../../utils/format';
+import { journalService, type MealType } from '../../services/api/journal.service';
+import { MealRowCard } from '../../components/today/MealRowCard';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MealLog'>;
@@ -124,19 +123,3 @@ export function MealLogScreen({ navigation }: Props) {
   );
 }
 
-function MealRowCard({ row }: { row: MealRow }) {
-  const { t } = useTranslation();
-  return (
-    <Card>
-      <View
-        style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
-      >
-        <Text variant="bodyEm" style={{ flex: 1 }}>
-          {row.title}
-        </Text>
-        <Badge label={t(`capture.mealTypes.${row.mealType}`)} tone="success" />
-      </View>
-      {row.cost != null ? <Text variant="caption">{formatMoney(row.cost)}</Text> : null}
-    </Card>
-  );
-}

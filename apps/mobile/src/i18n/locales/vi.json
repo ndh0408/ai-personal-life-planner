@@ -82,6 +82,11 @@
       "skip": "Bỏ qua",
       "cta": "Tiếp tục"
     },
+    "errors": {
+      "network": "Không lưu được. Kiểm tra mạng rồi thử lại.",
+      "validation_failed": "Thông tin chưa hợp lệ.",
+      "unknown": "Có lỗi xảy ra. Thử lại nhé."
+    },
     "aiSetup": {
       "kicker": "Bước 2 / 2",
       "title": "Kết nối AI của bạn",
@@ -233,7 +238,19 @@
     "title": "Lịch hôm nay",
     "empty": "Chưa có gì hôm nay. Quick Capture để thêm.",
     "openTasks": "Mở danh sách",
-    "openMeals": "Sổ ăn uống"
+    "openMeals": "Sổ ăn uống",
+    "regeneratePlan": "Tạo lại kế hoạch"
+  },
+  "assistant": {
+    "title": "Trợ lý",
+    "empty": "Hỏi mình bất kỳ điều gì.",
+    "inputPlaceholder": "Hỏi gì đó…",
+    "errors": {
+      "network": "Không gửi được tin. Kiểm tra mạng rồi thử lại.",
+      "AI_KEY_MISSING": "Cần API key AI để chat. Vào Cài đặt để thêm.",
+      "RATE_LIMITED": "Bạn gửi quá nhanh. Đợi một chút rồi thử lại.",
+      "unknown": "AI không trả lời được. Thử lại sau nhé."
+    }
   },
   "smart": {
     "kicker": "Thêm gì đó",
@@ -385,11 +402,6 @@
     "placeholders": {
       "note": "VD: Hơi đau đầu, uống ít nước…"
     }
-  },
-  "assistant": {
-    "title": "Trợ lý",
-    "empty": "Hỏi mình bất kỳ điều gì.",
-    "inputPlaceholder": "Hỏi gì đó…"
   },
   "settings": {
     "title": "Cài đặt",

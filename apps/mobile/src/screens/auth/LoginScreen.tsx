@@ -63,6 +63,7 @@ export function LoginScreen({ navigation }: Props) {
               placeholder={t('auth.emailPlaceholder')}
               keyboardType="email-address"
               autoComplete="email"
+              textContentType="emailAddress"
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -78,6 +79,7 @@ export function LoginScreen({ navigation }: Props) {
               label={t('auth.password')}
               placeholder={t('auth.passwordPlaceholder')}
               autoComplete="password"
+              textContentType="password"
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}

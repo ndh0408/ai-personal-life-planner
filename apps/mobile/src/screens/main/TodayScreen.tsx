@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Pressable } from 'react-native';
 import {
   AppScreen,
-  Badge,
   Button,
   Card,
   EmptyState,
@@ -18,9 +18,8 @@ import { spacing } from '../../theme';
 import { useTodayMeals, useTodayTasks } from '../../hooks/useFeed';
 import { useGenerateTodayPlan, useSetItemStatus, useTodayPlan } from '../../hooks/usePlanner';
 import { PlanItemRow } from '../../components/today/PlanItemRow';
-import type { TaskRow } from '../../services/api/tasks.service';
-import type { MealRow } from '../../services/api/journal.service';
-import { formatMoney } from '../../utils/format';
+import { TaskRowCard } from '../../components/today/TaskRowCard';
+import { MealRowCard } from '../../components/today/MealRowCard';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
 
 type Props = CompositeScreenProps<
@@ -46,6 +45,8 @@ export function TodayScreen({ navigation }: Props) {
       {/* Plan timeline */}
       {plan.isLoading ? (
         <LoadingState />
+      ) : plan.isError && !plan.data ? (
+        <ErrorState onRetry={() => plan.refetch()} />
       ) : plan.data ? (
         <View style={{ marginBottom: spacing['2xl'] }}>
           {plan.data.summary ? (
@@ -79,7 +80,7 @@ export function TodayScreen({ navigation }: Props) {
           ))}
           <View style={{ marginTop: spacing.md }}>
             <Button
-              label={gen.isPending ? t('common.loading') : t('common.retry')}
+              label={gen.isPending ? t('common.loading') : t('today.regeneratePlan')}
               variant="ghost"
               onPress={() => gen.mutate()}
               disabled={gen.isPending}
@@ -117,25 +118,28 @@ export function TodayScreen({ navigation }: Props) {
         }}
       >
         <Text variant="kicker">{t('home.stats.tasksToday')}</Text>
-        <Text
-          variant="caption"
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('today.openTasks')}
           onPress={() => navigation.navigate('Tasks')}
-          style={{ color: '#C97B4A', fontWeight: '700' }}
+          hitSlop={8}
         >
-          {t('today.openTasks')}
-        </Text>
+          <Text variant="caption" style={{ color: '#C97B4A', fontWeight: '700' }}>
+            {t('today.openTasks')}
+          </Text>
+        </Pressable>
       </View>
       {tasks.isLoading ? (
         <LoadingState />
       ) : tasks.data && tasks.data.rows.length === 0 ? (
         <EmptyState title={t('today.empty')} />
-      ) : (
+      ) : tasks.data ? (
         <View style={{ gap: spacing.md, marginBottom: spacing.lg }}>
-          {tasks.data!.rows.map((row) => (
+          {tasks.data.rows.map((row) => (
             <TaskRowCard key={row.id} row={row} locale={i18n.language as 'vi' | 'en'} />
           ))}
         </View>
-      )}
+      ) : null}
       <View style={{ marginBottom: spacing.xl }}>
         <Button
           label={'+ ' + t('smart.openCta')}
@@ -155,73 +159,29 @@ export function TodayScreen({ navigation }: Props) {
         }}
       >
         <Text variant="kicker">{t('capture.kinds.MEAL')}</Text>
-        <Text
-          variant="caption"
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('today.openMeals')}
           onPress={() => navigation.navigate('MealLog')}
-          style={{ color: '#C97B4A', fontWeight: '700' }}
+          hitSlop={8}
         >
-          {t('today.openMeals')}
-        </Text>
+          <Text variant="caption" style={{ color: '#C97B4A', fontWeight: '700' }}>
+            {t('today.openMeals')}
+          </Text>
+        </Pressable>
       </View>
       {meals.isLoading ? (
         <LoadingState />
       ) : meals.data && meals.data.rows.length === 0 ? (
         <EmptyState title={t('today.empty')} />
-      ) : (
+      ) : meals.data ? (
         <View style={{ gap: spacing.md }}>
-          {meals.data!.rows.map((m) => (
+          {meals.data.rows.map((m) => (
             <MealRowCard key={m.id} row={m} />
           ))}
         </View>
-      )}
+      ) : null}
     </AppScreen>
   );
 }
 
-function TaskRowCard({ row, locale }: { row: TaskRow; locale: 'vi' | 'en' }) {
-  const { t } = useTranslation();
-  const dueLabel =
-    row.dueAt &&
-    new Date(row.dueAt).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  const tone =
-    row.status === 'COMPLETED'
-      ? 'success'
-      : row.status === 'IN_PROGRESS'
-      ? 'info'
-      : row.priority === 'HIGH'
-      ? 'danger'
-      : 'neutral';
-  return (
-    <Card>
-      <View
-        style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
-      >
-        <Text variant="bodyEm" style={{ flex: 1 }}>
-          {row.title}
-        </Text>
-        <Badge label={t(`capture.priorities.${row.priority}`)} tone={tone} />
-      </View>
-      {dueLabel ? <Text variant="caption">{dueLabel}</Text> : null}
-    </Card>
-  );
-}
-
-function MealRowCard({ row }: { row: MealRow }) {
-  const { t } = useTranslation();
-  return (
-    <Card>
-      <View
-        style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
-      >
-        <Text variant="bodyEm" style={{ flex: 1 }}>
-          {row.title}
-        </Text>
-        <Badge label={t(`capture.mealTypes.${row.mealType}`)} tone="success" />
-      </View>
-      {row.cost != null ? <Text variant="caption">{formatMoney(row.cost)}</Text> : null}
-    </Card>
-  );
-}

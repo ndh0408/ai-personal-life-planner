@@ -17,13 +17,6 @@ export class NetworkError extends Error {
   }
 }
 
-export class SessionExpired extends Error {
-  constructor() {
-    super('Session expired');
-    this.name = 'SessionExpired';
-  }
-}
-
 export interface ApiSuccess<T> {
   success: true;
   data: T;

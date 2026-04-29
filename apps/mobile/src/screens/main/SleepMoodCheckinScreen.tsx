@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   AppScreen,
@@ -19,6 +19,7 @@ import {
   type Mood,
   type SleepQuality,
 } from '../../services/api/journal.service';
+import { profileService } from '../../services/api/profile.service';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SleepMoodCheckin'>;
@@ -29,13 +30,27 @@ const MOODS: Mood[] = ['GREAT', 'GOOD', 'OK', 'TIRED', 'STRESSED', 'SAD'];
 const ENERGIES: Energy[] = ['LOW', 'MEDIUM', 'HIGH'];
 
 /**
- * Build a sleep window assuming the user is checking in this morning:
- * sleepAt = today's wake-time minus the chosen duration. We anchor wake at
- * 07:00 local because that's the most common wake hour for the app's audience.
+ * Parse "HH:mm" → { h, m }, falling back to 07:00 when input is invalid/missing.
+ * Used to anchor the sleep window to the user's *own* usual wake time, not
+ * a hardcoded 7am.
  */
-function buildSleepWindow(hours: number): { sleepAtIso: string; wakeAtIso: string } {
+function parseHHMM(s: string | null | undefined, fallbackH = 7, fallbackM = 0) {
+  if (!s) return { h: fallbackH, m: fallbackM };
+  const m = /^(\d{1,2}):(\d{2})$/.exec(s.trim());
+  if (!m) return { h: fallbackH, m: fallbackM };
+  return {
+    h: Math.min(23, Math.max(0, Number(m[1]))),
+    m: Math.min(59, Math.max(0, Number(m[2]))),
+  };
+}
+
+function buildSleepWindow(
+  hours: number,
+  wakeTime: string | null | undefined,
+): { sleepAtIso: string; wakeAtIso: string } {
+  const { h, m } = parseHHMM(wakeTime);
   const wake = new Date();
-  wake.setHours(7, 0, 0, 0);
+  wake.setHours(h, m, 0, 0);
   const sleep = new Date(wake.getTime() - hours * 60 * 60_000);
   return { sleepAtIso: sleep.toISOString(), wakeAtIso: wake.toISOString() };
 }
@@ -45,6 +60,13 @@ export function SleepMoodCheckinScreen({ navigation }: Props) {
   const qc = useQueryClient();
   const toast = useToast();
 
+  // Pull profile so the wake anchor matches the user's onboarding answer.
+  const profile = useQuery({
+    queryKey: ['profile', 'me'],
+    queryFn: () => profileService.get(),
+    staleTime: 60_000,
+  });
+
   const [hours, setHours] = useState<number | null>(7);
   const [quality, setQuality] = useState<SleepQuality | null>(null);
   const [mood, setMood] = useState<Mood>('OK');
@@ -53,7 +75,10 @@ export function SleepMoodCheckinScreen({ navigation }: Props) {
 
   const saveSleep = useMutation({
     mutationFn: () => {
-      const { sleepAtIso, wakeAtIso } = buildSleepWindow(hours ?? 7);
+      const { sleepAtIso, wakeAtIso } = buildSleepWindow(
+        hours ?? 7,
+        profile.data?.usualWakeTime ?? null,
+      );
       return journalService.createSleep({
         sleepAtIso,
         wakeAtIso,
@@ -76,6 +101,10 @@ export function SleepMoodCheckinScreen({ navigation }: Props) {
   const submitting = saveSleep.isPending || saveMood.isPending;
 
   async function handleSave() {
+    // Reset previous error state on each attempt — without this, retry after
+    // a failure still shows the failed mutation as `isError`.
+    saveSleep.reset();
+    saveMood.reset();
     const tasks: Promise<unknown>[] = [];
     if (hours != null) tasks.push(saveSleep.mutateAsync());
     tasks.push(saveMood.mutateAsync());

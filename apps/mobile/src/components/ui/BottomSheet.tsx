@@ -1,13 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import {
   Animated,
-  Dimensions,
   Easing,
   Modal,
   Pressable,
   StyleSheet,
+  useWindowDimensions,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radius, spacing } from '../../theme';
 
 interface Props {
@@ -18,10 +19,14 @@ interface Props {
   heightRatio?: number;
 }
 
-const SCREEN_H = Dimensions.get('window').height;
-
 export function BottomSheet({ visible, onClose, children, heightRatio = 0.6 }: Props) {
-  const translateY = useRef(new Animated.Value(SCREEN_H)).current;
+  // Window dimensions are reactive — survives orientation/foldable/keyboard
+  // resize. The previous module-level Dimensions.get crashed the layout when
+  // the keyboard pushed content up.
+  const { height: screenH, width: screenW } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+
+  const translateY = useRef(new Animated.Value(screenH)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -38,7 +43,7 @@ export function BottomSheet({ visible, onClose, children, heightRatio = 0.6 }: P
     } else {
       Animated.parallel([
         Animated.timing(translateY, {
-          toValue: SCREEN_H,
+          toValue: screenH,
           duration: 200,
           easing: Easing.in(Easing.ease),
           useNativeDriver: true,
@@ -46,7 +51,11 @@ export function BottomSheet({ visible, onClose, children, heightRatio = 0.6 }: P
         Animated.timing(opacity, { toValue: 0, duration: 160, useNativeDriver: true }),
       ]).start();
     }
-  }, [visible, translateY, opacity]);
+  }, [visible, translateY, opacity, screenH]);
+
+  // Cap sheet width on tablets — full-bleed bottom sheets at 1024dp look wrong.
+  const maxSheetWidth = Math.min(screenW, 560);
+  const sheetHeight = Math.min(screenH * heightRatio, screenH - insets.top - 24);
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
@@ -55,7 +64,13 @@ export function BottomSheet({ visible, onClose, children, heightRatio = 0.6 }: P
         <Animated.View
           style={[
             styles.sheet,
-            { height: SCREEN_H * heightRatio, transform: [{ translateY }] },
+            {
+              width: maxSheetWidth,
+              alignSelf: 'center',
+              height: sheetHeight,
+              paddingBottom: insets.bottom + spacing.lg,
+              transform: [{ translateY }],
+            },
           ]}
         >
           <View style={styles.handle} />
@@ -74,7 +89,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: radius.xl,
     paddingTop: spacing.sm,
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing['2xl'],
   },
   handle: {
     width: 36,

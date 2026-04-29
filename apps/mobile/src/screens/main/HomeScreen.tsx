@@ -119,7 +119,7 @@ export function HomeScreen({ navigation }: Props) {
             aiEnabled={aiEnabled}
             onAddKey={() => navigation.navigate('AISettings')}
             onCapture={() => navigation.navigate('SmartEntry')}
-            onPlan={() => navigation.navigate('MainTabs', { screen: 'Today' } as never)}
+            onPlan={() => navigation.getParent()?.navigate('MainTabs', { screen: 'Today' })}
           />
 
           <QuickActionsRow
@@ -132,7 +132,7 @@ export function HomeScreen({ navigation }: Props) {
                 key: 'askAi',
                 glyph: '✨',
                 onPress: () =>
-                  navigation.navigate('MainTabs', { screen: 'Assistant' } as never),
+                  navigation.getParent()?.navigate('MainTabs', { screen: 'Assistant' }),
                 disabled: !aiEnabled,
               },
             ]}
@@ -144,11 +144,11 @@ export function HomeScreen({ navigation }: Props) {
             <View style={{ gap: spacing.md }}>
               <TodayPlanCard
                 summary={summary.data.todayPlan}
-                onPress={() => navigation.navigate('MainTabs', { screen: 'Today' } as never)}
+                onPress={() => navigation.getParent()?.navigate('MainTabs', { screen: 'Today' })}
               />
               <MoneyCard
                 summary={summary.data.money}
-                onPress={() => navigation.navigate('MainTabs', { screen: 'Money' } as never)}
+                onPress={() => navigation.getParent()?.navigate('MainTabs', { screen: 'Money' })}
               />
               <NextTaskCard task={summary.data.nextTask} />
               <NudgeCard

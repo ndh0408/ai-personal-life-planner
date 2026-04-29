@@ -52,8 +52,5 @@ export const cache = {
   },
 };
 
-export const CACHE_KEYS = {
-  locale: 'lifeos.cache.locale',
-  lastUserEmail: 'lifeos.cache.lastUserEmail',
-  homeStats: 'lifeos.cache.homeStats',
-} as const;
+// CACHE_KEYS removed — none of the keys (locale, lastUserEmail, homeStats)
+// had any active write callsites. Re-introduce per-key as needed.

@@ -32,6 +32,7 @@ import {
   type CaptureParseResponse,
 } from '../../services/api/capture.service';
 import { formatMoney } from '../../utils/format';
+import { makeIdempotencyKey } from '../../utils/idempotency';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SmartEntry'>;
@@ -56,10 +57,6 @@ const KIND_TONE: Record<CaptureKind, string> = {
   UNKNOWN: '#7A7A7A',
 };
 
-function makeKey(): string {
-  return `mob_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
-}
-
 export function SmartEntryScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -68,28 +65,42 @@ export function SmartEntryScreen({ navigation }: Props) {
   const [text, setText] = useState('');
   const [debounced, setDebounced] = useState('');
   const [preview, setPreview] = useState<CaptureParseResponse | null>(null);
-  const idemKey = useRef(makeKey()).current;
+  const idemKey = useRef(makeIdempotencyKey()).current;
 
-  // Debounce text input → parse call.
+  // Per-call request id — guards against out-of-order parse responses when
+  // the user types fast: in-flight request 3 may resolve after request 4,
+  // and we must not overwrite the newer preview with the older one.
+  const reqIdRef = useRef(0);
+
   useEffect(() => {
     const handle = setTimeout(() => setDebounced(text.trim()), 400);
     return () => clearTimeout(handle);
   }, [text]);
 
-  const parseMut = useMutation({
-    mutationFn: (input: string) => captureService.parse(input),
-    onSuccess: (res) => setPreview(res),
-    onError: () => setPreview(null),
-  });
-
-  // Fire parse when debounced text settles + has substance.
+  // Plain async fetch — no useMutation here because mutations don't expose
+  // a cancel signal and we need request-ordering control. The reqId guard
+  // makes stale responses no-ops.
+  const [parsing, setParsing] = useState(false);
   useEffect(() => {
     if (debounced.length < 3) {
       setPreview(null);
+      setParsing(false);
       return;
     }
-    parseMut.mutate(debounced);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const myId = ++reqIdRef.current;
+    setParsing(true);
+    captureService
+      .parse(debounced)
+      .then((res) => {
+        if (myId !== reqIdRef.current) return;
+        setPreview(res);
+        setParsing(false);
+      })
+      .catch(() => {
+        if (myId !== reqIdRef.current) return;
+        setPreview(null);
+        setParsing(false);
+      });
   }, [debounced]);
 
   const confirmMut = useMutation({
@@ -146,7 +157,7 @@ export function SmartEntryScreen({ navigation }: Props) {
         </Text>
       </Card>
 
-      {parseMut.isPending && debounced.length >= 3 ? (
+      {parsing && debounced.length >= 3 ? (
         <Card style={{ marginBottom: spacing.lg }}>
           <Text variant="caption">{t('smart.thinking')}</Text>
         </Card>
@@ -179,7 +190,14 @@ function PreviewCard({
   preview: CaptureParseResponse;
   rawText: string;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === 'en' ? 'en' : 'vi';
+  // Hooks must run unconditionally — keep useMemo above the UNKNOWN early-return
+  // so render order is stable across kind changes (Rules of Hooks).
+  const summary = useMemo(
+    () => summarize(preview, rawText, locale),
+    [preview, rawText, locale],
+  );
 
   if (preview.kind === 'UNKNOWN') {
     return (
@@ -195,7 +213,6 @@ function PreviewCard({
   }
 
   const tone = KIND_TONE[preview.kind];
-  const summary = useMemo(() => summarize(preview, rawText), [preview, rawText]);
   const sourceLabel =
     preview.source === 'OPENAI' ? t('smart.sourceAi') : t('smart.sourceRule');
 
@@ -215,11 +232,13 @@ function PreviewCard({
       <Text variant="bodyEm" style={{ marginTop: spacing.sm }}>
         {summary.title}
       </Text>
-      {summary.lines.map((line) => (
-        <Text key={line} variant="caption" style={{ marginTop: 2 }}>
-          {line}
-        </Text>
-      ))}
+      {summary.lines
+        .filter((l) => l.trim().length > 0)
+        .map((line, i) => (
+          <Text key={`${i}-${line}`} variant="caption" style={{ marginTop: 2 }}>
+            {line}
+          </Text>
+        ))}
     </Card>
   );
 }
@@ -229,7 +248,11 @@ interface PreviewSummary {
   lines: string[];
 }
 
-function summarize(p: CaptureParseResponse, raw: string): PreviewSummary {
+function summarize(
+  p: CaptureParseResponse,
+  raw: string,
+  locale: 'vi' | 'en' = 'vi',
+): PreviewSummary {
   const f = p.fields as Record<string, unknown>;
   switch (p.kind) {
     case 'EXPENSE': {
@@ -239,7 +262,7 @@ function summarize(p: CaptureParseResponse, raw: string): PreviewSummary {
         title: String(f.title ?? raw),
         lines: [
           `${formatMoney(amount)}  ·  ${cat}`,
-          formatLocal(f.expenseDateIso),
+          formatLocal(f.expenseDateIso, locale),
         ],
       };
     }
@@ -250,7 +273,7 @@ function summarize(p: CaptureParseResponse, raw: string): PreviewSummary {
         title: String(f.title ?? raw),
         lines: [
           `+${formatMoney(amount)}  ·  ${cat}`,
-          formatLocal(f.incomeDateIso),
+          formatLocal(f.incomeDateIso, locale),
         ],
       };
     }
@@ -263,7 +286,7 @@ function summarize(p: CaptureParseResponse, raw: string): PreviewSummary {
     }
     case 'TASK': {
       const lines: string[] = [String(f.priority ?? 'MEDIUM')];
-      if (f.dueAtIso) lines.push(formatLocal(f.dueAtIso));
+      if (f.dueAtIso) lines.push(formatLocal(f.dueAtIso, locale));
       return { title: String(f.title ?? raw), lines };
     }
     case 'SLEEP': {
@@ -284,10 +307,10 @@ function summarize(p: CaptureParseResponse, raw: string): PreviewSummary {
   }
 }
 
-function formatLocal(iso: unknown): string {
+function formatLocal(iso: unknown, locale: string = 'vi-VN'): string {
   if (typeof iso !== 'string') return '';
   try {
-    return new Date(iso).toLocaleString('vi-VN', {
+    return new Date(iso).toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN', {
       hour: '2-digit',
       minute: '2-digit',
       day: '2-digit',

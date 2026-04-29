@@ -53,7 +53,7 @@ export function AssistantScreen() {
           if (!activeId) setActiveId(data.conversationId);
         },
         onError: (e) => {
-          toast.show(readableError(e, t, 'auth'), 'danger');
+          toast.show(readableError(e, t, 'assistant'), 'danger');
         },
       },
     );

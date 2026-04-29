@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
 import { Text, View, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeScreen } from '../screens/main/HomeScreen';
 import { TodayScreen } from '../screens/main/TodayScreen';
 import { MoneyScreen } from '../screens/main/MoneyScreen';
@@ -32,13 +33,18 @@ function TabIcon({ name, focused }: { name: keyof MainTabParamList; focused: boo
 
 export function MainTabs() {
   const { t } = useTranslation();
+  // Tab bar height needs to grow with the device's bottom safe area —
+  // gesture-bar Androids and iPhone X+ would otherwise clip the labels.
+  const insets = useSafeAreaInsets();
+  const barHeight = 56 + Math.max(insets.bottom, 8);
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.accent.base,
         tabBarInactiveTintColor: colors.text.muted,
-        tabBarStyle: styles.bar,
+        tabBarStyle: [styles.bar, { height: barHeight, paddingBottom: insets.bottom || 8 }],
         tabBarLabelStyle: styles.label,
         tabBarItemStyle: { paddingTop: 6 },
         tabBarIcon: ({ focused }) => (
@@ -68,11 +74,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopColor: colors.border,
     borderTopWidth: 1,
-    height: 64,
-    paddingBottom: 8,
     paddingTop: 6,
   },
   label: { ...typography.micro, marginTop: 2 },
   iconWrap: { alignItems: 'center', justifyContent: 'center' },
   icon: { fontSize: 18, lineHeight: 20, fontWeight: '600' },
 });
+
+void spacing;

@@ -5,9 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   AppScreen,
-  Badge,
   Button,
-  Card,
   Chip,
   ConfirmModal,
   EmptyState,
@@ -19,6 +17,7 @@ import {
 import { spacing } from '../../theme';
 import { tasksService, type TaskRow } from '../../services/api/tasks.service';
 import { FEED_KEYS } from '../../hooks/useFeed';
+import { TaskRowCard } from '../../components/today/TaskRowCard';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Tasks'>;
@@ -100,6 +99,7 @@ export function TasksScreen({ navigation }: Props) {
             onComplete={() => complete.mutate(row.id)}
             onDelete={() => setPendingDelete(row)}
             disabled={complete.isPending || remove.isPending}
+            showFullDate
           />
         ))}
       </View>
@@ -118,73 +118,5 @@ export function TasksScreen({ navigation }: Props) {
         }}
       />
     </AppScreen>
-  );
-}
-
-function TaskRowCard({
-  row,
-  locale,
-  onComplete,
-  onDelete,
-  disabled,
-}: {
-  row: TaskRow;
-  locale: 'vi' | 'en';
-  onComplete: () => void;
-  onDelete: () => void;
-  disabled?: boolean;
-}) {
-  const { t } = useTranslation();
-  const isDone = row.status === 'COMPLETED';
-  const tone = isDone ? 'success' : row.priority === 'HIGH' ? 'danger' : 'neutral';
-  const due = row.dueAt
-    ? new Date(row.dueAt).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        day: '2-digit',
-        month: '2-digit',
-      })
-    : null;
-  return (
-    <Card>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <View style={{ flex: 1, marginRight: spacing.sm }}>
-          <Text
-            variant="bodyEm"
-            style={{ textDecorationLine: isDone ? 'line-through' : 'none' }}
-          >
-            {row.title}
-          </Text>
-          {due ? <Text variant="caption">{due}</Text> : null}
-        </View>
-        <Badge label={t(`capture.priorities.${row.priority}`)} tone={tone} />
-      </View>
-      {!isDone ? (
-        <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm }}>
-          <View style={{ flex: 1 }}>
-            <Button label={t('tasks.completeCta')} onPress={onComplete} disabled={disabled} size="md" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Button
-              label={t('common.delete')}
-              variant="ghost"
-              onPress={onDelete}
-              disabled={disabled}
-              size="md"
-            />
-          </View>
-        </View>
-      ) : (
-        <View style={{ marginTop: spacing.sm }}>
-          <Button
-            label={t('common.delete')}
-            variant="ghost"
-            onPress={onDelete}
-            disabled={disabled}
-            size="md"
-          />
-        </View>
-      )}
-    </Card>
   );
 }

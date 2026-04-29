@@ -26,8 +26,22 @@ export interface CaptureConfirmResponse {
   createdAt: string;
 }
 
+/**
+ * Best-effort device timezone — Hermes ships Intl on RN 0.74, but very old
+ * Android Hermes builds may not. Default to Asia/Ho_Chi_Minh because that's
+ * the app's current audience.
+ */
+function deviceTz(): string {
+  try {
+    const tz = Intl?.DateTimeFormat?.().resolvedOptions?.().timeZone;
+    return tz || 'Asia/Ho_Chi_Minh';
+  } catch {
+    return 'Asia/Ho_Chi_Minh';
+  }
+}
+
 export const captureService = {
-  parse(text: string, tz = 'Asia/Ho_Chi_Minh') {
+  parse(text: string, tz: string = deviceTz()) {
     return apiClient.request<CaptureParseResponse>('POST', '/capture/parse', { text, tz });
   },
   confirm(input: CaptureConfirmRequest) {

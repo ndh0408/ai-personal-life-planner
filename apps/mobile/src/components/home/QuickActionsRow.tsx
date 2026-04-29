@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { colors, radius, spacing, typography } from '../../theme';
 import { Text } from '../ui';
+import { useResponsive } from '../../hooks/useResponsive';
 
 interface Action {
   key: 'capture' | 'expense' | 'task' | 'checkin' | 'askAi';
@@ -17,6 +18,13 @@ interface Props {
 
 export function QuickActionsRow({ actions }: Props) {
   const { t } = useTranslation();
+  const { device, isLargeFont } = useResponsive();
+  // Tile width responds to device class + font scale: smaller phones get
+  // 96dp tiles so 4 fit in view; tablets get 130dp; large-font users get
+  // a bit more headroom so 2-line labels don't truncate.
+  const tileWidth =
+    device === 'smallPhone' ? 96 : device === 'tablet' ? 130 : isLargeFont ? 124 : 110;
+
   return (
     <View style={{ marginBottom: spacing.xl }}>
       <Text variant="kicker" style={{ marginBottom: spacing.sm }}>
@@ -32,14 +40,19 @@ export function QuickActionsRow({ actions }: Props) {
             key={a.key}
             onPress={a.onPress}
             disabled={a.disabled}
+            accessibilityRole="button"
+            accessibilityLabel={t(`home.quickActions.${a.key}`)}
             style={({ pressed }) => [
               styles.tile,
+              { width: tileWidth },
               a.disabled && styles.tileDisabled,
               pressed && styles.pressed,
             ]}
           >
             <Text style={styles.glyph}>{a.glyph}</Text>
-            <Text style={styles.label}>{t(`home.quickActions.${a.key}`)}</Text>
+            <Text style={styles.label} numberOfLines={2}>
+              {t(`home.quickActions.${a.key}`)}
+            </Text>
           </Pressable>
         ))}
       </ScrollView>
@@ -49,7 +62,6 @@ export function QuickActionsRow({ actions }: Props) {
 
 const styles = StyleSheet.create({
   tile: {
-    width: 110,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.sm,
     backgroundColor: colors.surface,
@@ -58,6 +70,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     alignItems: 'center',
     gap: 6,
+    minHeight: 48, // Android touch target floor
   },
   tileDisabled: { opacity: 0.45 },
   pressed: { backgroundColor: colors.surfaceAlt, transform: [{ scale: 0.98 }] },
