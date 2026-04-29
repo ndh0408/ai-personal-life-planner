@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -7,13 +8,21 @@ import {
   Param,
   Patch,
   Post,
+  Put,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { z } from 'zod';
 import {
   UpdatePlanItemStatusRequestSchema,
   type UpdatePlanItemStatusRequest,
 } from '@lifeos/shared';
+
+const UpdatePlanItemSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  startAtIso: z.string().datetime().nullable().optional(),
+  endAtIso: z.string().datetime().nullable().optional(),
+});
 import {
   CurrentUser,
   type AuthenticatedUser,
@@ -48,5 +57,21 @@ export class PlannerController {
     body: UpdatePlanItemStatusRequest,
   ) {
     return this.svc.updateItemStatus(user.id, id, body.status);
+  }
+
+  @Put('items/:id')
+  @HttpCode(HttpStatus.OK)
+  updateItem(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() body: unknown,
+  ) {
+    const r = UpdatePlanItemSchema.safeParse(body);
+    if (!r.success) {
+      throw new BadRequestException({
+        error: { code: 'VALIDATION_FAILED', message: 'Dữ liệu không hợp lệ.', issues: r.error.issues },
+      });
+    }
+    return this.svc.updateItem(user.id, id, r.data);
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import type { UpdateProfileRequest, UserProfilePublic } from '@lifeos/shared';
-import type { Prisma, UserProfile } from '@prisma/client';
+import type { UpdateProfileRequest, UserProfilePublic, WorkPattern } from '@lifeos/shared';
+import { Prisma, type UserProfile } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -25,10 +25,16 @@ export class UserProfileService {
     if (input.mainGoals !== undefined) data.mainGoals = input.mainGoals;
     if (input.usualWakeTime !== undefined) data.usualWakeTime = input.usualWakeTime;
     if (input.usualSleepTime !== undefined) data.usualSleepTime = input.usualSleepTime;
+    if (input.dislikes !== undefined) data.dislikes = input.dislikes;
+    if (input.allergies !== undefined) data.allergies = input.allergies;
+    if (input.monthlyGoal !== undefined) data.monthlyGoal = input.monthlyGoal;
+    if (input.workPattern !== undefined) data.workPattern = input.workPattern;
+    if (input.budgetMonthly !== undefined) {
+      data.budgetMonthly =
+        input.budgetMonthly === null ? null : new Prisma.Decimal(input.budgetMonthly);
+    }
     if (input.completeOnboarding === true) data.onboardingCompletedAt = new Date();
 
-    // Same upsert pattern: a fresh user might not have a profile row yet
-    // (the auth.service auto-creates one but tests / migrations may not).
     const create: Prisma.UserProfileCreateInput = {
       user: { connect: { id: userId } },
       preferredName: input.preferredName ?? null,
@@ -36,6 +42,12 @@ export class UserProfileService {
       mainGoals: input.mainGoals ?? [],
       usualWakeTime: input.usualWakeTime ?? null,
       usualSleepTime: input.usualSleepTime ?? null,
+      dislikes: input.dislikes ?? [],
+      allergies: input.allergies ?? [],
+      monthlyGoal: input.monthlyGoal ?? null,
+      workPattern: input.workPattern ?? null,
+      budgetMonthly:
+        input.budgetMonthly == null ? null : new Prisma.Decimal(input.budgetMonthly),
       onboardingCompletedAt: input.completeOnboarding ? new Date() : null,
     };
 
@@ -51,14 +63,17 @@ export class UserProfileService {
 function toPublic(p: UserProfile): UserProfilePublic {
   return {
     preferredName: p.preferredName,
-    // Prisma's Locale enum is structurally identical to the shared Zod enum
-    // ('vi' | 'en'); cast to keep the wire-format-safe type at the boundary.
     locale: p.locale as 'vi' | 'en',
     timezone: p.timezone,
     currency: p.currency,
     mainGoals: Array.isArray(p.mainGoals) ? (p.mainGoals as string[]) : [],
     usualWakeTime: p.usualWakeTime,
     usualSleepTime: p.usualSleepTime,
+    dislikes: Array.isArray(p.dislikes) ? (p.dislikes as string[]) : [],
+    allergies: Array.isArray(p.allergies) ? (p.allergies as string[]) : [],
+    monthlyGoal: p.monthlyGoal,
+    workPattern: (p.workPattern as WorkPattern | null) ?? null,
+    budgetMonthly: p.budgetMonthly == null ? null : Number(p.budgetMonthly),
     onboardingCompletedAt: p.onboardingCompletedAt
       ? p.onboardingCompletedAt.toISOString()
       : null,

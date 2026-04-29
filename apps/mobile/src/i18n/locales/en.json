@@ -409,11 +409,55 @@
       "unknown": "AI didn't reply. Try again later."
     }
   },
+  "preferences": {
+    "kicker": "Personalize",
+    "title": "Help LifeOS understand you",
+    "subtitle": "AI uses these to suggest things that actually fit you.",
+    "saved": "Preferences saved",
+    "fields": {
+      "workPattern": "Work pattern",
+      "monthlyGoal": "Goal for this month",
+      "budget": "Monthly budget (VND)",
+      "dislikes": "Don't suggest (foods, activities)",
+      "allergies": "Allergies / never suggest"
+    },
+    "placeholders": {
+      "monthlyGoal": "e.g. Save 5M, sleep 7h every night",
+      "dislikes": "phở, karaoke, bitter coffee",
+      "allergies": "peanuts, shellfish"
+    },
+    "hints": {
+      "commaSeparated": "Comma separated."
+    },
+    "workPatterns": {
+      "morning": "Morning (5-9am)",
+      "evening": "Evening (4-10pm)",
+      "night-owl": "Night owl",
+      "flexible": "Flexible"
+    }
+  },
+  "memory": {
+    "kicker": "What AI remembers",
+    "title": "AI memory",
+    "subtitle": "Facts AI learned from chat. Delete anything you don't want kept.",
+    "empty": "Nothing yet. Chat more to start.",
+    "forget": "Forget this",
+    "forgotten": "Forgotten"
+  },
+  "nudges": {
+    "noBreakfastTitle": "No breakfast yet today",
+    "noBreakfastBody": "{{hours}}h since you woke up. Grab a bite, then log it.",
+    "highSpendTitle": "Spending higher than usual",
+    "highSpendBody": "Spent {{spent}} today — {{pct}}% above your daily average this month.",
+    "dismiss": "Got it"
+  },
   "settings": {
     "title": "Settings",
     "account": "Account",
     "memberSince": "Joined {{date}}",
     "preferences": "Preferences",
+    "preferencesEntry": "Personal preferences",
+    "memoryEntry": "AI memory",
     "language": "Language",
     "languageVi": "Tiếng Việt",
     "languageEn": "English",

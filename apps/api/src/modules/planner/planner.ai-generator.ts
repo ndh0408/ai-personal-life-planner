@@ -15,6 +15,7 @@ import type { Task, UserProfile } from '@prisma/client';
 import { EncryptionService } from '../../common/crypto/encryption.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { rangeFor } from '../../common/datetime/range';
+import { UserContextService } from '../intelligence/user-context.service';
 import type { DraftItem } from './planner.generator';
 
 const SYS_PROMPT = `You are LifeOS AI's personal day planner. You are NOT a generic
@@ -123,6 +124,7 @@ export class PlannerAiGenerator {
     private readonly prisma: PrismaService,
     private readonly enc: EncryptionService,
     private readonly config: ConfigService,
+    private readonly userCtx: UserContextService,
   ) {}
 
   /**
@@ -144,18 +146,14 @@ export class PlannerAiGenerator {
     }
 
     const snap = await this.snapshot(userId, privacy);
+    // Round 18: enrich the legacy snapshot with the unified UserContext.
+    // Behaviour summary + recent events + memories give the AI a much wider
+    // signal than the original 7-field snapshot.
+    const ctx = await this.userCtx.build(userId);
     const userMsg = JSON.stringify({
       now: snap.now.toISOString(),
       tz: snap.tz,
-      profile: snap.profile
-        ? {
-            preferredName: snap.profile.preferredName,
-            usualWakeTime: snap.profile.usualWakeTime,
-            usualSleepTime: snap.profile.usualSleepTime,
-            locale: snap.profile.locale,
-            mainGoals: snap.profile.mainGoals,
-          }
-        : null,
+      profile: ctx.profile,
       openTasks: snap.openTasks.map((t) => ({
         title: t.title,
         priority: t.priority,
@@ -167,10 +165,26 @@ export class PlannerAiGenerator {
       sleepTrendHours: snap.sleepTrendHours,
       recentMoods: snap.recentMoods,
       recentMeals: snap.recentMeals,
-      todaySpendVnd: snap.todaySpendVnd,
+      todaySpendVnd: ctx.todaySpendVnd,
+      monthSpendVnd: ctx.monthSpendVnd,
       weekSpendVnd: snap.weekSpendVnd,
       topExpenseCategory: snap.topExpenseCategory,
+      topExpenseCategories: ctx.behavior.topExpenseCategories,
       completedTaskCount7d: snap.completedTaskCount7d,
+      // Behaviour patterns the AI can lean on.
+      behaviorSummary: {
+        avgSleepByWeekday: ctx.behavior.avgSleepByWeekday,
+        moodSleepCorrelation: ctx.behavior.moodSleepCorrelation,
+        peakFocus: ctx.behavior.peakFocus,
+        taskCompletionByPrio: ctx.behavior.taskCompletionByPrio,
+      },
+      // Last 12 user actions — the AI sees what just happened.
+      recentEvents: ctx.recentEvents.slice(0, 12).map((e) => ({
+        kind: e.kind,
+        summary: e.summary,
+      })),
+      // Long-term memories the user has shared in chat.
+      memories: ctx.memories.slice(0, 6).map((m) => m.fact),
     });
 
     const ctrl = new AbortController();

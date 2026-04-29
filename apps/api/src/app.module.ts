@@ -33,6 +33,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { PrivacyModule } from './modules/privacy/privacy.module';
 import { CaptureModule } from './modules/capture/capture.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { IntelligenceModule } from './modules/intelligence/intelligence.module';
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     PrivacyModule,
     CaptureModule,
     DashboardModule,
+    IntelligenceModule,
   ],
   controllers: [HealthController, VersionController],
   providers: [

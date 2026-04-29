@@ -162,6 +162,9 @@ model User {
   aiRecs          AIRecommendation[]
   aiUsages        AiUsageLog[]
   quickCaptures   QuickCapture[]
+  behaviorSummary UserBehaviorSummary?
+  events          EventLog[]
+  memories        AssistantMemory[]
 
   @@index([status])
 }
@@ -194,11 +197,95 @@ model UserProfile {
   mainGoals             Json      @default("[]")
   usualWakeTime         String?   // "07:00" — local wall-clock, not a DateTime
   usualSleepTime        String?   // "23:30"
+  // Round 18 — "understand the user" expansion.
+  // Foods/activities the user explicitly does NOT want suggested.
+  dislikes              Json      @default("[]")  // string[]
+  allergies             Json      @default("[]")  // string[]
+  // One-line goal for the current month (free text), shown to AI verbatim.
+  monthlyGoal           String?
+  // 'morning' | 'evening' | 'night-owl' | 'flexible' — drives plan rhythm.
+  workPattern           String?
+  // VND/month soft cap; AI nudges when running spend > 0.7 of this.
+  budgetMonthly         Decimal?  @db.Decimal(18, 2)
   onboardingCompletedAt DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------- Round 18: behaviour + memory ---------------------------------------
+
+/// Computed snapshot of user behaviour patterns. One row per user, recomputed
+/// on a lazy hourly job (or on-demand from the planner). Avoids re-aggregating
+/// 90 days of history every time the AI runs.
+model UserBehaviorSummary {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  // Hour-of-day histograms (24-bucket arrays) — typical wake/sleep moments.
+  wakeHistogram         Json     @default("[]")
+  sleepHistogram        Json     @default("[]")
+  // Average sleep minutes per weekday (Sun..Sat). Length 7.
+  avgSleepByWeekday     Json     @default("[]")
+  // Peak focus window in local hour (e.g. {"start": 9, "end": 12}).
+  peakFocus             Json?
+  // Top 5 expense categories with weekly amount.
+  topExpenseCategories  Json     @default("[]")
+  // Top 5 meal titles (for variety rotation).
+  recentMealTitles      Json     @default("[]")
+  // Pearson r between sleep hours and next-day mood score (-1..1) or null when n<5.
+  moodSleepCorrelation  Float?
+  // Task completion rate by priority — { LOW: 0.7, MEDIUM: 0.55, HIGH: 0.83 }
+  taskCompletionByPrio  Json     @default("{}")
+  // Last computed at + N events processed.
+  computedAt            DateTime @default(now())
+  eventsAtCompute       Int      @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Append-only stream of user actions. The AI reads the most recent N events
+/// to understand "what just happened" without re-querying every entity table.
+model EventLog {
+  id        String   @id @default(cuid())
+  userId    String
+  // 'CAPTURE_PARSED' | 'CAPTURE_CONFIRMED' | 'CAPTURE_EDITED' |
+  // 'PLAN_ITEM_DONE' | 'PLAN_ITEM_SKIP' | 'PLAN_ITEM_EDITED' |
+  // 'INSIGHT_LIKED' | 'INSIGHT_DISMISSED' | 'TASK_COMPLETED' | 'TASK_DELETED'
+  kind      String
+  // The original user text or item title — short summary suitable for AI.
+  summary   String
+  // Free-form payload (kind-specific). Keep small.
+  payload   Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+/// Long-term memory for the Assistant. The chat job extracts atomic facts
+/// from each turn ("user prefers cơm gà over phở", "user works night shifts")
+/// and injects the highest-weight ones into the system prompt of subsequent
+/// chats. Like ChatGPT memory but per-user, on the user's own key.
+model AssistantMemory {
+  id          String   @id @default(cuid())
+  userId      String
+  fact        String
+  // 0..1 — manual feedback bumps this; old unconfirmed facts decay.
+  weight      Float    @default(0.5)
+  // 'preference' | 'constraint' | 'goal' | 'fact'
+  kind        String
+  // Source conversationId so the user can audit / delete.
+  sourceConvId String?
+  createdAt   DateTime @default(now())
+  lastUsedAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, weight])
 }
 
 // ---------- AI credentials ------------------------------------------------------

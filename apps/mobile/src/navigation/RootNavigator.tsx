@@ -11,6 +11,8 @@ import { SmartEntryScreen } from '../screens/main/SmartEntryScreen';
 import { TasksScreen } from '../screens/main/TasksScreen';
 import { MealLogScreen } from '../screens/main/MealLogScreen';
 import { SleepMoodCheckinScreen } from '../screens/main/SleepMoodCheckinScreen';
+import { PreferencesScreen } from '../screens/main/PreferencesScreen';
+import { MemoryScreen } from '../screens/main/MemoryScreen';
 import type { RootStackParamList } from './types';
 import { colors } from '../theme';
 
@@ -52,6 +54,8 @@ function MainStack() {
       <Stack.Screen name="Tasks" component={TasksScreen} />
       <Stack.Screen name="MealLog" component={MealLogScreen} />
       <Stack.Screen name="SleepMoodCheckin" component={SleepMoodCheckinScreen} />
+      <Stack.Screen name="Preferences" component={PreferencesScreen} />
+      <Stack.Screen name="Memory" component={MemoryScreen} />
     </Stack.Navigator>
   );
 }

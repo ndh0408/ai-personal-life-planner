@@ -11,10 +11,16 @@ import type {
 } from '@lifeos/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { generateForUser } from './recommendations.generator';
+import { InsightGenerator } from '../intelligence/insight.generator';
+import { EventLogService } from '../intelligence/event-log.service';
 
 @Injectable()
 export class RecommendationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly insight: InsightGenerator,
+    private readonly events: EventLogService,
+  ) {}
 
   async list(userId: string): Promise<RecommendationPublic[]> {
     const rows = await this.prisma.aIRecommendation.findMany({
@@ -48,24 +54,30 @@ export class RecommendationsService {
       where: { id },
       data: { status: status as AiRecommendationStatus },
     });
+    // Event-log dismissals + applies so future insights know not to repeat.
+    if (status === 'DISMISSED') {
+      await this.events.log(userId, 'INSIGHT_DISMISSED', updated.title, { id, type: updated.type });
+    } else if (status === 'APPLIED') {
+      await this.events.log(userId, 'INSIGHT_LIKED', updated.title, { id, type: updated.type });
+    }
     return toPublic(updated);
   }
 
   /**
-   * Re-run the rule-based generator. Old NEW recs are bumped to VIEWED so the
-   * "new today" surface stays focused on what just came in.
+   * Re-run the recommendation pipeline. Round-18 prefers the LLM-driven
+   * Insight generator (reads full UserContext) when an AI key is available,
+   * falling back to the deterministic rule generator otherwise. Old NEW
+   * recs are bumped to VIEWED before new ones land.
    */
   async refresh(userId: string): Promise<RefreshRecommendationsResponse> {
     const privacy = await this.prisma.privacySetting.findUnique({ where: { userId } });
-    if (!privacy) {
-      // No settings row should not happen (auto-created at register), but
-      // if it does we can't proceed without consent — return empty.
-      return { generated: 0, rows: [] };
-    }
-    const drafts = await generateForUser(this.prisma, userId, privacy);
+    if (!privacy) return { generated: 0, rows: [] };
 
-    // Move stale NEW → VIEWED so they stop showing as "new" if they aren't
-    // re-emitted by the generator on this pass.
+    let drafts = await this.insight.generate(userId);
+    if (!drafts || drafts.length === 0) {
+      drafts = await generateForUser(this.prisma, userId, privacy);
+    }
+
     await this.prisma.aIRecommendation.updateMany({
       where: { userId, status: AiRecommendationStatus.NEW },
       data: { status: AiRecommendationStatus.VIEWED },

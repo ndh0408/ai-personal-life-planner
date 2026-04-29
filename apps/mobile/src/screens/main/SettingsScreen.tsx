@@ -116,6 +116,16 @@ export function SettingsScreen({ navigation }: Props) {
           glyph="◎"
           onPress={() => navigation.navigate('AISettings')}
         />
+        <QuickActionButton
+          label={t('settings.preferencesEntry')}
+          glyph="◑"
+          onPress={() => navigation.navigate('Preferences')}
+        />
+        <QuickActionButton
+          label={t('settings.memoryEntry')}
+          glyph="◔"
+          onPress={() => navigation.navigate('Memory')}
+        />
         <Card>
           <Text variant="caption" style={{ marginBottom: spacing.sm }}>
             {t('settings.language')}

@@ -30,4 +30,6 @@ export type RootStackParamList = {
   Tasks: undefined;
   MealLog: undefined;
   SleepMoodCheckin: undefined;
+  Preferences: undefined;
+  Memory: undefined;
 };

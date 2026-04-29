@@ -26,6 +26,8 @@ import type {
 } from '@lifeos/shared';
 import { EncryptionService } from '../../common/crypto/encryption.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { UserContextService } from '../intelligence/user-context.service';
+import { AssistantMemoryService } from '../intelligence/assistant-memory.service';
 
 const SYS_PROMPT = `You are LifeOS AI — a personal assistant for everyday life.
 
@@ -52,6 +54,8 @@ export class AssistantService {
     private readonly prisma: PrismaService,
     private readonly enc: EncryptionService,
     private readonly config: ConfigService,
+    private readonly userCtx: UserContextService,
+    private readonly memory: AssistantMemoryService,
   ) {}
 
   // ── Send message (creates conversation if needed, calls LLM, stores) ─────
@@ -80,9 +84,16 @@ export class AssistantService {
       take: MAX_HISTORY_MESSAGES,
     });
 
+    // Build a tight context prelude: profile + behavior + memories. The
+    // assistant treats this as background facts the user has already shared,
+    // so it can answer questions like "what should I eat for lunch" without
+    // re-asking who the user is.
+    const ctx = await this.userCtx.build(userId);
+    const ctxPrelude = buildContextPrelude(ctx);
+
     let assistantContent: string;
     try {
-      assistantContent = await this.callLlm(key, history);
+      assistantContent = await this.callLlm(key, history, ctxPrelude);
     } catch (e) {
       // Roll back: delete the user message we just wrote so the conversation
       // doesn't end with an unanswered turn the next call will misread.
@@ -104,6 +115,21 @@ export class AssistantService {
       where: { id: conversation.id },
       data: { updatedAt: new Date() },
     });
+
+    // Round 18: fire-and-forget long-term memory extraction. Reads the last
+    // 6 turns and asks the user's own LLM to extract durable facts. Non-
+    // blocking — the user response is already returned by the time this
+    // resolves.
+    void this.memory
+      .extractAndStore(
+        userId,
+        conversation.id,
+        [...history, assistantMsg].slice(-6).map((m) => ({
+          role: m.role.toLowerCase() === 'assistant' ? 'assistant' : 'user',
+          content: m.content,
+        })),
+      )
+      .catch(() => undefined);
 
     return {
       conversationId: conversation.id,
@@ -204,6 +230,7 @@ export class AssistantService {
   private async callLlm(
     key: { apiKey: string; baseUrl: string; model: string },
     history: AIMessage[],
+    ctxPrelude: string,
   ): Promise<string> {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
@@ -211,6 +238,9 @@ export class AssistantService {
       const client = new OpenAI({ apiKey: key.apiKey, baseURL: key.baseUrl });
       const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
         { role: 'system', content: SYS_PROMPT },
+        // Round 18: inject the user context as a second system message so the
+        // assistant can reference profile + behaviour + long-term memories.
+        ...(ctxPrelude ? [{ role: 'system' as const, content: ctxPrelude }] : []),
         ...history.map((m) => ({
           role: m.role.toLowerCase() as 'user' | 'assistant' | 'system',
           content: m.content,
@@ -269,4 +299,48 @@ function toMessage(m: AIMessage): AiMessagePublic {
     content: m.content,
     createdAt: m.createdAt.toISOString(),
   };
+}
+
+/**
+ * Render the user's UserContext into a compact background prelude the
+ * assistant can read like a memory. Plain text — not JSON — so the LLM
+ * treats it as accepted facts rather than something to reformat.
+ */
+function buildContextPrelude(ctx: import('../intelligence/user-context.service').UserContext): string {
+  if (!ctx.profile) return '';
+  const lines: string[] = ['Background facts about this user:'];
+  const p = ctx.profile;
+  if (p.preferredName) lines.push(`- Name: ${p.preferredName}`);
+  if (p.usualWakeTime || p.usualSleepTime) {
+    lines.push(
+      `- Sleep window: ${p.usualWakeTime ?? '?'} → ${p.usualSleepTime ?? '?'} (local)`,
+    );
+  }
+  if (p.workPattern) lines.push(`- Work pattern: ${p.workPattern}`);
+  if (p.mainGoals.length) lines.push(`- Main goals: ${p.mainGoals.join(', ')}`);
+  if (p.monthlyGoal) lines.push(`- Monthly goal: ${p.monthlyGoal}`);
+  if (p.dislikes.length) lines.push(`- Dislikes (avoid suggesting): ${p.dislikes.join(', ')}`);
+  if (p.allergies.length) lines.push(`- Allergies (NEVER suggest): ${p.allergies.join(', ')}`);
+  if (p.budgetMonthly != null) {
+    lines.push(`- Monthly budget: ${p.budgetMonthly} VND (today: ${ctx.todaySpendVnd}, month: ${ctx.monthSpendVnd})`);
+  }
+  if (ctx.lastSleepMinutes != null) {
+    lines.push(`- Last sleep: ${(ctx.lastSleepMinutes / 60).toFixed(1)}h`);
+  }
+  if (ctx.lastMood) lines.push(`- Last mood: ${ctx.lastMood}`);
+  if (ctx.openHighPriorityTaskCount > 0) {
+    lines.push(`- ${ctx.openHighPriorityTaskCount} HIGH-priority task(s) still open`);
+  }
+  if (ctx.behavior.peakFocus) {
+    lines.push(`- Peak focus window: ${ctx.behavior.peakFocus.start}:00–${ctx.behavior.peakFocus.end}:00`);
+  }
+  if (ctx.behavior.recentMealTitles.length) {
+    lines.push(`- Recent meals: ${ctx.behavior.recentMealTitles.slice(0, 5).join(' / ')}`);
+  }
+  if (ctx.memories.length) {
+    lines.push('Things the user has told you in earlier chats:');
+    for (const m of ctx.memories.slice(0, 8)) lines.push(`  • ${m.fact}`);
+  }
+  lines.push(`Now: ${ctx.now} (${ctx.tz}).`);
+  return lines.join('\n');
 }

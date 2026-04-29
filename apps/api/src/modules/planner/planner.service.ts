@@ -14,12 +14,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { rangeFor } from '../../common/datetime/range';
 import { generatePlanItems, type DraftItem } from './planner.generator';
 import { PlannerAiGenerator } from './planner.ai-generator';
+import { EventLogService } from '../intelligence/event-log.service';
 
 @Injectable()
 export class PlannerService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ai: PlannerAiGenerator,
+    private readonly events: EventLogService,
   ) {}
 
   async getToday(userId: string): Promise<DailyPlanPublic | null> {
@@ -93,6 +95,40 @@ export class PlannerService {
     return { plan: toPlan(reloaded, reloaded.items), generated: drafts.length };
   }
 
+  /**
+   * Update an item's title / start / end. Records a PLAN_ITEM_EDITED event so
+   * the AI knows the user disagreed with its choice — future plans should
+   * lean toward the user's edits.
+   */
+  async updateItem(
+    userId: string,
+    itemId: string,
+    input: { title?: string; startAtIso?: string | null; endAtIso?: string | null },
+  ): Promise<DailyPlanItemPublic> {
+    const item = await this.prisma.dailyPlanItem.findUnique({ where: { id: itemId } });
+    if (!item) {
+      throw new NotFoundException({ error: { code: 'NOT_FOUND', message: 'Mục không tồn tại.' } });
+    }
+    if (item.userId !== userId) {
+      throw new ForbiddenException({ error: { code: 'FORBIDDEN', message: 'Không có quyền với mục này.' } });
+    }
+    const data: Record<string, unknown> = {};
+    if (input.title !== undefined) data.title = input.title.trim();
+    if (input.startAtIso !== undefined) {
+      data.startAt = input.startAtIso ? new Date(input.startAtIso) : null;
+    }
+    if (input.endAtIso !== undefined) {
+      data.endAt = input.endAtIso ? new Date(input.endAtIso) : null;
+    }
+    const updated = await this.prisma.dailyPlanItem.update({ where: { id: itemId }, data });
+    await this.events.log(userId, 'PLAN_ITEM_EDITED', updated.title, {
+      id: itemId,
+      titleChanged: input.title !== undefined,
+      timeChanged: input.startAtIso !== undefined || input.endAtIso !== undefined,
+    });
+    return toItem(updated);
+  }
+
   async updateItemStatus(
     userId: string,
     itemId: string,
@@ -113,6 +149,11 @@ export class PlannerService {
       where: { id: itemId },
       data: { status: status as DailyPlanItemStatus },
     });
+    if (status === 'COMPLETED') {
+      await this.events.log(userId, 'PLAN_ITEM_DONE', updated.title, { id: itemId });
+    } else if (status === 'SKIPPED') {
+      await this.events.log(userId, 'PLAN_ITEM_SKIP', updated.title, { id: itemId });
+    }
     return toItem(updated);
   }
 }

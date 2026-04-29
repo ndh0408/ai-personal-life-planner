@@ -16,12 +16,15 @@ import { spacing, colors } from '../../theme';
 import { useAuthStore } from '../../store/auth.store';
 import { useDashboardSummary } from '../../hooks/useDashboard';
 import { useCaptureConfirm, useCaptureParse } from '../../hooks/useCapture';
-import { useFeedInvalidator } from '../../hooks/useFeed';
+import { useFeedInvalidator, useTodayMeals } from '../../hooks/useFeed';
+import { useQuery } from '@tanstack/react-query';
+import { profileService } from '../../services/api/profile.service';
 import { useUpdateRecommendationStatus } from '../../hooks/useRecommendations';
 import { QuickCaptureBar } from '../../components/quick-capture/QuickCaptureBar';
 import { CapturePreviewSheet } from '../../components/quick-capture/CapturePreviewSheet';
 import { HomeHero } from '../../components/home/HomeHero';
 import { QuickActionsRow } from '../../components/home/QuickActionsRow';
+import { SmartNudges } from '../../components/home/SmartNudges';
 import type { CaptureParseResponse } from '../../services/api/capture.service';
 import { formatMoney } from '../../utils/format';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
@@ -41,6 +44,12 @@ export function HomeScreen({ navigation }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const summary = useDashboardSummary();
+  const meals = useTodayMeals();
+  const profile = useQuery({
+    queryKey: ['profile', 'me'],
+    queryFn: () => profileService.get(),
+    staleTime: 5 * 60_000,
+  });
   const parse = useCaptureParse();
   const confirm = useCaptureConfirm();
   const invalidateFeed = useFeedInvalidator();
@@ -138,6 +147,17 @@ export function HomeScreen({ navigation }: Props) {
             ]}
           />
 
+          {summary.data ? (
+            <SmartNudges
+              usualWakeTime={profile.data?.usualWakeTime ?? null}
+              mealsToday={meals.data?.total ?? 0}
+              todaySpendVnd={summary.data.money?.todayTotal ?? 0}
+              // Use weekTotal as a rough monthly proxy when monthly is unavailable.
+              monthSpendVnd={summary.data.money?.weekTotal ?? 0}
+              dayOfMonth={new Date().getDate()}
+            />
+          ) : null}
+
           {summary.isLoading && !summary.data ? (
             <LoadingState />
           ) : summary.data ? (
@@ -154,6 +174,7 @@ export function HomeScreen({ navigation }: Props) {
               <NudgeCard
                 nudge={summary.data.topRecommendation}
                 onDismiss={(id) => updateRec.mutate({ id, status: 'DISMISSED' })}
+                onApply={(id) => updateRec.mutate({ id, status: 'APPLIED' })}
               />
               <MoodSleepCard summary={summary.data.moodSleep} />
             </View>
@@ -357,11 +378,13 @@ function NextTaskCard({
 function NudgeCard({
   nudge,
   onDismiss,
+  onApply,
 }: {
   nudge:
     | { id: string; type: string; title: string; content: string; priority: string }
     | null;
   onDismiss: (id: string) => void;
+  onApply: (id: string) => void;
 }) {
   const { t } = useTranslation();
   if (!nudge) {
@@ -387,15 +410,30 @@ function NudgeCard({
         body={nudge.content}
         tone={tone as 'info' | 'success' | 'warning' | 'danger'}
       />
-      <Pressable
-        onPress={() => onDismiss(nudge.id)}
-        hitSlop={6}
-        style={{ alignSelf: 'flex-end', marginTop: 6, padding: 4 }}
-      >
-        <Text variant="caption" style={{ color: colors.text.muted }}>
-          ✕
-        </Text>
-      </Pressable>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 6 }}>
+        <Pressable
+          onPress={() => onApply(nudge.id)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Useful"
+          style={{ padding: 4 }}
+        >
+          <Text variant="caption" style={{ color: colors.status.success, fontWeight: '700' }}>
+            👍 Useful
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => onDismiss(nudge.id)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss"
+          style={{ padding: 4 }}
+        >
+          <Text variant="caption" style={{ color: colors.text.muted, fontWeight: '700' }}>
+            ✕ Dismiss
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }

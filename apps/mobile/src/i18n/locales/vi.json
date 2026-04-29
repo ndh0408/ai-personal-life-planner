@@ -410,11 +410,55 @@
       "note": "VD: Hơi đau đầu, uống ít nước…"
     }
   },
+  "preferences": {
+    "kicker": "Cá nhân hoá",
+    "title": "Hiểu bạn hơn",
+    "subtitle": "AI sẽ dùng những thông tin này để gợi ý sát hơn với bạn.",
+    "saved": "Đã lưu tuỳ chọn",
+    "fields": {
+      "workPattern": "Lịch làm việc",
+      "monthlyGoal": "Mục tiêu tháng này",
+      "budget": "Ngân sách / tháng (VND)",
+      "dislikes": "Không thích (món, hoạt động)",
+      "allergies": "Dị ứng / tránh tuyệt đối"
+    },
+    "placeholders": {
+      "monthlyGoal": "VD: Tiết kiệm 5tr, ngủ đủ 7h mỗi đêm",
+      "dislikes": "phở, karaoke, cà phê đắng",
+      "allergies": "đậu phộng, hải sản"
+    },
+    "hints": {
+      "commaSeparated": "Phân tách bằng dấu phẩy."
+    },
+    "workPatterns": {
+      "morning": "Sáng (5-9h)",
+      "evening": "Chiều tối (16-22h)",
+      "night-owl": "Đêm khuya",
+      "flexible": "Linh hoạt"
+    }
+  },
+  "memory": {
+    "kicker": "AI nhớ gì về bạn",
+    "title": "Trí nhớ AI",
+    "subtitle": "Những điều AI đã học được từ chat. Xoá bất kỳ mục nào không muốn AI nhớ.",
+    "empty": "Chưa có gì. Chat thêm để AI bắt đầu hiểu bạn.",
+    "forget": "Xoá khỏi trí nhớ",
+    "forgotten": "Đã xoá khỏi trí nhớ AI"
+  },
+  "nudges": {
+    "noBreakfastTitle": "Hôm nay chưa thấy bữa sáng",
+    "noBreakfastBody": "Đã {{hours}}h từ lúc bạn dậy. Ăn nhẹ rồi log nhé.",
+    "highSpendTitle": "Hôm nay chi tiêu cao",
+    "highSpendBody": "Đã chi {{spent}} hôm nay — vượt {{pct}}% so với trung bình ngày tháng này.",
+    "dismiss": "Đã hiểu"
+  },
   "settings": {
     "title": "Cài đặt",
     "account": "Tài khoản",
     "memberSince": "Tạo ngày {{date}}",
     "preferences": "Tuỳ chọn",
+    "preferencesEntry": "Hiểu bạn hơn",
+    "memoryEntry": "Trí nhớ AI",
     "language": "Ngôn ngữ",
     "languageVi": "Tiếng Việt",
     "languageEn": "English",

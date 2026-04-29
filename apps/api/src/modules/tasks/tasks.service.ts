@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { TaskStatus, type Task } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { rangeFor, type RangeName } from '../../common/datetime/range';
+import { EventLogService } from '../intelligence/event-log.service';
 
 export interface TaskRow {
   id: string;
@@ -38,7 +39,10 @@ export interface UpdateTaskInput {
 
 @Injectable()
 export class TasksService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: EventLogService,
+  ) {}
 
   async list(userId: string, range: RangeName | null): Promise<TaskListResponse> {
     const where = baseWhere(userId);
@@ -101,12 +105,18 @@ export class TasksService {
       where: { id },
       data: { status: 'COMPLETED', completedAt: new Date() },
     });
+    await this.events.log(userId, 'TASK_COMPLETED', row.title, {
+      id: row.id,
+      priority: row.priority,
+    });
     return toRow(row);
   }
 
   async softDelete(userId: string, id: string): Promise<{ id: string }> {
     await this.assertOwn(userId, id);
+    const row = await this.prisma.task.findUnique({ where: { id }, select: { title: true } });
     await this.prisma.task.update({ where: { id }, data: { deletedAt: new Date() } });
+    if (row) await this.events.log(userId, 'TASK_DELETED', row.title, { id });
     return { id };
   }
 

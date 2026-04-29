@@ -16,10 +16,16 @@ import {
 } from '@lifeos/shared';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EventLogService } from '../intelligence/event-log.service';
+import { BehaviorService } from '../intelligence/behavior.service';
 
 @Injectable()
 export class ConfirmService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: EventLogService,
+    private readonly behavior: BehaviorService,
+  ) {}
 
   async confirm(userId: string, input: CaptureConfirmRequest): Promise<CaptureConfirmResponse> {
     let response: CaptureConfirmResponse;
@@ -71,6 +77,27 @@ export class ConfirmService {
         })
         .catch(() => undefined);
     }
+
+    // Round 18: feed the intelligence layer.
+    // - EventLog gives the AI a rolling stream of "what just happened".
+    // - Behaviour summary stays fresh after sleep/expense/income confirms.
+    const summaryText = (input.rawText ?? input.kind).slice(0, 280);
+    await this.events.log(userId, 'CAPTURE_CONFIRMED', summaryText, {
+      kind: input.kind,
+      targetId: response.id,
+    });
+    if (input.kind === 'SLEEP' || input.kind === 'EXPENSE' || input.kind === 'INCOME') {
+      // Behaviour patterns shift on these — recompute now so the next plan/
+      // insight call sees fresh numbers.
+      void this.behavior.recompute(userId).catch(() => undefined);
+    }
+
+    // Mid-day soft adapt: when the user logs sleep or mood, the AI should
+    // know to soften today's remaining items (e.g. user logs 4h sleep at
+    // 09:00 → next plan generation will see this and shorten blocks).
+    // We DON'T regenerate here (would discard pending status); instead the
+    // EventLog + recompute means the next time the user pulls Today, the
+    // generate call uses the fresh signals.
 
     return response;
   }
