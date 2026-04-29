@@ -5,10 +5,11 @@ import { AssistantMemoryService } from './assistant-memory.service';
 import { UserContextService } from './user-context.service';
 import { InsightGenerator } from './insight.generator';
 import { MemoryController } from './memory.controller';
+import { TelemetryController } from './telemetry.controller';
 
 @Module({
   imports: [],
-  controllers: [MemoryController],
+  controllers: [MemoryController, TelemetryController],
   providers: [
     EventLogService,
     BehaviorService,

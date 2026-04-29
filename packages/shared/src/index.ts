@@ -4,6 +4,7 @@ export * from './assistant';
 export * from './capture';
 export * from './common';
 export * from './dashboard';
+export * from './device-data';
 export * from './planner';
 export * from './privacy';
 export * from './profile';

@@ -101,12 +101,31 @@ export class ConfirmService {
     }
 
     // EventLog feeds the assistant the rolling "what just happened" stream.
+    // Round 35: log both the meta event (CAPTURE_CONFIRMED) and a kind-
+    // specific event (EXPENSE_CREATED / SLEEP_LOGGED / …) so behaviour +
+    // insight services can filter by domain without parsing the payload.
     const summaryText = (input.rawText ?? input.kind).slice(0, 280);
+    const KIND_EVENT: Record<string, import('../intelligence/event-log.service').EventKind> = {
+      EXPENSE: 'EXPENSE_CREATED',
+      INCOME: 'INCOME_CREATED',
+      MEAL: 'MEAL_LOGGED',
+      SLEEP: 'SLEEP_LOGGED',
+      MOOD: 'MOOD_LOGGED',
+      TASK: 'TASK_CREATED',
+    };
+    const domainEvent = KIND_EVENT[input.kind];
     await this.events.log(userId, 'CAPTURE_CONFIRMED', summaryText, {
       kind: input.kind,
       targetId: result.entityId,
       quickCaptureId: result.quickCaptureId,
     });
+    if (domainEvent) {
+      await this.events.log(userId, domainEvent, summaryText, {
+        targetId: result.entityId,
+        quickCaptureId: result.quickCaptureId,
+        source: 'MANUAL',
+      });
+    }
     if (input.kind === 'SLEEP' || input.kind === 'EXPENSE' || input.kind === 'INCOME') {
       void this.behavior.recompute(userId).catch(() => undefined);
     }

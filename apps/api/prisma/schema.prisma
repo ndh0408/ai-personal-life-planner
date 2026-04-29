@@ -78,6 +78,17 @@ enum EnergyLevel {
   HIGH
 }
 
+// Round 35: provenance tag on every passively-logged datum.
+// MANUAL  — user typed it / confirmed it via Smart Capture.
+// DEVICE  — synced from HealthKit / Health Connect.
+// INFERRED — derived from app-activity heuristics (e.g. sleep from
+//           inactivity 23:00→07:00 with no foreground events).
+enum DataSource {
+  MANUAL
+  DEVICE
+  INFERRED
+}
+
 enum DailyPlanItemType {
   TASK
   MEAL
@@ -296,6 +307,62 @@ model AssistantMemory {
   @@index([userId, weight])
 }
 
+/// Round 36: per-user, per-source watermark for sensor sync. The phone
+/// pushes data via /device-data/sync; the API persists the latest sample
+/// timestamp it has accepted so the next call only sends new rows. One
+/// row per (userId, source).
+model DeviceSyncCursor {
+  id            String   @id @default(cuid())
+  userId        String
+  /// 'health-connect' | 'healthkit' | 'inferred'
+  source        String
+  /// Last sample timestamp we have ingested for this source.
+  lastSyncedAt  DateTime
+  /// Free-form provider metadata (device model, OS version) for debugging.
+  meta          Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, source])
+  @@index([userId])
+}
+
+/// Round 36: optional heart-rate trend store. We don't keep every beat —
+/// the sync job aggregates to 5-min buckets (avg + max) so a week of HR
+/// stays small. Only populated when health permission is granted.
+model HeartRateSample {
+  id             String   @id @default(cuid())
+  userId         String
+  bucketStart    DateTime
+  /// Beats per minute, mean over the bucket.
+  avgBpm         Int
+  maxBpm         Int
+  /// Same DataSource semantics as SleepLog.
+  source         DataSource @default(DEVICE)
+  deviceRecordId String?
+  createdAt      DateTime @default(now())
+
+  @@unique([userId, bucketStart])
+  @@index([userId, bucketStart])
+}
+
+/// Round 36: passive activity samples — steps + foreground-app usage
+/// minutes per 30-min bucket. Powers circadian + stress detection
+/// without forcing the user to log anything.
+model ActivitySample {
+  id           String     @id @default(cuid())
+  userId       String
+  bucketStart  DateTime
+  steps        Int        @default(0)
+  /// Foreground app minutes the user spent inside LifeOS during the bucket.
+  appMinutes   Int        @default(0)
+  source       DataSource @default(INFERRED)
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, bucketStart])
+  @@index([userId, bucketStart])
+}
+
 // ---------- AI credentials ------------------------------------------------------
 
 model UserAiKey {
@@ -413,15 +480,16 @@ model Task {
 // ---------- Health journal ------------------------------------------------------
 
 model MealLog {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   userId    String
   mealType  MealType
   title     String
-  cost      Decimal? @db.Decimal(18, 2)
+  cost      Decimal?   @db.Decimal(18, 2)
   loggedAt  DateTime
   note      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  source    DataSource @default(MANUAL)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -437,6 +505,13 @@ model SleepLog {
   durationMinutes Int
   quality         SleepQuality?
   note            String?
+  // Round 35: where the row came from (manual capture vs. Health Connect
+  // sync vs. inferred from app-inactivity). Lets the UI badge data
+  // source and the assistant qualify confidence ("Tracked by your phone").
+  source          DataSource    @default(MANUAL)
+  /// Optional foreign id from the device platform (HealthKit sample UUID
+  /// or Health Connect record id) — used by the sync job to dedupe.
+  deviceRecordId  String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
@@ -444,6 +519,7 @@ model SleepLog {
 
   @@index([userId])
   @@index([userId, sleepAt])
+  @@index([userId, source, sleepAt])
 }
 
 model MoodLog {
@@ -453,6 +529,7 @@ model MoodLog {
   energy    EnergyLevel
   loggedAt  DateTime
   note      String?
+  source    DataSource  @default(MANUAL)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 

@@ -35,6 +35,7 @@ import { PrivacyModule } from './modules/privacy/privacy.module';
 import { CaptureModule } from './modules/capture/capture.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { IntelligenceModule } from './modules/intelligence/intelligence.module';
+import { DeviceDataModule } from './modules/device-data/device-data.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { IntelligenceModule } from './modules/intelligence/intelligence.module';
     CaptureModule,
     DashboardModule,
     IntelligenceModule,
+    DeviceDataModule,
   ],
   controllers: [HealthController, VersionController],
   providers: [

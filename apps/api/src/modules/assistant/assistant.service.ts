@@ -25,6 +25,7 @@ import type {
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserContextService } from '../intelligence/user-context.service';
 import { AssistantMemoryService } from '../intelligence/assistant-memory.service';
+import { EventLogService } from '../intelligence/event-log.service';
 import { LlmService } from '../../common/llm/llm.service';
 import { LlmError } from '../../common/llm/llm.types';
 import { ActionSuggesterService } from './action-suggester.service';
@@ -54,6 +55,7 @@ export class AssistantService {
     private readonly memory: AssistantMemoryService,
     private readonly llm: LlmService,
     private readonly actions: ActionSuggesterService,
+    private readonly events: EventLogService,
   ) {}
 
   // ── Send message (creates conversation if needed, calls LLM, stores) ─────
@@ -134,6 +136,18 @@ export class AssistantService {
       ctx,
       userText: input.content,
     });
+
+    // Round 35: log assistant turn for behaviour profile / activity tracking.
+    // Payload deliberately holds only message ids — content stays in
+    // AIMessage to avoid double-storage and keep the event row small.
+    void this.events
+      .log(userId, 'ASSISTANT_MESSAGE_SENT', input.content.slice(0, 280), {
+        conversationId: conversation.id,
+        userMessageId: userMsg.id,
+        assistantMessageId: assistantMsg.id,
+        suggestedActionCount: suggestedActions.length,
+      })
+      .catch(() => undefined);
 
     return {
       conversationId: conversation.id,

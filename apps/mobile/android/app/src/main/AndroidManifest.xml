@@ -2,6 +2,20 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Round 36: Health Connect read permissions. The user is asked
+         in-app via requestPermission(); these declarations let the OS
+         know what we may request. We never write to Health Connect. -->
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+
+    <!-- Required by Play Store policy: declare we know about the
+         Health Connect APK so PackageManager queries succeed on
+         Android 11+ (scoped queries). -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+    </queries>
+
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"
@@ -21,6 +35,26 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
+
+        <!-- Health Connect privacy-policy rationale target. Any tap on
+             "View privacy policy" in Health Connect's permission dialog
+             deep-links into the app; we route to Settings → Privacy in
+             onCreate. -->
+        <intent-filter>
+            <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+        </intent-filter>
       </activity>
+
+      <!-- Health Connect on Android 13- needs the legacy permission alias. -->
+      <activity-alias
+        android:name="ViewPermissionUsageActivity"
+        android:exported="true"
+        android:targetActivity=".MainActivity"
+        android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+            <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+        </intent-filter>
+      </activity-alias>
     </application>
 </manifest>
