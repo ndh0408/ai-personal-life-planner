@@ -1,0 +1,28 @@
+# cloudflared config (round 28 sample).
+#
+# This is a template — the real config lives in /etc/cloudflared/config.yml
+# on the prod host. Copy this file and fill in:
+#   - your tunnel UUID (from `cloudflared tunnel create lifeos-api`)
+#   - your hostname (the DNS record you create with `cloudflared tunnel route dns`)
+#
+# Behind the scenes:
+#   - cloudflared binds outbound to Cloudflare's edge.
+#   - Cloudflare terminates TLS and forwards plaintext HTTP to 127.0.0.1:4000.
+#   - The API container only listens on 127.0.0.1:4000 (see compose.prod.yaml),
+#     so nothing on the public internet can reach Postgres or Redis.
+
+tunnel: REPLACE_WITH_TUNNEL_UUID
+credentials-file: /etc/cloudflared/REPLACE_WITH_TUNNEL_UUID.json
+
+ingress:
+  # API behind the tunnel. Mobile + web app point here.
+  - hostname: api.tothanhthuy.cloud
+    service: http://127.0.0.1:4000
+    originRequest:
+      noTLSVerify: true
+      # SSE streams need long-lived connections; default 100 s is too short.
+      connectTimeout: 30s
+      tcpKeepAlive: 30s
+
+  # Catch-all 404 for anything not matched above.
+  - service: http_status:404

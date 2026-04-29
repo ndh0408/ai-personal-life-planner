@@ -1,0 +1,44 @@
+# systemd unit for LifeOS API (round 28).
+#
+# Wraps `docker compose up -d` so the API auto-starts on boot and
+# survives `systemctl daemon-reload`. Postgres + Redis come up as
+# dependencies because the prod compose file declares depends_on with
+# healthchecks.
+#
+# Install:
+#   sudo cp docker/lifeos-api.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now lifeos-api
+#
+# Logs:
+#   journalctl -u lifeos-api -f
+#   docker compose -f /home/huy/AppQuanLY/compose.yaml -f /home/huy/AppQuanLY/compose.prod.yaml logs -f api
+
+[Unit]
+Description=LifeOS AI API
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/huy/AppQuanLY
+EnvironmentFile=/etc/lifeos/api.env
+
+ExecStart=/usr/bin/docker compose \
+  -f compose.yaml -f compose.prod.yaml \
+  up -d
+
+ExecStop=/usr/bin/docker compose \
+  -f compose.yaml -f compose.prod.yaml \
+  stop api
+
+# Health-driven restart (round 29 will tighten this once the unit is
+# split into one service per container so systemd can target the api
+# alone).
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

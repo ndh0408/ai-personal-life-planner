@@ -137,6 +137,29 @@ alive instead of frozen.
 
 ---
 
+## Round 26 — Mobile streaming client (shipped)
+
+react-native-sse wired in. AssistantScreen drives a real SSE EventSource;
+progress events show "Đang đọc dữ liệu hôm nay…" / "Đang suy nghĩ…", deltas
+stream live into a sienna bubble, Stop button cancels cleanly, Hỏi lại
+re-runs the last prompt.
+
+## Round 27 — Tests (shipped)
+
+@testing-library/react-native + @testing-library/jest-native landed. 22
+mobile tests (format/idempotency/debug-store + KindBadge component test)
+plus 8 new API tests (privacy + corrections services). Suite total: 127
+green tests.
+
+## Round 28 — Production hardening (shipped)
+
+- Liveness / readiness / deep healthcheck split.
+- Secrets rotation playbook (docs/SECRETS.md): generation, storage,
+  rotation cadence, leak response.
+- Idempotent deploy script (scripts/deploy-prod.sh).
+- systemd unit (docker/lifeos-api.service) + cloudflared config sample.
+- .env.example refreshed.
+
 ## Round 25 — CI / compose split / smoke tests
 
 - `compose.yaml` (base) + `compose.dev.yaml` (host ports + bind mounts) +

@@ -8,11 +8,13 @@ it in the right place.
 > Curious about the *why*? Start with [docs/PRODUCT_SPEC.md](./docs/PRODUCT_SPEC.md)
 > and [docs/UX_PRINCIPLES.md](./docs/UX_PRINCIPLES.md).
 
-Currently at **Round 25 — productionised**. Builds on round 18's intelligence
-core with hygiene/security baseline (R19), privacy-aware LifeSnapshot (R20),
-3-tier capture routing + correction memory (R21), atomic undo (R22), Home
-UX rewrite + Privacy + DevPanel (R23), assistant streaming (R24), and a
-real CI + smoke pipeline (R25).
+Currently at **Round 28 — production hardened**. Builds on round 18's
+intelligence core with hygiene/security baseline (R19), privacy-aware
+LifeSnapshot (R20), 3-tier capture routing + correction memory (R21),
+atomic undo (R22), Home UX rewrite + Privacy + DevPanel (R23), assistant
+streaming (R24), CI + smoke (R25), real mobile streaming client with
+react-native-sse (R26), 127-test suite (R27), and orchestrator-grade
+healthchecks + secrets rotation playbook (R28).
 
 ## Stack
 
@@ -79,6 +81,9 @@ scripts/          deploy-android.sh, connect-android.sh, dev-bootstrap.sh
 | 23 | **Mobile UX rewrite** — Home gọn lại, mode-specific quick actions, hidden DevPanel, Privacy screen |
 | 24 | **Assistant streaming** — SSE pipeline + staged progress UX |
 | 25 | **Productionised** — compose.{base,dev,prod}.yaml split, GitHub Actions CI, Maestro smoke flow, multi-stage Dockerfile |
+| 26 | **Mobile streaming** — react-native-sse client, real progress events + live tokens, Stop / Hỏi lại buttons |
+| 27 | **Tests** — @testing-library/react-native + jest setup, 22 mobile + 105 API tests (127 total) |
+| 28 | **Hardening** — liveness/readiness/deep healthchecks, secrets rotation docs, deploy script, systemd unit, cloudflared sample |
 
 ## Run it locally
 
@@ -247,20 +252,32 @@ UserContext = {
 
 ## Status
 
-- API: 18 modules, **100/100 jest tests** pass, TS clean.
-- Mobile: 20 screens, 30+ components, 17 services, 12+ hooks. TS clean.
+- API: 18 modules, **105/105 jest tests** pass, TS clean.
+- Mobile: 20 screens, 30+ components, 17 services, 12+ hooks, **22 jest tests**, TS clean.
 - APK ~59 MB, deployed via Tailscale ADB to Xiaomi 13T.
 - Public API: `https://api.tothanhthuy.cloud/api` (Cloudflare Tunnel).
+- Health: `/health` (liveness), `/health/ready` (DB + Redis), `/health/deep`
+  (snapshot version + encryption key check).
 - CI: `.github/workflows/ci.yml` runs lint/typecheck → API tests → mobile
   typecheck/tests → Android debug APK on every push.
 - Smoke: `maestro test .maestro/smoke.yaml` against a connected device for
   register → capture → save → undo → privacy round-trip.
 
-## Production deploy (round 25)
+## Production deploy (round 28)
 
 ```bash
-# On the prod host:
-docker compose -f compose.yaml -f compose.prod.yaml build api
-docker compose -f compose.yaml -f compose.prod.yaml up -d
-# Cloudflare Tunnel forwards to 127.0.0.1:4000.
+# Idempotent zero-downtime-ish deploy script:
+bash scripts/deploy-prod.sh
+
+# Or manually:
+docker compose -f compose.yaml -f compose.prod.yaml --env-file /etc/lifeos/api.env \
+  build api
+docker compose -f compose.yaml -f compose.prod.yaml --env-file /etc/lifeos/api.env \
+  run --rm --no-deps api npx prisma migrate deploy
+docker compose -f compose.yaml -f compose.prod.yaml --env-file /etc/lifeos/api.env \
+  up -d --no-deps api
 ```
+
+systemd unit (auto-start on boot): see [docker/lifeos-api.service](./docker/lifeos-api.service).
+Cloudflare Tunnel template: see [docker/cloudflared.config.example.yml](./docker/cloudflared.config.example.yml).
+Secrets rotation playbook: [docs/SECRETS.md](./docs/SECRETS.md).
