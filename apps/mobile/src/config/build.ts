@@ -1,6 +1,6 @@
 /**
  * Build-time constants. Bumped manually with each release for now —
- * the CI pipeline will inject the real Git SHA / build number when wired.
+ * the CI pipeline (round 25) will inject the real Git SHA + build number.
  */
-export const APP_VERSION = '0.16.0';
-export const APP_BUILD = 'round-16';
+export const APP_VERSION = '0.19.0';
+export const APP_BUILD = 'round-19';

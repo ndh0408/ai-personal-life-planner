@@ -1,6 +1,7 @@
 import {
   ConflictException,
   ForbiddenException,
+  HttpException,
   Injectable,
   Logger,
   UnauthorizedException,
@@ -18,6 +19,7 @@ import type {
   UserPublic,
 } from '@lifeos/shared';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AccountLockoutService } from './account-lockout.service';
 
 interface AccessPayload {
   sub: string;
@@ -36,6 +38,12 @@ interface ClientContext {
 }
 
 const BCRYPT_COST = 12;
+
+// Pre-computed bcrypt hash of a random 32-byte string (cost 12). Compared
+// against when the email doesn't exist, to keep the response time symmetric
+// with a real wrong-password path. The actual plaintext is irrelevant —
+// this hash must never match any real password.
+const DUMMY_HASH = '$2b$12$lH9N8Q6mZxJ8vY3T2k1aOu8K4RJqJZJxX0p5vY6rN8M2q1Z7y3X4u';
 
 /** Parse a JWT TTL string ("15m", "30d", "3600s", "7d") into seconds. */
 function ttlToSeconds(spec: string): number {
@@ -60,6 +68,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly lockout: AccountLockoutService,
   ) {
     this.accessTtlSec = ttlToSeconds(this.config.get<string>('JWT_ACCESS_TTL') ?? '15m');
     this.refreshTtlSec = ttlToSeconds(this.config.get<string>('JWT_REFRESH_TTL') ?? '30d');
@@ -104,12 +113,38 @@ export class AuthService {
       where: { email: input.email.toLowerCase() },
     });
     if (!user) {
+      // Bcrypt comparison runs in O(work) regardless of input — but the lookup
+      // above doesn't. Burn an equivalent compare against a dummy hash so the
+      // timing of "no such email" matches "wrong password".
+      await bcrypt.compare(input.password, DUMMY_HASH);
       throw new UnauthorizedException({
         error: { code: 'INVALID_CREDENTIALS', message: 'Email hoặc mật khẩu không đúng.' },
       });
     }
+
+    // 423 Locked: account is in cool-down. We check before bcrypt so an
+    // attacker who has already triggered the lock can't keep guessing.
+    const lockState = this.lockout.isLocked(user);
+    if (lockState) {
+      const seconds = Math.ceil((lockState.until.getTime() - Date.now()) / 1000);
+      throw new HttpException(
+        {
+          error: {
+            code: 'ACCOUNT_LOCKED',
+            message: `Tài khoản tạm khoá do nhập sai liên tục. Thử lại sau ${seconds}s.`,
+            retryAfterSeconds: seconds,
+          },
+        },
+        423, // HTTP 423 Locked (RFC 4918)
+      );
+    }
+
     const ok = await bcrypt.compare(input.password, user.passwordHash);
     if (!ok) {
+      const result = await this.lockout.recordFailure(user.id);
+      if (result.lockedUntil) {
+        this.logger.warn(`account_locked user=${user.id} until=${result.lockedUntil.toISOString()}`);
+      }
       throw new UnauthorizedException({
         error: { code: 'INVALID_CREDENTIALS', message: 'Email hoặc mật khẩu không đúng.' },
       });
@@ -119,6 +154,8 @@ export class AuthService {
         error: { code: 'ACCOUNT_DISABLED', message: 'Tài khoản này đã bị khoá.' },
       });
     }
+
+    await this.lockout.recordSuccess(user.id);
     const tokens = await this.issueTokens(user, ctx);
     return { user: toPublic(user), tokens };
   }

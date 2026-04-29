@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { err } from './response-envelope';
+import { redact, redactUrl } from './redact.util';
 
 interface NestErrorBody {
   error?: { code?: string; message?: string };
@@ -66,10 +67,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       // Unknown error — log full detail server-side, send opaque message in prod.
       const detail =
         exception instanceof Error
-          ? { name: exception.name, message: exception.message, stack: exception.stack }
-          : { value: String(exception) };
+          ? redact({ name: exception.name, message: exception.message, stack: exception.stack })
+          : redact({ value: String(exception) });
       this.logger.error(
-        `Unhandled exception on ${req.method} ${req.url} (rid=${req.id ?? 'none'})`,
+        `Unhandled exception on ${req.method} ${redactUrl(req.url)} (rid=${req.id ?? 'none'})`,
         detail,
       );
       if (!this.isProduction && exception instanceof Error) {
@@ -82,13 +83,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message = 'Internal server error';
     }
 
+    const safeUrl = redactUrl(req.url);
     if (status >= 500) {
       this.logger.error(
-        `${req.method} ${req.url} → ${status} ${errorCode} (rid=${req.id ?? 'none'}): ${message}`,
+        `${req.method} ${safeUrl} → ${status} ${errorCode} (rid=${req.id ?? 'none'}): ${message}`,
       );
     } else {
       this.logger.warn(
-        `${req.method} ${req.url} → ${status} ${errorCode} (rid=${req.id ?? 'none'}): ${message}`,
+        `${req.method} ${safeUrl} → ${status} ${errorCode} (rid=${req.id ?? 'none'}): ${message}`,
       );
     }
 

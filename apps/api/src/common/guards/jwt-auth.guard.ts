@@ -13,6 +13,7 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 interface AccessPayload {
   sub: string;
   email: string;
+  type?: string;
 }
 
 @Injectable()
@@ -38,19 +39,37 @@ export class JwtAuthGuard implements CanActivate {
       });
     }
     const token = auth.slice('Bearer '.length).trim();
+
+    let payload: AccessPayload;
     try {
-      const payload = await this.jwt.verifyAsync<AccessPayload>(token, {
+      payload = await this.jwt.verifyAsync<AccessPayload>(token, {
         secret: this.config.getOrThrow<string>('JWT_ACCESS_SECRET'),
       });
-      (req as Request & { user: { id: string; email: string } }).user = {
-        id: payload.sub,
-        email: payload.email,
-      };
-      return true;
     } catch {
       throw new UnauthorizedException({
         error: { code: 'invalid_token', message: 'Access token is invalid or expired' },
       });
     }
+
+    // Defence-in-depth: even though access and refresh use different secrets
+    // today, a future config slip-up that aligned them must not make refresh
+    // tokens accepted as access tokens. Reject anything that doesn't carry
+    // type=access explicitly.
+    if (payload.type !== 'access') {
+      throw new UnauthorizedException({
+        error: { code: 'wrong_token_type', message: 'Wrong token type' },
+      });
+    }
+    if (!payload.sub || !payload.email) {
+      throw new UnauthorizedException({
+        error: { code: 'invalid_token', message: 'Access token is invalid or expired' },
+      });
+    }
+
+    (req as Request & { user: { id: string; email: string } }).user = {
+      id: payload.sub,
+      email: payload.email,
+    };
+    return true;
   }
 }
