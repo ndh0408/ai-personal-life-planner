@@ -27,6 +27,44 @@ export interface ExpenseSummary {
   currency: 'VND';
 }
 
+export interface TimelineEntry {
+  id: string;
+  kind: 'EXPENSE' | 'INCOME';
+  title: string;
+  amount: number;
+  category: string;
+  occurredAt: string;
+  walletId: string;
+  note: string | null;
+}
+
+export interface TimelineResponse {
+  range: string | null;
+  totalIncome: number;
+  totalExpense: number;
+  net: number;
+  rows: TimelineEntry[];
+}
+
+export interface IncomeRow {
+  id: string;
+  title: string;
+  amount: number;
+  currency: 'VND';
+  category: string;
+  incomeDate: string;
+  walletId: string;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface IncomeListResponse {
+  range: string | null;
+  total: number;
+  totalAmount: number;
+  rows: IncomeRow[];
+}
+
 export interface CreateExpenseInput {
   title: string;
   amount: number;
@@ -65,5 +103,19 @@ export const financeService = {
   },
   remove(id: string) {
     return apiClient.request<{ id: string }>('DELETE', `/expenses/${id}`);
+  },
+  timeline(range?: 'today' | 'yesterday' | 'week' | 'month') {
+    const qs = range ? `?range=${range}` : '';
+    return apiClient.request<TimelineResponse>('GET', `/finance/timeline${qs}`);
+  },
+};
+
+export const incomeService = {
+  list(range?: 'today' | 'yesterday' | 'week' | 'month') {
+    const qs = range ? `?range=${range}` : '';
+    return apiClient.request<IncomeListResponse>('GET', `/incomes${qs}`);
+  },
+  remove(id: string) {
+    return apiClient.request<{ id: string }>('DELETE', `/incomes/${id}`);
   },
 };

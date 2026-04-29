@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { ExpensesController } from './finance.controller';
+import { ExpensesController, FinanceTimelineController } from './finance.controller';
 import { FinanceService } from './finance.service';
 
 @Module({
-  controllers: [ExpensesController],
+  controllers: [ExpensesController, FinanceTimelineController],
   providers: [FinanceService],
 })
 export class FinanceModule {}

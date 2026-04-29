@@ -30,6 +30,27 @@ export interface ExpenseSummary {
   currency: 'VND';
 }
 
+export type TimelineEntryKind = 'EXPENSE' | 'INCOME';
+
+export interface TimelineEntry {
+  id: string;
+  kind: TimelineEntryKind;
+  title: string;
+  amount: number;
+  category: string;
+  occurredAt: string;
+  walletId: string;
+  note: string | null;
+}
+
+export interface TimelineResponse {
+  range: RangeName | null;
+  totalIncome: number;
+  totalExpense: number;
+  net: number;
+  rows: TimelineEntry[];
+}
+
 export interface CreateExpenseInput {
   title: string;
   amount: number;
@@ -103,6 +124,68 @@ export class FinanceService {
       monthTotal: sum(monthRows),
       weekByCategory,
       currency: 'VND',
+    };
+  }
+
+  /**
+   * Mixed expense + income feed for the Money tab. We fetch both, tag each
+   * with a kind, and merge by date desc. Totals are sums per kind so the UI
+   * can show "Thu / Chi / Còn lại" up top in one query.
+   */
+  async timeline(userId: string, range: RangeName | null): Promise<TimelineResponse> {
+    const expenseWhere: Record<string, unknown> = { userId, deletedAt: null };
+    const incomeWhere: Record<string, unknown> = { userId, deletedAt: null };
+    if (range) {
+      const { start, end } = rangeFor(range);
+      expenseWhere.expenseDate = { gte: start, lt: end };
+      incomeWhere.incomeDate = { gte: start, lt: end };
+    }
+
+    const [expenses, incomes] = await Promise.all([
+      this.prisma.expense.findMany({
+        where: expenseWhere,
+        orderBy: { expenseDate: 'desc' },
+        take: 200,
+      }),
+      this.prisma.income.findMany({
+        where: incomeWhere,
+        orderBy: { incomeDate: 'desc' },
+        take: 200,
+      }),
+    ]);
+
+    const totalExpense = expenses.reduce((s, e) => s + Number(e.amount), 0);
+    const totalIncome = incomes.reduce((s, i) => s + Number(i.amount), 0);
+
+    const rows: TimelineEntry[] = [
+      ...expenses.map((e) => ({
+        id: e.id,
+        kind: 'EXPENSE' as const,
+        title: e.title,
+        amount: Number(e.amount),
+        category: e.category,
+        occurredAt: e.expenseDate.toISOString(),
+        walletId: e.walletId,
+        note: e.note,
+      })),
+      ...incomes.map((i) => ({
+        id: i.id,
+        kind: 'INCOME' as const,
+        title: i.title,
+        amount: Number(i.amount),
+        category: i.category ?? 'other',
+        occurredAt: i.incomeDate.toISOString(),
+        walletId: i.walletId,
+        note: i.note,
+      })),
+    ].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
+
+    return {
+      range,
+      totalExpense,
+      totalIncome,
+      net: totalIncome - totalExpense,
+      rows: rows.slice(0, 200),
     };
   }
 

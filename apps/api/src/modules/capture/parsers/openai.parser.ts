@@ -14,25 +14,33 @@ import { EncryptionService } from '../../../common/crypto/encryption.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 const SYS_PROMPT = `You classify a single short user utterance about everyday life into ONE of:
-- EXPENSE: spending money on something (food, transport, utilities, …)
-- MEAL: a meal eaten (breakfast / lunch / dinner / snack)
+- EXPENSE: money the user SPENT on something (food, bills, transport, shopping, …)
+- INCOME: money the user RECEIVED (salary, bonus, freelance, refund, gift, dividends)
+- MEAL: a meal eaten (breakfast / lunch / dinner / snack) — no money flow
 - TASK: something to do, sometimes with a time
 - SLEEP: a sleep duration
 - MOOD: an emotional state
 - UNKNOWN: when none of the above fits
 
+Direction rule (critical):
+- "lương 15tr", "thưởng tết 5tr", "freelance được 3tr", "hoàn tiền 200k" → INCOME
+- "phở 60k", "trả tiền điện 280k", "mua sách 240k", "đổ xăng 100k" → EXPENSE
+- If the verb is missing, the bias is EXPENSE (people log spends more often).
+
 Return STRICT JSON with this shape (no commentary):
 {
-  "kind": "EXPENSE" | "MEAL" | "TASK" | "SLEEP" | "MOOD" | "UNKNOWN",
+  "kind": "EXPENSE" | "INCOME" | "MEAL" | "TASK" | "SLEEP" | "MOOD" | "UNKNOWN",
   "confidence": 0..1,
   "title": "short human-readable label",
-  "amount": <integer in smallest unit, only for EXPENSE / MEAL cost>,
-  "category": "food" | "transport" | "utility" | "learning" | "health" | "clothes" | "other"  (EXPENSE only),
+  "amount": <integer in smallest unit, only for EXPENSE / INCOME / MEAL cost>,
+  "category": one of [food, transport, bills, shopping, health, learning, entertainment, family, other]  (EXPENSE),
+  "incomeCategory": one of [salary, bonus, freelance, gift, refund, investment, other]  (INCOME),
   "mealType": "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK"  (MEAL only),
   "priority": "LOW" | "MEDIUM" | "HIGH"  (TASK only),
   "dueAt": "ISO 8601 in user TZ"  (TASK with time only),
   "loggedAt": "ISO 8601 in user TZ"  (MEAL / MOOD),
   "expenseDate": "ISO 8601 in user TZ"  (EXPENSE),
+  "incomeDate": "ISO 8601 in user TZ"  (INCOME),
   "durationMinutes": <integer>  (SLEEP),
   "sleepAt": "ISO 8601",
   "wakeAt": "ISO 8601",
@@ -46,16 +54,18 @@ Bias toward Vietnamese if the input is Vietnamese.`;
 const TIMEOUT_MS = 12_000;
 
 interface LlmExtraction {
-  kind: 'EXPENSE' | 'MEAL' | 'TASK' | 'SLEEP' | 'MOOD' | 'UNKNOWN';
+  kind: 'EXPENSE' | 'INCOME' | 'MEAL' | 'TASK' | 'SLEEP' | 'MOOD' | 'UNKNOWN';
   confidence: number;
   title?: string;
   amount?: number;
   category?: string;
+  incomeCategory?: string;
   mealType?: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK';
   priority?: 'LOW' | 'MEDIUM' | 'HIGH';
   dueAt?: string;
   loggedAt?: string;
   expenseDate?: string;
+  incomeDate?: string;
   durationMinutes?: number;
   sleepAt?: string;
   wakeAt?: string;
@@ -150,6 +160,21 @@ function mapToHit(x: LlmExtraction, ctx: ParseContext): ParseHit | null {
           expenseDateIso: x.expenseDate ?? nowIso,
         },
         previewText: `💸 ${title} — ${x.amount.toLocaleString('vi-VN')} ₫`,
+      };
+    case 'INCOME':
+      if (typeof x.amount !== 'number' || x.amount < 0) return null;
+      return {
+        kind: 'INCOME',
+        source: 'OPENAI',
+        confidence: conf,
+        fields: {
+          title,
+          amount: Math.round(x.amount),
+          currency: 'VND',
+          category: x.incomeCategory ?? x.category ?? 'other',
+          incomeDateIso: x.incomeDate ?? x.expenseDate ?? nowIso,
+        },
+        previewText: `💰 ${title} — +${x.amount.toLocaleString('vi-VN')} ₫`,
       };
     case 'MEAL':
       return {

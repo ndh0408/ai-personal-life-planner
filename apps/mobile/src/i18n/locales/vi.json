@@ -171,6 +171,7 @@
     "previewTitle": "Đúng ý bạn chưa?",
     "kinds": {
       "EXPENSE": "Chi tiêu",
+      "INCOME": "Thu nhập",
       "MEAL": "Bữa ăn",
       "TASK": "Việc cần làm",
       "SLEEP": "Giấc ngủ",
@@ -234,6 +235,37 @@
     "openTasks": "Mở danh sách",
     "openMeals": "Sổ ăn uống"
   },
+  "smart": {
+    "kicker": "Thêm gì đó",
+    "title": "AI sẽ tự phân loại",
+    "openCta": "Thêm gì đó",
+    "saveCta": "Lưu",
+    "inputLabel": "Bạn muốn ghi gì?",
+    "placeholder": "VD: phở 60k · lương 15tr · họp An mai 9h · ngủ 7h · cảm thấy mệt",
+    "hint": "AI tự nhận diện chi tiêu / thu nhập / task / bữa ăn / giấc ngủ / cảm xúc — không cần chọn nhãn.",
+    "thinking": "AI đang đọc…",
+    "unknownTitle": "Mình chưa rõ ý",
+    "unknownBody": "Gõ rõ hơn nhé. Ví dụ thêm số tiền, hoặc thêm động từ (ăn / mua / nhận lương / ngủ).",
+    "sourceRule": "Luật cứng",
+    "sourceAi": "AI",
+    "kindLabels": {
+      "EXPENSE": "Chi tiêu",
+      "INCOME": "Thu nhập",
+      "MEAL": "Bữa ăn",
+      "TASK": "Việc cần làm",
+      "SLEEP": "Giấc ngủ",
+      "MOOD": "Cảm xúc",
+      "UNKNOWN": "Chưa rõ"
+    },
+    "savedKinds": {
+      "EXPENSE": "Đã ghi nhận khoản chi",
+      "INCOME": "Đã ghi nhận khoản thu",
+      "MEAL": "Đã ghi nhận bữa ăn",
+      "TASK": "Đã thêm task",
+      "SLEEP": "Đã ghi nhận giấc ngủ",
+      "MOOD": "Đã ghi nhận cảm xúc"
+    }
+  },
   "tasks": {
     "kicker": "Việc cần làm",
     "title": "Tasks",
@@ -266,16 +298,26 @@
     }
   },
   "money": {
-    "title": "Chi tiêu",
+    "title": "Tài chính",
     "addTitle": "Thêm chi tiêu",
     "addCta": "Thêm chi tiêu",
     "saveCta": "Lưu khoản chi",
     "added": "Đã ghi nhận khoản chi",
     "weekTotal": "Tuần này",
     "todayTotal": "Hôm nay",
-    "empty": "Chưa có chi tiêu nào tuần này.",
+    "totalIncome": "Thu",
+    "totalExpense": "Chi",
+    "net": "Còn lại",
+    "timeline": "Dòng tiền",
+    "empty": "Chưa có giao dịch nào.",
     "byCategory": "Theo nhóm",
     "confirmDeleteTitle": "Xoá khoản chi này?",
+    "confirmDeleteIncomeTitle": "Xoá khoản thu này?",
+    "ranges": {
+      "today": "Hôm nay",
+      "week": "Tuần này",
+      "month": "Tháng này"
+    },
     "fields": {
       "title": "Mô tả",
       "amount": "Số tiền (VND)",
@@ -293,6 +335,14 @@
       "health": "Sức khoẻ",
       "learning": "Học tập",
       "bills": "Hoá đơn",
+      "entertainment": "Giải trí",
+      "family": "Gia đình",
+      "salary": "Lương",
+      "bonus": "Thưởng",
+      "freelance": "Freelance",
+      "gift": "Quà tặng",
+      "refund": "Hoàn tiền",
+      "investment": "Đầu tư",
       "other": "Khác"
     }
   },

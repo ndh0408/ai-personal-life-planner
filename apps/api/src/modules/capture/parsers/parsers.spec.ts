@@ -148,6 +148,61 @@ describe('Sleep parser', () => {
   });
 });
 
+describe('Income parser', () => {
+  it('classifies "lương 15tr" as INCOME / salary', () => {
+    const hit = runRuleParsers('lương 15tr', ctx);
+    expect(hit?.kind).toBe('INCOME');
+    expect(hit?.fields.amount).toBe(15_000_000);
+    expect(hit?.fields.category).toBe('salary');
+    expect(hit?.confidence).toBeGreaterThanOrEqual(0.9);
+  });
+
+  it('classifies "thưởng tết 5tr" as INCOME / bonus', () => {
+    const hit = runRuleParsers('thưởng tết 5tr', ctx);
+    expect(hit?.kind).toBe('INCOME');
+    expect(hit?.fields.category).toBe('bonus');
+  });
+
+  it('classifies "freelance được 3tr" as INCOME / freelance', () => {
+    const hit = runRuleParsers('freelance được 3tr', ctx);
+    expect(hit?.kind).toBe('INCOME');
+    expect(hit?.fields.category).toBe('freelance');
+  });
+
+  it('classifies "hoàn tiền 200k" as INCOME / refund', () => {
+    const hit = runRuleParsers('hoàn tiền 200k', ctx);
+    expect(hit?.kind).toBe('INCOME');
+    expect(hit?.fields.category).toBe('refund');
+  });
+
+  it('income beats expense when both triggers present', () => {
+    const hit = runRuleParsers('nhận lương 10tr', ctx);
+    expect(hit?.kind).toBe('INCOME');
+  });
+
+  it('"mua sách 240k" stays EXPENSE — no income trigger', () => {
+    const hit = runRuleParsers('mua sách 240k', ctx);
+    expect(hit?.kind).toBe('EXPENSE');
+  });
+});
+
+describe('Expense category map (round 15 expansion)', () => {
+  it.each([
+    ['trả tiền điện 280k', 'bills'],
+    ['internet fpt 250k', 'bills'],
+    ['mua quần áo 600k', 'shopping'],
+    ['shopee 1.2tr', 'shopping'],
+    ['xem phim cgv 110k', 'entertainment'],
+    ['đi nhậu 500k', 'food'],
+    ['mừng cưới bạn 500k', 'family'],
+    ['gym tháng này 350k', 'health'],
+  ])('%p → %p', (text, cat) => {
+    const hit = runRuleParsers(text, ctx);
+    expect(hit?.kind).toBe('EXPENSE');
+    expect(hit?.fields.category).toBe(cat);
+  });
+});
+
 describe('Mood parser', () => {
   it('classifies "mood vui" as MOOD / GOOD', () => {
     const hit = runRuleParsers('mood vui', ctx);

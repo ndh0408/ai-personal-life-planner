@@ -171,6 +171,7 @@
     "previewTitle": "Looks right?",
     "kinds": {
       "EXPENSE": "Expense",
+      "INCOME": "Income",
       "MEAL": "Meal",
       "TASK": "Task",
       "SLEEP": "Sleep",
@@ -234,6 +235,37 @@
     "openTasks": "Open list",
     "openMeals": "Meal log"
   },
+  "smart": {
+    "kicker": "Add anything",
+    "title": "AI will classify it",
+    "openCta": "Add anything",
+    "saveCta": "Save",
+    "inputLabel": "What do you want to log?",
+    "placeholder": "e.g. coffee 30k · salary 15m · meet An tomorrow 9 · slept 7h · feeling tired",
+    "hint": "AI auto-detects expense / income / task / meal / sleep / mood — no labels to pick.",
+    "thinking": "AI reading…",
+    "unknownTitle": "Not sure what you mean",
+    "unknownBody": "Try again with more detail — add an amount, or a verb (ate / bought / received salary / slept).",
+    "sourceRule": "Rule",
+    "sourceAi": "AI",
+    "kindLabels": {
+      "EXPENSE": "Expense",
+      "INCOME": "Income",
+      "MEAL": "Meal",
+      "TASK": "Task",
+      "SLEEP": "Sleep",
+      "MOOD": "Mood",
+      "UNKNOWN": "Unknown"
+    },
+    "savedKinds": {
+      "EXPENSE": "Expense saved",
+      "INCOME": "Income saved",
+      "MEAL": "Meal logged",
+      "TASK": "Task added",
+      "SLEEP": "Sleep saved",
+      "MOOD": "Mood saved"
+    }
+  },
   "tasks": {
     "kicker": "To do",
     "title": "Tasks",
@@ -266,16 +298,26 @@
     }
   },
   "money": {
-    "title": "Money",
+    "title": "Finance",
     "addTitle": "Add expense",
     "addCta": "Add expense",
     "saveCta": "Save expense",
     "added": "Expense saved",
     "weekTotal": "This week",
     "todayTotal": "Today",
-    "empty": "No expenses this week.",
+    "totalIncome": "Income",
+    "totalExpense": "Spend",
+    "net": "Net",
+    "timeline": "Activity",
+    "empty": "No transactions yet.",
     "byCategory": "By category",
     "confirmDeleteTitle": "Delete this expense?",
+    "confirmDeleteIncomeTitle": "Delete this income?",
+    "ranges": {
+      "today": "Today",
+      "week": "Week",
+      "month": "Month"
+    },
     "fields": {
       "title": "Description",
       "amount": "Amount (VND)",
@@ -293,6 +335,14 @@
       "health": "Health",
       "learning": "Learning",
       "bills": "Bills",
+      "entertainment": "Entertainment",
+      "family": "Family",
+      "salary": "Salary",
+      "bonus": "Bonus",
+      "freelance": "Freelance",
+      "gift": "Gift",
+      "refund": "Refund",
+      "investment": "Investment",
       "other": "Other"
     }
   },

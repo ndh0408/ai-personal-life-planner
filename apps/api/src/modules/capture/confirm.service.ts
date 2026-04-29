@@ -8,6 +8,7 @@ import {
   type CaptureConfirmRequest,
   type CaptureConfirmResponse,
   ExpenseFieldsSchema,
+  IncomeFieldsSchema,
   MealFieldsSchema,
   TaskFieldsSchema,
   SleepFieldsSchema,
@@ -25,6 +26,9 @@ export class ConfirmService {
     switch (input.kind) {
       case 'EXPENSE':
         response = await this.insertExpense(userId, input);
+        break;
+      case 'INCOME':
+        response = await this.insertIncome(userId, input);
         break;
       case 'MEAL':
         response = await this.insertMeal(userId, input);
@@ -108,6 +112,45 @@ export class ConfirmService {
       }),
     ]);
     return done('EXPENSE', row.id, row.createdAt);
+  }
+
+  // ── Income ───────────────────────────────────────────────────────────────
+
+  private async insertIncome(
+    userId: string,
+    input: CaptureConfirmRequest,
+  ): Promise<CaptureConfirmResponse> {
+    const fields = parseOrThrow(IncomeFieldsSchema, input.fields);
+    const wallet = await this.defaultWallet(userId);
+
+    if (input.idempotencyKey) {
+      const existing = await this.prisma.income.findUnique({
+        where: { userId_idempotencyKey: { userId, idempotencyKey: input.idempotencyKey } },
+      });
+      if (existing) return done('INCOME', existing.id, existing.createdAt);
+    }
+
+    // Mirror of insertExpense but **increment** the wallet — a paycheck or
+    // refund should make the balance go up.
+    const amount = new Prisma.Decimal(fields.amount);
+    const [row] = await this.prisma.$transaction([
+      this.prisma.income.create({
+        data: {
+          userId,
+          walletId: wallet.id,
+          title: fields.title,
+          amount,
+          category: fields.category,
+          incomeDate: new Date(fields.incomeDateIso),
+          idempotencyKey: input.idempotencyKey ?? null,
+        },
+      }),
+      this.prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { balance: { increment: amount } },
+      }),
+    ]);
+    return done('INCOME', row.id, row.createdAt);
   }
 
   // ── Meal ─────────────────────────────────────────────────────────────────

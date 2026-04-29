@@ -138,9 +138,9 @@ export function TodayScreen({ navigation }: Props) {
       )}
       <View style={{ marginBottom: spacing.xl }}>
         <Button
-          label={'+ ' + t('tasks.addCta')}
+          label={'+ ' + t('smart.openCta')}
           variant="ghost"
-          onPress={() => navigation.navigate('AddTask')}
+          onPress={() => navigation.navigate('SmartEntry')}
         />
       </View>
 

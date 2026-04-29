@@ -7,6 +7,7 @@ import { AuthStack } from './AuthStack';
 import { OnboardingStack } from './OnboardingStack';
 import { MainTabs } from './MainTabs';
 import { AISettingsScreen } from '../screens/main/AISettingsScreen';
+import { SmartEntryScreen } from '../screens/main/SmartEntryScreen';
 import { TasksScreen } from '../screens/main/TasksScreen';
 import { AddTaskScreen } from '../screens/main/AddTaskScreen';
 import { AddExpenseScreen } from '../screens/main/AddExpenseScreen';
@@ -44,6 +45,11 @@ function MainStack() {
         name="AISettings"
         component={AISettingsScreen}
         options={{ presentation: 'card', animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="SmartEntry"
+        component={SmartEntryScreen}
+        options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
       />
       <Stack.Screen name="Tasks" component={TasksScreen} />
       <Stack.Screen name="AddTask" component={AddTaskScreen} />

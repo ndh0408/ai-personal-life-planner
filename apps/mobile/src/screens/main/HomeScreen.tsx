@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -118,17 +118,15 @@ export function HomeScreen({ navigation }: Props) {
           <HomeHero
             aiEnabled={aiEnabled}
             onAddKey={() => navigation.navigate('AISettings')}
-            onCapture={() =>
-              Alert.alert('', t('home.quickCapturePlaceholder'))
-            }
+            onCapture={() => navigation.navigate('SmartEntry')}
             onPlan={() => navigation.navigate('MainTabs', { screen: 'Today' } as never)}
           />
 
           <QuickActionsRow
             actions={[
-              { key: 'capture', glyph: '✎', onPress: () => Alert.alert('', t('home.quickCapturePlaceholder')) },
-              { key: 'expense', glyph: '💸', onPress: () => navigation.navigate('AddExpense') },
-              { key: 'task', glyph: '✓', onPress: () => navigation.navigate('AddTask') },
+              { key: 'capture', glyph: '✎', onPress: () => navigation.navigate('SmartEntry') },
+              { key: 'expense', glyph: '💸', onPress: () => navigation.navigate('SmartEntry') },
+              { key: 'task', glyph: '✓', onPress: () => navigation.navigate('SmartEntry') },
               { key: 'checkin', glyph: '✦', onPress: () => navigation.navigate('SleepMoodCheckin') },
               {
                 key: 'askAi',

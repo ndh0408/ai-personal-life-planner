@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 
-export type CaptureKind = 'EXPENSE' | 'MEAL' | 'TASK' | 'SLEEP' | 'MOOD' | 'UNKNOWN';
+export type CaptureKind = 'EXPENSE' | 'INCOME' | 'MEAL' | 'TASK' | 'SLEEP' | 'MOOD' | 'UNKNOWN';
 export type ParserSource = 'RULE' | 'OPENAI';
 
 export interface CaptureParseResponse {

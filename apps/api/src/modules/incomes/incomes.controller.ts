@@ -16,25 +16,25 @@ import {
   CurrentUser,
   type AuthenticatedUser,
 } from '../../common/decorators/current-user.decorator';
-import { FinanceService } from './finance.service';
+import { IncomesService } from './incomes.service';
 import type { RangeName } from '../../common/datetime/range';
 
 const ALLOWED: RangeName[] = ['today', 'yesterday', 'week', 'month'];
 
-const CreateExpenseSchema = z.object({
+const CreateIncomeSchema = z.object({
   title: z.string().min(1).max(200),
   amount: z.number().positive().max(1e12),
   category: z.string().min(1).max(40),
-  expenseDateIso: z.string().datetime(),
+  incomeDateIso: z.string().datetime(),
   walletId: z.string().min(1).optional(),
   note: z.string().max(2000).nullable().optional(),
 });
 
-const UpdateExpenseSchema = z.object({
+const UpdateIncomeSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   amount: z.number().positive().max(1e12).optional(),
   category: z.string().min(1).max(40).optional(),
-  expenseDateIso: z.string().datetime().optional(),
+  incomeDateIso: z.string().datetime().optional(),
   note: z.string().max(2000).nullable().optional(),
 });
 
@@ -65,18 +65,13 @@ function parseBody<T>(
 
 @ApiBearerAuth()
 @ApiTags('finance')
-@Controller('expenses')
-export class ExpensesController {
-  constructor(private readonly svc: FinanceService) {}
+@Controller('incomes')
+export class IncomesController {
+  constructor(private readonly svc: IncomesService) {}
 
   @Get()
   list(@CurrentUser() user: AuthenticatedUser, @Query('range') range?: string) {
     return this.svc.list(user.id, parseRange(range));
-  }
-
-  @Get('summary')
-  summary(@CurrentUser() user: AuthenticatedUser) {
-    return this.svc.summary(user.id);
   }
 
   @Post()
@@ -85,7 +80,7 @@ export class ExpensesController {
     @Body() body: unknown,
     @Headers('idempotency-key') idempotencyKey?: string,
   ) {
-    const input = parseBody(CreateExpenseSchema, body);
+    const input = parseBody(CreateIncomeSchema, body);
     return this.svc.create(user.id, { ...input, idempotencyKey });
   }
 
@@ -95,27 +90,11 @@ export class ExpensesController {
     @Param('id') id: string,
     @Body() body: unknown,
   ) {
-    return this.svc.update(user.id, id, parseBody(UpdateExpenseSchema, body));
+    return this.svc.update(user.id, id, parseBody(UpdateIncomeSchema, body));
   }
 
   @Delete(':id')
   remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.svc.softDelete(user.id, id);
-  }
-}
-
-/**
- * Mixed expense + income feed. Lives under /api/finance so neither side
- * "owns" the timeline — both modules contribute to it.
- */
-@ApiBearerAuth()
-@ApiTags('finance')
-@Controller('finance')
-export class FinanceTimelineController {
-  constructor(private readonly svc: FinanceService) {}
-
-  @Get('timeline')
-  timeline(@CurrentUser() user: AuthenticatedUser, @Query('range') range?: string) {
-    return this.svc.timeline(user.id, parseRange(range));
   }
 }

@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const CaptureKindSchema = z.enum([
   'EXPENSE',
+  'INCOME',
   'MEAL',
   'TASK',
   'SLEEP',
@@ -37,6 +38,15 @@ export const ExpenseFieldsSchema = z.object({
   expenseDateIso: z.string().datetime(),
 });
 export type ExpenseFields = z.infer<typeof ExpenseFieldsSchema>;
+
+export const IncomeFieldsSchema = z.object({
+  title: z.string().min(1).max(200),
+  amount: z.number().int().nonnegative(),
+  currency: z.literal('VND').default('VND'),
+  category: z.string().max(40).default('other'),
+  incomeDateIso: z.string().datetime(),
+});
+export type IncomeFields = z.infer<typeof IncomeFieldsSchema>;
 
 export const MealFieldsSchema = z.object({
   title: z.string().min(1).max(200),
@@ -85,7 +95,7 @@ export type CaptureParseResponse = z.infer<typeof CaptureParseResponseSchema>;
 // ── Confirm: input ────────────────────────────────────────────────────────────
 
 export const CaptureConfirmRequestSchema = z.object({
-  kind: z.enum(['EXPENSE', 'MEAL', 'TASK', 'SLEEP', 'MOOD']),
+  kind: z.enum(['EXPENSE', 'INCOME', 'MEAL', 'TASK', 'SLEEP', 'MOOD']),
   fields: z.record(z.string(), z.unknown()),
   /** Idempotency key — same value insert returns the existing row, not a duplicate. */
   idempotencyKey: z.string().min(8).max(80).optional(),
@@ -100,7 +110,7 @@ export const CaptureConfirmRequestSchema = z.object({
 export type CaptureConfirmRequest = z.infer<typeof CaptureConfirmRequestSchema>;
 
 export const CaptureConfirmResponseSchema = z.object({
-  kind: z.enum(['EXPENSE', 'MEAL', 'TASK', 'SLEEP', 'MOOD']),
+  kind: z.enum(['EXPENSE', 'INCOME', 'MEAL', 'TASK', 'SLEEP', 'MOOD']),
   id: z.string(),
   createdAt: z.string().datetime(),
 });

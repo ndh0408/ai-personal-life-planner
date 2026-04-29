@@ -6,6 +6,7 @@ import type { CaptureKind } from '../../services/api/capture.service';
 
 const STYLE_FOR: Record<CaptureKind, { glyph: string; bg: string; fg: string }> = {
   EXPENSE: { glyph: '💸', bg: 'rgba(214, 162, 78, 0.18)', fg: colors.status.warning },
+  INCOME: { glyph: '💰', bg: 'rgba(127, 166, 107, 0.18)', fg: colors.status.success },
   MEAL: { glyph: '🍚', bg: 'rgba(127, 166, 107, 0.18)', fg: colors.status.success },
   TASK: { glyph: '✓', bg: 'rgba(107, 143, 168, 0.18)', fg: colors.status.info },
   SLEEP: { glyph: '💤', bg: 'rgba(201, 123, 74, 0.16)', fg: colors.accent.base },

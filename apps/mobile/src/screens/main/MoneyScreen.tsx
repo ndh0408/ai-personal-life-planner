@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { RefreshControl, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -9,6 +9,7 @@ import {
   AppScreen,
   Button,
   Card,
+  Chip,
   ConfirmModal,
   EmptyState,
   ErrorState,
@@ -18,8 +19,11 @@ import {
   useToast,
 } from '../../components/ui';
 import { spacing } from '../../theme';
-import { useExpensesSummary, useWeekExpenses } from '../../hooks/useFeed';
-import { financeService, type ExpenseRow } from '../../services/api/finance.service';
+import {
+  financeService,
+  incomeService,
+  type TimelineEntry,
+} from '../../services/api/finance.service';
 import { formatMoney, relativeTime } from '../../utils/format';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
 
@@ -28,90 +32,131 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamList>
 >;
 
+type Range = 'today' | 'week' | 'month';
+
 export function MoneyScreen({ navigation }: Props) {
   const { t, i18n } = useTranslation();
   const qc = useQueryClient();
   const toast = useToast();
-  const summary = useExpensesSummary();
-  const week = useWeekExpenses();
-  const [pendingDelete, setPendingDelete] = useState<ExpenseRow | null>(null);
+  const [range, setRange] = useState<Range>('month');
+  const [pendingDelete, setPendingDelete] = useState<TimelineEntry | null>(null);
+
+  const timeline = useQuery({
+    queryKey: ['finance', 'timeline', range],
+    queryFn: () => financeService.timeline(range),
+  });
 
   const remove = useMutation({
-    mutationFn: (id: string) => financeService.remove(id),
+    mutationFn: (entry: TimelineEntry) =>
+      entry.kind === 'EXPENSE'
+        ? financeService.remove(entry.id)
+        : incomeService.remove(entry.id),
     onSuccess: () => {
       toast.show(t('common.deleted'), 'success');
+      qc.invalidateQueries({ queryKey: ['finance'] });
       qc.invalidateQueries({ queryKey: ['expenses'] });
+      qc.invalidateQueries({ queryKey: ['incomes'] });
+      qc.invalidateQueries({ queryKey: ['wallets'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
     },
     onError: (e) => toast.show((e as Error).message, 'danger'),
   });
 
-  const refreshing = (week.isFetching && !week.isLoading) || (summary.isFetching && !summary.isLoading);
-  const onRefresh = () => {
-    void week.refetch();
-    void summary.refetch();
-  };
+  const refreshing = timeline.isFetching && !timeline.isLoading;
 
   return (
-    <AppScreen refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+    <AppScreen
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={() => timeline.refetch()} />
+      }
+    >
       <Text variant="kicker">{t('tabs.money')}</Text>
-      <Text variant="display" style={{ marginTop: spacing.md, marginBottom: spacing.xl }}>
+      <Text variant="display" style={{ marginTop: spacing.md, marginBottom: spacing.lg }}>
         {t('money.title')}
       </Text>
 
-      <View style={{ flexDirection: 'row', gap: spacing.md, marginBottom: spacing.xl }}>
-        <StatCard label={t('money.todayTotal')} value={formatMoney(summary.data?.todayTotal ?? 0)} />
-        <StatCard label={t('money.weekTotal')} value={formatMoney(summary.data?.weekTotal ?? 0)} />
+      <View style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg }}>
+        {(['today', 'week', 'month'] as Range[]).map((r) => (
+          <Chip
+            key={r}
+            label={t(`money.ranges.${r}`)}
+            tone="accent"
+            selected={range === r}
+            onPress={() => setRange(r)}
+          />
+        ))}
       </View>
 
-      <Button label={'+ ' + t('money.addCta')} onPress={() => navigation.navigate('AddExpense')} />
+      <View style={{ flexDirection: 'row', gap: spacing.md, marginBottom: spacing.lg }}>
+        <StatCard
+          label={t('money.totalIncome')}
+          value={'+' + formatMoney(timeline.data?.totalIncome ?? 0)}
+        />
+        <StatCard
+          label={t('money.totalExpense')}
+          value={'-' + formatMoney(timeline.data?.totalExpense ?? 0)}
+        />
+      </View>
+      <Card
+        style={{
+          marginBottom: spacing.xl,
+          backgroundColor: (timeline.data?.net ?? 0) >= 0 ? '#E8F5EE' : '#FBE9E7',
+        }}
+      >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <Text variant="kicker">{t('money.net')}</Text>
+          <Text
+            variant="bodyEm"
+            style={{
+              color: (timeline.data?.net ?? 0) >= 0 ? '#2E8B57' : '#C24A3F',
+              fontSize: 18,
+            }}
+          >
+            {(timeline.data?.net ?? 0) >= 0 ? '+' : ''}
+            {formatMoney(timeline.data?.net ?? 0)}
+          </Text>
+        </View>
+      </Card>
+
+      <Button label={'+ ' + t('smart.openCta')} onPress={() => navigation.navigate('SmartEntry')} />
 
       <View style={{ height: spacing.xl }} />
 
-      {summary.data && summary.data.weekByCategory.length > 0 ? (
-        <Card style={{ marginBottom: spacing.xl }}>
-          <Text variant="kicker">{t('money.byCategory')}</Text>
-          {summary.data.weekByCategory.map((c) => (
-            <View
-              key={c.category}
-              style={{ flexDirection: 'row', justifyContent: 'space-between' }}
-            >
-              <Text>{t(`money.categories.${c.category}`, { defaultValue: c.category })}</Text>
-              <Text variant="bodyEm">{formatMoney(c.amount)}</Text>
-            </View>
-          ))}
-        </Card>
-      ) : null}
-
       <Text variant="kicker" style={{ marginBottom: spacing.sm }}>
-        {t('money.weekTotal')}
+        {t('money.timeline')}
       </Text>
 
-      {week.isError ? <ErrorState onRetry={() => week.refetch()} /> : null}
-      {week.isLoading ? <LoadingState /> : null}
-      {week.data && week.data.rows.length === 0 ? <EmptyState title={t('money.empty')} /> : null}
+      {timeline.isError ? <ErrorState onRetry={() => timeline.refetch()} /> : null}
+      {timeline.isLoading ? <LoadingState /> : null}
+      {timeline.data && timeline.data.rows.length === 0 ? (
+        <EmptyState title={t('money.empty')} />
+      ) : null}
 
       <View style={{ gap: spacing.md }}>
-        {week.data?.rows.map((r) => (
-          <ExpenseCard
-            key={r.id}
-            row={r}
+        {timeline.data?.rows.map((row) => (
+          <TimelineRow
+            key={`${row.kind}-${row.id}`}
+            row={row}
             locale={i18n.language as 'vi' | 'en'}
-            onDelete={() => setPendingDelete(r)}
+            onDelete={() => setPendingDelete(row)}
           />
         ))}
       </View>
 
       <ConfirmModal
         visible={!!pendingDelete}
-        title={t('money.confirmDeleteTitle')}
+        title={t(
+          pendingDelete?.kind === 'INCOME'
+            ? 'money.confirmDeleteIncomeTitle'
+            : 'money.confirmDeleteTitle',
+        )}
         body={pendingDelete?.title}
         confirmLabel={t('common.delete')}
         cancelLabel={t('common.cancel')}
         destructive
         onCancel={() => setPendingDelete(null)}
         onConfirm={() => {
-          if (pendingDelete) remove.mutate(pendingDelete.id);
+          if (pendingDelete) remove.mutate(pendingDelete);
           setPendingDelete(null);
         }}
       />
@@ -119,18 +164,20 @@ export function MoneyScreen({ navigation }: Props) {
   );
 }
 
-function ExpenseCard({
+function TimelineRow({
   row,
   locale,
   onDelete,
 }: {
-  row: ExpenseRow;
+  row: TimelineEntry;
   locale: 'vi' | 'en';
   onDelete: () => void;
 }) {
   const { t } = useTranslation();
+  const isIncome = row.kind === 'INCOME';
+  const tone = isIncome ? '#2E8B57' : '#C24A3F';
   return (
-    <Card>
+    <Card style={{ borderLeftWidth: 3, borderLeftColor: tone, paddingLeft: spacing.md }}>
       <View
         style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
       >
@@ -138,10 +185,13 @@ function ExpenseCard({
           <Text variant="bodyEm">{row.title}</Text>
           <Text variant="caption">
             {t(`money.categories.${row.category}`, { defaultValue: row.category })} ·{' '}
-            {relativeTime(row.expenseDate, locale)}
+            {relativeTime(row.occurredAt, locale)}
           </Text>
         </View>
-        <Text variant="bodyEm">{formatMoney(row.amount)}</Text>
+        <Text variant="bodyEm" style={{ color: tone }}>
+          {isIncome ? '+' : '-'}
+          {formatMoney(row.amount)}
+        </Text>
       </View>
       <View style={{ marginTop: spacing.sm }}>
         <Button label={t('common.delete')} variant="ghost" onPress={onDelete} size="md" />

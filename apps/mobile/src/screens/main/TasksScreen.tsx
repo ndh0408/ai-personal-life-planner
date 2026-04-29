@@ -81,7 +81,7 @@ export function TasksScreen({ navigation }: Props) {
         ))}
       </View>
 
-      <Button label={'+ ' + t('tasks.addCta')} onPress={() => navigation.navigate('AddTask')} />
+      <Button label={'+ ' + t('smart.openCta')} onPress={() => navigation.navigate('SmartEntry')} />
 
       <View style={{ height: spacing.lg }} />
 
