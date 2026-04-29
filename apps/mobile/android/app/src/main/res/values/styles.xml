@@ -9,15 +9,13 @@
         <item name="android:windowBackground">@color/splashBackground</item>
     </style>
 
-    <!-- Round 33: Android 12+ splash theme.
-         The system handles the splash window automatically when the
-         launch activity uses this theme as android:theme on first start.
-         splashScreenIconBackgroundColor matches the canvas so the icon
-         halo is invisible (clean monogram on cream). -->
-    <style name="Theme.LifeOS.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/splashBackground</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
-        <item name="postSplashScreenTheme">@style/AppTheme</item>
-    </style>
+    <!-- Note (round 33): a custom Theme.SplashScreen style would need the
+         androidx.core:core-splashscreen library on the gradle classpath
+         to resolve windowSplashScreenBackground / windowSplashScreenAnimatedIcon.
+         We skip it here to keep the dependency footprint stable — AppTheme
+         above already sets windowBackground=splashBackground, which Android
+         12+ honours for the cold-start splash with the launcher icon
+         centred on it. Re-introduce a proper theme when the splashscreen
+         lib lands in a future round. -->
 
 </resources>

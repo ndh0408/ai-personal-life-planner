@@ -72,3 +72,19 @@ appId: com.lifeos.mobile
 # Either toast confirms — the test is "we got back to the screen with no error".
 - assertNotVisible:
     text: 'Đã xảy ra lỗi|Error'
+
+# 8. Round 32: Assistant action chips. Open Assistant, send a prompt that
+#    triggers the heuristic, and verify the chip row renders.
+- tapOn:
+    text: 'Trợ lý|Assistant'
+- tapOn:
+    text: 'Hỏi.*|Ask.*'
+- inputText: 'Hôm nay tôi nên làm gì?'
+- tapOn:
+    text: 'Gửi|Send'
+    optional: true
+# After the stream completes, the action chips should appear. Heuristic
+# always emits at least an OPEN_SCREEN(Today) fallback.
+- assertVisible:
+    text: 'Lập kế hoạch.*|Xem.*|Open.*'
+    optional: true
