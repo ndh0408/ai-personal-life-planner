@@ -17,7 +17,7 @@ import {
   useConversation,
   useConversations,
   useDeleteConversation,
-  useSendMessage,
+  useStreamingAssistant,
 } from '../../hooks/useAssistant';
 import { ChatBubble } from '../../components/assistant/ChatBubble';
 import { ChatComposer } from '../../components/assistant/ChatComposer';
@@ -33,30 +33,43 @@ export function AssistantScreen() {
 
   const list = useConversations();
   const detail = useConversation(activeId);
-  const send = useSendMessage();
+  const stream = useStreamingAssistant();
   const remove = useDeleteConversation();
+  const lastUserTextRef = useRef<string | null>(null);
 
   const scrollRef = useRef<ScrollView>(null);
   const messagesLength = detail.data?.messages.length ?? 0;
 
+  // Scroll to the bottom on new messages, on stage updates (so the
+  // "Đang đọc dữ liệu hôm nay…" pill stays visible), and on every delta
+  // batch (so the live text doesn't fall off-screen).
   useEffect(() => {
-    if (view === 'chat' && messagesLength > 0) {
+    if (view === 'chat') {
       requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
     }
-  }, [view, messagesLength]);
+  }, [view, messagesLength, stream.stage, stream.liveText]);
 
-  const handleSend = (content: string) => {
-    send.mutate(
-      { content, conversationId: activeId ?? undefined },
-      {
-        onSuccess: (data) => {
-          if (!activeId) setActiveId(data.conversationId);
-        },
-        onError: (e) => {
-          toast.show(readableError(e, t, 'assistant'), 'danger');
-        },
-      },
-    );
+  // Surface stream errors as toasts. Streaming errors arrive on the SSE
+  // channel rather than as a thrown promise, so this is the only path.
+  useEffect(() => {
+    if (stream.error) {
+      const message = stream.error.message
+        || readableError(stream.error, t, 'assistant');
+      toast.show(message, 'danger');
+    }
+  }, [stream.error, toast, t]);
+
+  const handleSend = async (content: string) => {
+    lastUserTextRef.current = content;
+    const cid = await stream.send(content, activeId ?? undefined);
+    if (cid && !activeId) setActiveId(cid);
+  };
+
+  const handleStop = () => stream.stop();
+
+  const handleRegenerate = () => {
+    if (!lastUserTextRef.current || stream.isStreaming) return;
+    void stream.send(lastUserTextRef.current, activeId ?? undefined);
   };
 
   if (view === 'list') {
@@ -121,7 +134,7 @@ export function AssistantScreen() {
   return (
     <AppScreen
       noBottomInset
-      footer={<ChatComposer busy={send.isPending} onSend={handleSend} />}
+      footer={<ChatComposer busy={stream.isStreaming} onSend={handleSend} />}
       scroll={false}
     >
       <AppHeader
@@ -151,10 +164,57 @@ export function AssistantScreen() {
         {detail.data?.messages.map((m) => (
           <ChatBubble key={m.id} msg={m} />
         ))}
-        {!activeId ? <Text variant="caption">{t('assistant.empty')}</Text> : null}
-        {send.isPending ? <StagedThinking /> : null}
+        {!activeId && !stream.isStreaming ? (
+          <Text variant="caption">{t('assistant.empty')}</Text>
+        ) : null}
+
+        {/* Streaming surface: shows progress label *or* the live token feed,
+            never both — the server emits exactly one progress event before
+            the first delta lands. */}
+        {stream.isStreaming && stream.liveText ? (
+          <View style={styles.liveBubble}>
+            <Text>{stream.liveText}</Text>
+            <StreamControls onStop={handleStop} />
+          </View>
+        ) : stream.isStreaming ? (
+          <View style={styles.thinking}>
+            <Text variant="caption">
+              {stream.stage ?? t('assistant.stages.calling_llm', { defaultValue: 'Đang suy nghĩ…' })}
+            </Text>
+            <StreamControls onStop={handleStop} compact />
+          </View>
+        ) : null}
+
+        {/* Regenerate button when the last turn finished and we have a
+            seed prompt to retry. Hidden during active streams. */}
+        {!stream.isStreaming && lastUserTextRef.current && !stream.error ? (
+          <Pressable onPress={handleRegenerate} style={styles.regenerateBtn} hitSlop={8}>
+            <Text variant="caption" style={{ color: colors.accent.base }}>
+              ↻ {t('assistant.regenerate', { defaultValue: 'Hỏi lại' })}
+            </Text>
+          </Pressable>
+        ) : null}
       </ScrollView>
     </AppScreen>
+  );
+}
+
+function StreamControls({ onStop, compact }: { onStop: () => void; compact?: boolean }) {
+  const { t } = useTranslation();
+  return (
+    <Pressable
+      onPress={onStop}
+      hitSlop={8}
+      accessibilityRole="button"
+      style={[
+        styles.stopBtn,
+        compact ? { paddingHorizontal: spacing.sm, marginTop: 4 } : { marginTop: spacing.xs },
+      ]}
+    >
+      <Text variant="caption" style={{ color: colors.status.danger, fontWeight: '700' }}>
+        ■ {t('assistant.stop', { defaultValue: 'Dừng' })}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -173,30 +233,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: radius.lg,
     alignSelf: 'flex-start',
+    marginVertical: spacing.xs,
+  },
+  liveBubble: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.accent.soft,
+    borderColor: colors.accent.base,
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    alignSelf: 'flex-start',
+    marginVertical: spacing.xs,
+    maxWidth: '90%',
+  },
+  stopBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
+    backgroundColor: 'rgba(201, 98, 74, 0.12)',
+    alignSelf: 'flex-start',
+  },
+  regenerateBtn: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    marginTop: spacing.sm,
+    marginLeft: spacing.lg,
   },
 });
-
-/**
- * Round 24: while the assistant turn runs, rotate through the same staged
- * labels the streaming pipeline would emit. Once react-native-sse lands,
- * this gets driven by real progress events instead of a setInterval.
- */
-function StagedThinking() {
-  const { t } = useTranslation();
-  const stages = [
-    t('assistant.stages.reading_snapshot', { defaultValue: 'Đang đọc dữ liệu hôm nay…' }),
-    t('assistant.stages.calling_llm', { defaultValue: 'Đang suy nghĩ…' }),
-  ];
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const handle = setInterval(() => setI((v) => (v + 1) % stages.length), 1500);
-    return () => clearInterval(handle);
-    // stages is captured from t — don't add to deps to avoid re-running interval each render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  return (
-    <View style={styles.thinking}>
-      <Text variant="caption">{stages[i]}</Text>
-    </View>
-  );
-}
