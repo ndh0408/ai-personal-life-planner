@@ -149,15 +149,18 @@ export function HomeScreen({ navigation }: Props) {
             aiEnabled={aiEnabled}
             userName={greetingName}
             onAddKey={() => navigation.navigate('AISettings')}
-            onCapture={() => navigation.navigate('SmartEntry')}
+            onCapture={() => navigation.navigate('SmartEntry', { mode: 'auto' })}
             onPlan={() => navigation.getParent()?.navigate('MainTabs', { screen: 'Today' })}
           />
 
+          {/* R23: quick actions are mode-specific. Each chip preselects a kind
+              on SmartEntry, so "Chi tiêu" opens with EXPENSE chosen and the
+              right editor; "auto" was creating four buttons that all opened
+              the same screen. */}
           <QuickActionsRow
             actions={[
-              { key: 'capture', onPress: () => navigation.navigate('SmartEntry') },
-              { key: 'expense', onPress: () => navigation.navigate('SmartEntry') },
-              { key: 'task', onPress: () => navigation.navigate('SmartEntry') },
+              { key: 'expense', onPress: () => navigation.navigate('SmartEntry', { mode: 'EXPENSE' }) },
+              { key: 'task', onPress: () => navigation.navigate('SmartEntry', { mode: 'TASK' }) },
               { key: 'checkin', onPress: () => navigation.navigate('SleepMoodCheckin') },
               {
                 key: 'askAi',

@@ -18,8 +18,10 @@ import { spacing, colors } from '../../theme';
 import { useAuthStore } from '../../store/auth.store';
 import { i18n } from '../../i18n';
 import { APP_VERSION, APP_BUILD } from '../../config/build';
+import { APP_ENV } from '../../config/env';
 import { API_BASE_URL } from '../../services/api/config';
 import { apiClient } from '../../services/api/client';
+import { useDebugStore } from '../../store/debug.store';
 import { useWipeCache } from '../../hooks/useWipeCache';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
 
@@ -126,6 +128,11 @@ export function SettingsScreen({ navigation }: Props) {
           glyph="◔"
           onPress={() => navigation.navigate('Memory')}
         />
+        <QuickActionButton
+          label={t('settings.privacyEntry', { defaultValue: 'Quyền riêng tư' })}
+          glyph="◐"
+          onPress={() => navigation.navigate('Privacy')}
+        />
         <Card>
           <Text variant="caption" style={{ marginBottom: spacing.sm }}>
             {t('settings.language')}
@@ -194,8 +201,21 @@ export function SettingsScreen({ navigation }: Props) {
 function DevPanel({ onClose, userId }: { onClose: () => void; userId: string }) {
   const { t } = useTranslation();
   const tokens = apiClient.getTokens();
+  const lastParse = useDebugStore((s) => s.lastParse);
+  const lastApiError = useDebugStore((s) => s.lastApiError);
+
+  const lastParseLine = lastParse
+    ? `${lastParse.kind} · ${lastParse.source} · ${(lastParse.confidence * 100).toFixed(0)}%${
+        lastParse.needsReview ? ' · ⚠️' : ''
+      }`
+    : '—';
+  const lastErrorLine = lastApiError
+    ? `${lastApiError.status ?? '—'} ${lastApiError.errorCode ?? ''} ${lastApiError.path}`
+    : '—';
+
   const rows: Array<[string, string]> = [
     [t('settings.developer.appVersion'), `${APP_VERSION} (${APP_BUILD})`],
+    [t('settings.developer.env', { defaultValue: 'Env' }), APP_ENV],
     [t('settings.developer.platform'), `${Platform.OS} ${Platform.Version}`],
     [t('settings.developer.apiBaseUrl'), API_BASE_URL],
     [t('settings.developer.userId'), userId],
@@ -207,6 +227,8 @@ function DevPanel({ onClose, userId }: { onClose: () => void; userId: string }) 
           ).toLocaleTimeString('vi-VN')}`
         : t('settings.developer.tokensMissing'),
     ],
+    [t('settings.developer.lastParse', { defaultValue: 'Last parse' }), lastParseLine],
+    [t('settings.developer.lastError', { defaultValue: 'Last error' }), lastErrorLine],
   ];
 
   return (

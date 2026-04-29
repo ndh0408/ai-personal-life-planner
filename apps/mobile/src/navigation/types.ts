@@ -45,5 +45,6 @@ export type RootStackParamList = {
   MealLog: undefined;
   SleepMoodCheckin: undefined;
   Preferences: undefined;
+  Privacy: undefined;
   Memory: undefined;
 };

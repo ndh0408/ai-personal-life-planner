@@ -29,6 +29,7 @@ import {
 } from '../../services/api/capture.service';
 import { CaptureFieldEditor } from '../../components/quick-capture/CaptureFieldEditor';
 import { makeIdempotencyKey } from '../../utils/idempotency';
+import { useDebugStore } from '../../store/debug.store';
 import type { IconName } from '../../components/ui';
 import { Icon } from '../../components/ui';
 import type { RootStackParamList } from '../../navigation/types';
@@ -117,6 +118,15 @@ export function SmartEntryScreen({ navigation, route }: Props) {
         setEditableKind(finalRes.kind);
         setEditableFields({ ...finalRes.fields });
         originalRef.current = { kind: finalRes.kind, fields: { ...finalRes.fields } };
+        // Surface in DevPanel so a confused user can see what the parser saw.
+        useDebugStore.getState().recordParse({
+          rawText: debounced,
+          kind: finalRes.kind,
+          source: finalRes.source,
+          confidence: finalRes.confidence,
+          needsReview: !!finalRes.needsReview,
+          at: Date.now(),
+        });
         setParsing(false);
       })
       .catch(() => {

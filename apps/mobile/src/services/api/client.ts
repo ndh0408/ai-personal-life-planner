@@ -13,6 +13,7 @@
 import { secureStorage, type SecureTokens } from '../storage/secure';
 import { API_BASE_URL } from './config';
 import { ApiHttpError, NetworkError, type ApiEnvelope } from './errors';
+import { useDebugStore } from '../../store/debug.store';
 
 type SessionEndHandler = () => void;
 
@@ -86,6 +87,21 @@ export const apiClient = {
     }
 
     if (envelope.success) return envelope.data;
+
+    // Round 23: record the last error so DevPanel can show it when the user
+    // hunts for "why did the screen go red". Best-effort — never let a debug
+    // store mishap interfere with the actual request flow.
+    try {
+      useDebugStore.getState().recordApiError({
+        status: res.status,
+        errorCode: envelope.errorCode ?? null,
+        message: envelope.message ?? '',
+        path,
+        at: Date.now(),
+      });
+    } catch {
+      /* swallow */
+    }
 
     const isUnauth = res.status === 401;
     const recoverable = envelope.errorCode === 'invalid_token' || envelope.errorCode === 'missing_token';
