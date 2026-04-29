@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Adaptive-icon background layer — solid cream canvas. The launcher mask
+  trims this to the device's preferred shape.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
+  <rect width="108" height="108" fill="#F4EFE7"/>
+</svg>

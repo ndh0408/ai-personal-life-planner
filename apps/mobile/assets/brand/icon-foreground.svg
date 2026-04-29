@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Adaptive-icon foreground layer (round 33).
+
+  Android draws this on top of icon-background.svg under whichever mask
+  the launcher applies (circle on Pixel, rounded square elsewhere). The
+  108×108 viewBox matches the adaptive-icon canvas; the centre 66×66 is
+  the guaranteed safe zone. Mark stays inside an 80×80 safe inner box so
+  every mask shape keeps it whole.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
+  <!-- L stem. -->
+  <rect x="36" y="32" width="10" height="44" rx="5" fill="#C97B4A"/>
+  <!-- O ring. -->
+  <circle cx="68" cy="54" r="14" fill="none" stroke="#C97B4A" stroke-width="6"/>
+  <circle cx="68" cy="54" r="3.2" fill="#C97B4A"/>
+</svg>

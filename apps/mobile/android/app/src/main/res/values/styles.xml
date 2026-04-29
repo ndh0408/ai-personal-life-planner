@@ -1,9 +1,23 @@
 <resources>
 
-    <!-- Base application theme. -->
+    <!-- Base application theme. Used after the splash window is dismissed. -->
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <!-- Round 33: explicit window background = canvas, so the brief
+             interval between SplashScreen dismissal and the first React
+             paint is the same cream as the splash itself — no flash. -->
+        <item name="android:windowBackground">@color/splashBackground</item>
+    </style>
+
+    <!-- Round 33: Android 12+ splash theme.
+         The system handles the splash window automatically when the
+         launch activity uses this theme as android:theme on first start.
+         splashScreenIconBackgroundColor matches the canvas so the icon
+         halo is invisible (clean monogram on cream). -->
+    <style name="Theme.LifeOS.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splashBackground</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
+        <item name="postSplashScreenTheme">@style/AppTheme</item>
     </style>
 
 </resources>

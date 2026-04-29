@@ -20,3 +20,4 @@ export { Text } from './Text';
 export { Icon, type IconName } from './Icon';
 export { Avatar } from './Avatar';
 export { Sparkline } from './Sparkline';
+export { BrandMark } from './BrandMark';

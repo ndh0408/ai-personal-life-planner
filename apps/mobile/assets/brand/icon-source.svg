@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  LifeOS AI launcher mark — round 33.
+
+  Editorial Calm palette: cream canvas, sienna mark. Designed for the
+  Android adaptive-icon viewport (108×108 dp with the centre 66×66 dp
+  guaranteed visible inside any mask). Mark stays inside an 80×80 safe
+  zone so a circular crop on Pixel / a rounded square on Samsung / a
+  superellipse on OnePlus all keep the full glyph visible.
+
+  Mark is a soft monogram "L•O" — a left vertical stem joined to a right
+  ring. Reads as "LifeOS" or "Life Operating System"; the dot in the
+  middle of the ring deliberately echoes the @lifeos/* package badge.
+  No Android-robot, no rocket, no faux 3D — same Editorial Calm tone as
+  the in-app surfaces.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
+  <!-- Cream canvas. Full bleed so adaptive-icon background overlays this
+       same colour seamlessly. -->
+  <rect width="108" height="108" fill="#F4EFE7"/>
+
+  <!-- Sienna left stem (the L). Tall slim rectangle with rounded top +
+       bottom; sits inside the 80×80 safe zone (offset 14..94, height 60). -->
+  <rect x="36" y="32" width="10" height="44" rx="5" fill="#C97B4A"/>
+
+  <!-- Sienna ring (the O). Stroked circle, gap on the bottom so the
+       monogram reads as paired letters, not a logo asterisk. -->
+  <circle cx="68" cy="54" r="14" fill="none" stroke="#C97B4A" stroke-width="6"/>
+
+  <!-- Centre dot — same accent, placed inside the ring as a focal anchor.
+       Doubles as the wifi/AI signal cue at small sizes. -->
+  <circle cx="68" cy="54" r="3.2" fill="#C97B4A"/>
+</svg>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Android 12+ splash logo. Sits centred inside the system splash window
+  (max 192dp) on the user's wallpaper background. We render the mark on
+  a transparent canvas because the splash background is set separately
+  via @color/splashBackground.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <!-- Same monogram, scaled. Stem 22×96, ring r=30. -->
+  <rect x="80" y="72" width="22" height="96" rx="11" fill="#C97B4A"/>
+  <circle cx="150" cy="120" r="30" fill="none" stroke="#C97B4A" stroke-width="13"/>
+  <circle cx="150" cy="120" r="6.5" fill="#C97B4A"/>
+</svg>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Brand colours referenced by adaptive-icon + splash (round 33).
+
+  Keep these in sync with apps/mobile/src/theme/colors.ts:
+    icBackground   = canvas (#F4EFE7 cream)
+    splashBackground = same cream (Android 12+ window background)
+-->
+<resources>
+    <color name="icBackground">#F4EFE7</color>
+    <color name="splashBackground">#F4EFE7</color>
+    <color name="brandSienna">#C97B4A</color>
+</resources>
