@@ -35,13 +35,11 @@ function pickEnv(): AppEnv {
 export const APP_ENV: AppEnv = pickEnv();
 
 /**
- * Per-environment defaults. Override either by setting LIFEOS_API_BASE_URL
- * (highest priority) or by changing the entry below for a given env.
- *
- * `dev` points at the public tunnel today because the team works on
- * physical devices, not simulators — there's no localhost the phone can
- * reach. Swap in `http://10.0.2.2:4000/api` for an Android emulator setup
- * or your LAN IP for a real-device dev build.
+ * Per-environment defaults. The public Cloudflare Tunnel
+ * (api.tothanhthuy.cloud → 127.0.0.1:4000 on huy-server) terminates HTTPS
+ * at Cloudflare's edge, so phones can reach the API from any network —
+ * not just the dev tailnet. Override the URL at bundle time with
+ * LIFEOS_API_BASE_URL when running against a different ingress.
  */
 const API_BY_ENV: Record<AppEnv, string> = {
   dev: 'https://api.tothanhthuy.cloud/api',
