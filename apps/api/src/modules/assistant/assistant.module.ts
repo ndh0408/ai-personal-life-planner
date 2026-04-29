@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AssistantController } from './assistant.controller';
 import { AssistantService } from './assistant.service';
 import { AssistantStreamingService } from './assistant.streaming.service';
+import { ActionSuggesterService } from './action-suggester.service';
 import { RecommendationsController } from './recommendations.controller';
 import { RecommendationsService } from './recommendations.service';
 import { IntelligenceModule } from '../intelligence/intelligence.module';
@@ -9,6 +10,11 @@ import { IntelligenceModule } from '../intelligence/intelligence.module';
 @Module({
   imports: [IntelligenceModule],
   controllers: [AssistantController, RecommendationsController],
-  providers: [AssistantService, AssistantStreamingService, RecommendationsService],
+  providers: [
+    AssistantService,
+    AssistantStreamingService,
+    ActionSuggesterService,
+    RecommendationsService,
+  ],
 })
 export class AssistantModule {}

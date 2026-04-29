@@ -27,6 +27,7 @@ import { UserContextService } from '../intelligence/user-context.service';
 import { AssistantMemoryService } from '../intelligence/assistant-memory.service';
 import { LlmService } from '../../common/llm/llm.service';
 import { LlmError } from '../../common/llm/llm.types';
+import { ActionSuggesterService } from './action-suggester.service';
 
 const SYS_INSTRUCTIONS = `You are LifeOS AI — a personal assistant for everyday life.
 
@@ -52,6 +53,7 @@ export class AssistantService {
     private readonly userCtx: UserContextService,
     private readonly memory: AssistantMemoryService,
     private readonly llm: LlmService,
+    private readonly actions: ActionSuggesterService,
   ) {}
 
   // ── Send message (creates conversation if needed, calls LLM, stores) ─────
@@ -125,10 +127,19 @@ export class AssistantService {
       )
       .catch(() => undefined);
 
+    // Round 30: derive follow-up action chips from the assistant's reply +
+    // the snapshot we already loaded. Heuristic, no extra LLM call.
+    const suggestedActions = this.actions.suggest({
+      assistantText: assistantContent,
+      ctx,
+      userText: input.content,
+    });
+
     return {
       conversationId: conversation.id,
       userMessage: toMessage(userMsg),
       assistantMessage: toMessage(assistantMsg),
+      suggestedActions,
     };
   }
 

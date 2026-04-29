@@ -233,7 +233,7 @@ export class UserContextService {
 
     // Fan out only into domains the user has enabled. Disabled domains return
     // null/empty without ever issuing a query.
-    const [behaviorRaw, recentEvents, memoriesRaw, lastSleep, lastMood, todayExp, monthExp, openHighTasks, walletsRaw] =
+    const [behaviorRaw, recentEvents, memoriesRaw, lastSleep, lastMood, todayExp, monthExp, openHighTasks, walletsRaw, correctionsRaw] =
       await Promise.all([
         this.behavior.get(userId),
         this.events.recent(userId, 30),
@@ -282,6 +282,22 @@ export class UserContextService {
               select: { id: true, name: true, balance: true, isDefault: true, currency: true },
             })
           : Promise.resolve([]),
+        // Round 30: surface the user's last 5 capture corrections in the
+        // snapshot so the assistant can spot patterns ("your trà sữa
+        // entries always end up as EXPENSE not MEAL — got it"). The
+        // capture parser also uses the same data via CorrectionsService;
+        // this is the snapshot consumer.
+        this.prisma.captureCorrection.findMany({
+          where: { userId },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          select: {
+            rawText: true,
+            originalKind: true,
+            correctedKind: true,
+            createdAt: true,
+          },
+        }),
       ]);
 
     const behavior = this.gateBehavior(behaviorRaw, privacy);
@@ -327,7 +343,12 @@ export class UserContextService {
         isDefault: w.isDefault,
         currency: w.currency,
       })),
-      recentCorrections: [], // populated in R21
+      recentCorrections: correctionsRaw.map((c) => ({
+        rawText: c.rawText,
+        originalKind: c.originalKind,
+        correctedKind: c.correctedKind,
+        createdAt: c.createdAt.toISOString(),
+      })),
       lastSleepMinutes: privacy.useHealthForAI ? lastSleep?.durationMinutes ?? null : null,
       lastMood: privacy.useHealthForAI ? lastMood?.mood ?? null : null,
       todaySpendVnd: privacy.useFinanceForAI

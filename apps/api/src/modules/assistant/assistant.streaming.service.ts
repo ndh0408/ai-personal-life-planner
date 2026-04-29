@@ -22,6 +22,7 @@ import type { AssistantStreamEvent } from '@lifeos/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserContextService } from '../intelligence/user-context.service';
 import { LlmService } from '../../common/llm/llm.service';
+import { ActionSuggesterService } from './action-suggester.service';
 
 const SYS_INSTRUCTIONS = `You are LifeOS AI — a personal assistant for everyday life.
 
@@ -52,6 +53,7 @@ export class AssistantStreamingService {
     private readonly prisma: PrismaService,
     private readonly userCtx: UserContextService,
     private readonly llm: LlmService,
+    private readonly actions: ActionSuggesterService,
   ) {}
 
   /**
@@ -163,6 +165,22 @@ export class AssistantStreamingService {
       where: { id: args.conversationId },
       data: { updatedAt: new Date() },
     });
+
+    // Round 30: derive follow-up action chips. Heuristic, not another LLM
+    // call, so the chips appear at the same time as `completed` rather
+    // than tens of seconds later.
+    const suggestedActions = this.actions.suggest({
+      assistantText: assembled,
+      ctx,
+      userText: args.userText,
+    });
+
+    yield {
+      type: 'assistant.stream.actions',
+      ...base,
+      seq: seq++,
+      actions: suggestedActions,
+    };
 
     yield {
       type: 'assistant.stream.completed',

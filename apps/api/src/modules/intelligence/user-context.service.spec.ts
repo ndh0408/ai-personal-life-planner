@@ -82,6 +82,8 @@ function fakePrisma(store: FakeStore): PrismaService {
     },
     task: { count: jest.fn(async () => store.highTaskCount) },
     wallet: { findMany: jest.fn(async () => store.wallets) },
+    // Round 30: snapshot now reads recent capture corrections.
+    captureCorrection: { findMany: jest.fn(async () => []) },
   } as unknown as PrismaService;
 }
 

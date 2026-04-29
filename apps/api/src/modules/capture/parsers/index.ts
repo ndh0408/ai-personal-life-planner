@@ -21,13 +21,23 @@ const PARSERS = [
  * Ties broken by parser order — Income > Expense > Meal > Task > Sleep > Mood.
  */
 export function runRuleParsers(text: string, ctx: ParseContext): ParseHit | null {
-  let best: ParseHit | null = null;
+  const hits = runRuleParsersAll(text, ctx);
+  return hits[0] ?? null;
+}
+
+/**
+ * Run every rule parser and return all hits sorted by confidence descending.
+ * Used by capture.service to populate `alternatives` on the parse response —
+ * when the top pick is uncertain, surfacing "or maybe TASK / MEAL?" lets the
+ * user one-tap-switch instead of editing the kind manually.
+ */
+export function runRuleParsersAll(text: string, ctx: ParseContext): ParseHit[] {
+  const hits: ParseHit[] = [];
   for (const p of PARSERS) {
     const hit = p.match(text, ctx);
-    if (!hit) continue;
-    if (!best || hit.confidence > best.confidence) best = hit;
+    if (hit) hits.push(hit);
   }
-  return best;
+  return hits.sort((a, b) => b.confidence - a.confidence);
 }
 
 export type { ParseContext, ParseHit, RuleParser } from './types';

@@ -83,11 +83,24 @@ export type MoodFields = z.infer<typeof MoodFieldsSchema>;
 
 // ── Parse: response (preview) ────────────────────────────────────────────────
 
+/**
+ * Round 30: alternative classifications when the top pick is uncertain
+ * or the parsers disagree. UI surfaces these as "Hay là...?" chips so
+ * the user can switch kind in one tap instead of falling into UNKNOWN.
+ */
+export const CaptureAlternativeSchema = z.object({
+  kind: CaptureKindSchema,
+  confidence: z.number().min(0).max(1),
+  label: z.string().max(80),
+  reason: z.string().max(160).optional(),
+});
+export type CaptureAlternative = z.infer<typeof CaptureAlternativeSchema>;
+
 export const CaptureParseResponseSchema = z.object({
   kind: CaptureKindSchema,
   source: ParserSourceSchema,
   confidence: z.number().min(0).max(1),
-  /** Pre-formatted line for the preview chip, e.g. "🍚 Cơm tấm — 75.000 ₫ — 12:00". */
+  /** Pre-formatted line for the preview chip. */
   previewText: z.string().max(200),
   /** Per-kind shape; UNKNOWN means an empty object plus a hint. */
   fields: z.record(z.string(), z.unknown()),
@@ -101,6 +114,12 @@ export const CaptureParseResponseSchema = z.object({
   /** Stable handle to look this parse up later (e.g. when persisting an edit
    *  as a CaptureCorrection on confirm). */
   parseId: z.string().optional(),
+  /**
+   * Up to 3 alternative classifications, ordered by confidence descending.
+   * Empty when the top pick is confident or no second-place candidate
+   * exists. Excludes the top kind and UNKNOWN.
+   */
+  alternatives: z.array(CaptureAlternativeSchema).max(3).default([]),
 });
 export type CaptureParseResponse = z.infer<typeof CaptureParseResponseSchema>;
 

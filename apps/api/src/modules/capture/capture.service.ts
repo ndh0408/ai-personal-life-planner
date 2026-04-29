@@ -22,8 +22,14 @@
  *      the parser is sure.
  */
 import { Injectable } from '@nestjs/common';
-import type { CaptureParseRequest, CaptureParseResponse, ParserSource } from '@lifeos/shared';
-import { runRuleParsers } from './parsers';
+import type {
+  CaptureAlternative,
+  CaptureKind,
+  CaptureParseRequest,
+  CaptureParseResponse,
+  ParserSource,
+} from '@lifeos/shared';
+import { runRuleParsersAll } from './parsers';
 import type { ParseHit } from './parsers/types';
 import { OpenAiParser } from './parsers/openai.parser';
 import { CorrectionsService } from './corrections.service';
@@ -47,11 +53,19 @@ export class CaptureService {
     const now = input.nowIso ? new Date(input.nowIso) : new Date();
     const ctx = { now, tz: input.tz };
 
-    const ruleHit = runRuleParsers(input.text, ctx);
+    const ruleHits = runRuleParsersAll(input.text, ctx);
+    const ruleHit = ruleHits[0] ?? null;
 
-    // Tier 1: strong rule wins, no LLM trip.
+    // Tier 1: strong rule wins, no LLM trip. Still surface alternatives
+    // because even a confident parser benefits from a "or maybe...?" chip
+    // when there's a clear runner-up (e.g. "ăn 60k" hits both EXPENSE and
+    // MEAL strongly).
     if (ruleHit && ruleHit.confidence >= STRONG_THRESHOLD) {
-      return toResponse(ruleHit, { source: 'RULE', needsReview: false });
+      return toResponse(ruleHit, {
+        source: 'RULE',
+        needsReview: false,
+        alternatives: collectAlternatives(ruleHits, ruleHit.kind, null),
+      });
     }
 
     // Tier 2: medium-confidence rule (or no rule but the user has said
@@ -69,10 +83,15 @@ export class CaptureService {
         ruleHit && llmHit ? 'HYBRID' : winner === ruleHit ? 'RULE' : 'OPENAI';
       const needsReview =
         winner.confidence < MEDIUM_THRESHOLD || (source === 'RULE' && !llmHit && winner.confidence < STRONG_THRESHOLD);
-      return toResponse(winner, { source, needsReview });
+      return toResponse(winner, {
+        source,
+        needsReview,
+        alternatives: collectAlternatives(ruleHits, winner.kind, llmHit),
+      });
     }
 
-    // Tier 3: nothing came back. UNKNOWN.
+    // Tier 3: nothing came back. UNKNOWN — still offer alternatives if the
+    // rule parsers had weak hits we can present as 1-tap fallbacks.
     return {
       kind: 'UNKNOWN',
       source: 'RULE',
@@ -81,8 +100,45 @@ export class CaptureService {
       previewText: '?',
       hint: 'Mình chưa rõ ý — gõ rõ hơn hoặc chọn loại bên dưới.',
       needsReview: true,
+      alternatives: collectAlternatives(ruleHits, 'UNKNOWN', null),
     };
   }
+}
+
+/**
+ * Build up to 3 alternative classifications. Excludes the chosen kind and
+ * UNKNOWN; clamps confidence to a 0.3 floor (anything weaker is noise) and
+ * ranks by confidence descending. The LLM hit (if any) is included only
+ * when its kind differs from the rule winner — gives the UI an "or AI
+ * thinks…" option.
+ */
+function collectAlternatives(
+  ruleHits: ParseHit[],
+  chosenKind: CaptureKind | 'UNKNOWN',
+  llmHit: ParseHit | null,
+): CaptureAlternative[] {
+  const seen = new Set<string>([chosenKind]);
+  const out: CaptureAlternative[] = [];
+
+  if (llmHit && !seen.has(llmHit.kind) && llmHit.kind !== 'UNKNOWN' && llmHit.confidence >= 0.3) {
+    out.push(toAlternative(llmHit));
+    seen.add(llmHit.kind);
+  }
+  for (const h of ruleHits) {
+    if (out.length >= 3) break;
+    if (seen.has(h.kind) || h.kind === 'UNKNOWN' || h.confidence < 0.3) continue;
+    out.push(toAlternative(h));
+    seen.add(h.kind);
+  }
+  return out;
+}
+
+function toAlternative(hit: ParseHit): CaptureAlternative {
+  return {
+    kind: hit.kind,
+    confidence: Number(hit.confidence.toFixed(3)),
+    label: hit.previewText.slice(0, 80),
+  };
 }
 
 function pickWinner(rule: ParseHit | null, llm: ParseHit | null): ParseHit | null {
@@ -97,7 +153,7 @@ function pickWinner(rule: ParseHit | null, llm: ParseHit | null): ParseHit | nul
 
 function toResponse(
   hit: ParseHit,
-  meta: { source: ParserSource; needsReview: boolean },
+  meta: { source: ParserSource; needsReview: boolean; alternatives: CaptureAlternative[] },
 ): CaptureParseResponse {
   return {
     kind: hit.kind,
@@ -107,5 +163,6 @@ function toResponse(
     previewText: hit.previewText,
     hint: hit.hint,
     needsReview: meta.needsReview,
+    alternatives: meta.alternatives,
   };
 }

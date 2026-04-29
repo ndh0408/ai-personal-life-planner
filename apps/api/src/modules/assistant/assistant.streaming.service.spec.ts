@@ -3,6 +3,11 @@ import type { PrismaService } from '../../prisma/prisma.service';
 import type { UserContextService } from '../intelligence/user-context.service';
 import type { LlmService } from '../../common/llm/llm.service';
 import type { LlmStreamEvent } from '../../common/llm/llm.types';
+import type { ActionSuggesterService } from './action-suggester.service';
+
+function fakeActions(): ActionSuggesterService {
+  return { suggest: jest.fn(() => []) } as unknown as ActionSuggesterService;
+}
 
 /** Build a fake LlmService that yields a fixed series of stream events. */
 function fakeLlm(opts: { events: LlmStreamEvent[] }): LlmService {
@@ -68,7 +73,12 @@ describe('AssistantStreamingService', () => {
       { type: 'delta', delta: ' ưu tiên' },
       { type: 'done', finalText: 'Sáng nay bạn nên ưu tiên' },
     ];
-    const svc = new AssistantStreamingService(fakePrisma(), fakeUserCtx(), fakeLlm({ events }));
+    const svc = new AssistantStreamingService(
+      fakePrisma(),
+      fakeUserCtx(),
+      fakeLlm({ events }),
+      fakeActions(),
+    );
 
     const out = [];
     for await (const ev of svc.run({
@@ -98,7 +108,12 @@ describe('AssistantStreamingService', () => {
       { type: 'delta', delta: 'B' },
       { type: 'done', finalText: 'AB' },
     ];
-    const svc = new AssistantStreamingService(fakePrisma(), fakeUserCtx(), fakeLlm({ events }));
+    const svc = new AssistantStreamingService(
+      fakePrisma(),
+      fakeUserCtx(),
+      fakeLlm({ events }),
+      fakeActions(),
+    );
     const seqs: number[] = [];
     for await (const ev of svc.run({
       userId: 'u1',
@@ -117,7 +132,12 @@ describe('AssistantStreamingService', () => {
     const events: LlmStreamEvent[] = [
       { type: 'error', code: 'AI_KEY_MISSING', message: 'No key' },
     ];
-    const svc = new AssistantStreamingService(fakePrisma(), fakeUserCtx(), fakeLlm({ events }));
+    const svc = new AssistantStreamingService(
+      fakePrisma(),
+      fakeUserCtx(),
+      fakeLlm({ events }),
+      fakeActions(),
+    );
     const out = [];
     for await (const ev of svc.run({
       userId: 'u1',

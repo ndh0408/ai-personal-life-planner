@@ -9,10 +9,16 @@ import { AiRecommendationStatus } from '@prisma/client';
 import type { DashboardSummary } from '@lifeos/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { rangeFor } from '../../common/datetime/range';
+import { UserContextService } from '../intelligence/user-context.service';
+import { SmartBriefService } from './smart-brief.service';
 
 @Injectable()
 export class DashboardService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly userCtx: UserContextService,
+    private readonly smartBrief: SmartBriefService,
+  ) {}
 
   async summary(userId: string): Promise<DashboardSummary> {
     const now = new Date();
@@ -84,13 +90,35 @@ export class DashboardService {
       rows.reduce((s, r) => s + Number(r.amount), 0);
 
     const todayItems = todayPlan?.items ?? [];
+    const totalItems = todayItems.length;
+    const doneItems = todayItems.filter((i) => i.status === 'COMPLETED').length;
+
+    // Round 30: build the smart brief + suggested captures + privacy hints
+    // from the existing snapshot so the redesigned Home can render in one
+    // round-trip without firing extra queries.
+    const ctx = await this.userCtx.build(userId);
+    const profile = await this.prisma.userProfile.findUnique({
+      where: { userId },
+      select: { budgetMonthly: true },
+    });
+    const briefInput = {
+      ctx,
+      todayPlanItems: totalItems,
+      todayPlanDone: doneItems,
+      budgetMonthly: profile?.budgetMonthly == null ? null : Number(profile.budgetMonthly),
+      monthSpend: ctx.monthSpendVnd,
+      hasAiKey: !!aiKey?.isActive,
+    };
+    const smartBrief = this.smartBrief.build(briefInput);
+    const suggestedCaptures = this.smartBrief.suggestCaptures(briefInput);
+    const privacyLimitedDomains = this.smartBrief.privacyLimitedDomains(ctx);
 
     return {
       aiEnabled: !!aiKey?.isActive,
       todayPlan: {
         planId: todayPlan?.id ?? null,
-        totalItems: todayItems.length,
-        doneItems: todayItems.filter((i) => i.status === 'COMPLETED').length,
+        totalItems,
+        doneItems,
         aiGenerated: todayPlan?.aiGenerated ?? false,
       },
       money: {
@@ -123,6 +151,9 @@ export class DashboardService {
         lastEnergy: lastMood?.energy ?? null,
       },
       serverTime: now.toISOString(),
+      smartBrief,
+      suggestedCaptures,
+      privacyLimitedDomains,
     };
   }
 }

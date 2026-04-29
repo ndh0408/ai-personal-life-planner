@@ -45,6 +45,54 @@ export const MoodSleepSummarySchema = z.object({
 });
 export type MoodSleepSummary = z.infer<typeof MoodSleepSummarySchema>;
 
+// ── Round 30: smart brief + suggested captures + privacy hints ──────────────
+//
+// Surfaces in DashboardSummary that the redesigned Home screen reads to
+// render its "command center" hero. All three are optional from the
+// client's perspective — older mobile builds ignore them and show the
+// classic card grid.
+
+export const SmartBriefToneSchema = z.enum(['neutral', 'gentle', 'urgent', 'celebratory']);
+export type SmartBriefTone = z.infer<typeof SmartBriefToneSchema>;
+
+export const SmartBriefActionSchema = z.object({
+  /** UI label, ≤ 40 chars to fit in the chip. */
+  label: z.string().max(40),
+  /** Same shape as AssistantAction screens — let the UI route consistently. */
+  screen: z
+    .enum(['Today', 'Money', 'Tasks', 'MealLog', 'SleepMoodCheckin', 'AISettings', 'Privacy'])
+    .optional(),
+  /** Or open SmartEntry pre-filled. */
+  smartEntryMode: z.enum(['EXPENSE', 'INCOME', 'TASK', 'MEAL', 'SLEEP', 'MOOD']).optional(),
+});
+export type SmartBriefAction = z.infer<typeof SmartBriefActionSchema>;
+
+export const SmartBriefSchema = z.object({
+  /** One-line summary, ≤ 80 chars. */
+  headline: z.string().max(80),
+  /** Optional second line with context, ≤ 200 chars. */
+  body: z.string().max(200).optional(),
+  tone: SmartBriefToneSchema,
+  /** Where the brief came from (rules / AI). UI can label "AI" appropriately. */
+  source: z.enum(['RULE', 'AI']),
+  /** Reason chips — 1-3 short tags ("ngủ thiếu", "vượt ngân sách") so the UI
+   *  can show *why* this brief surfaced rather than feeling like magic. */
+  reasonLabels: z.array(z.string().max(40)).max(3),
+  /** Optional CTA — UI surfaces as a primary button. */
+  primaryAction: SmartBriefActionSchema.optional(),
+});
+export type SmartBrief = z.infer<typeof SmartBriefSchema>;
+
+export const SuggestedCaptureSchema = z.object({
+  /** Pre-filled SmartEntry text, ≤ 120 chars. */
+  text: z.string().max(120),
+  /** Why we suggested it — surfaced as small caption under the chip. */
+  reason: z.string().max(80).optional(),
+  /** Kind preselect, optional. */
+  mode: z.enum(['EXPENSE', 'INCOME', 'TASK', 'MEAL', 'SLEEP', 'MOOD']).optional(),
+});
+export type SuggestedCapture = z.infer<typeof SuggestedCaptureSchema>;
+
 export const DashboardSummarySchema = z.object({
   aiEnabled: z.boolean(),
   todayPlan: TodayPlanSummarySchema,
@@ -53,5 +101,11 @@ export const DashboardSummarySchema = z.object({
   topRecommendation: TopRecommendationSchema,
   moodSleep: MoodSleepSummarySchema,
   serverTime: z.string(),
+  /** Round 30: command-center brief. Null when there's nothing salient. */
+  smartBrief: SmartBriefSchema.nullable().default(null),
+  /** Round 30: 0-3 suggested capture strings to put on Home as chips. */
+  suggestedCaptures: z.array(SuggestedCaptureSchema).max(3).default([]),
+  /** Round 30: domains the user has hidden — UI can say "AI doesn't see X". */
+  privacyLimitedDomains: z.array(z.enum(['finance', 'health', 'meals', 'tasks'])).default([]),
 });
 export type DashboardSummary = z.infer<typeof DashboardSummarySchema>;
