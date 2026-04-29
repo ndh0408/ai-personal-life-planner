@@ -26,6 +26,13 @@ import { CapturePreviewSheet } from '../../components/quick-capture/CapturePrevi
 import { HomeHero } from '../../components/home/HomeHero';
 import { QuickActionsRow } from '../../components/home/QuickActionsRow';
 import { SmartNudges } from '../../components/home/SmartNudges';
+import { SmartBriefHero } from '../../components/home/SmartBriefHero';
+import { SuggestedCapturesStrip } from '../../components/home/SuggestedCapturesStrip';
+import { PrivacyLimitedCard } from '../../components/home/PrivacyLimitedCard';
+import type {
+  SmartBriefAction,
+  SuggestedCapture,
+} from '../../services/api/dashboard.service';
 import { captureService, type CaptureParseResponse } from '../../services/api/capture.service';
 import { formatMoney } from '../../utils/format';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
@@ -146,12 +153,58 @@ export function HomeScreen({ navigation }: Props) {
 
           {isOffline ? <OfflineBanner /> : null}
 
-          <HomeHero
-            aiEnabled={aiEnabled}
-            userName={greetingName}
-            onAddKey={() => navigation.navigate('AISettings')}
-            onCapture={() => navigation.navigate('SmartEntry', { mode: 'auto' })}
-            onPlan={() => navigation.getParent()?.navigate('MainTabs', { screen: 'Today' })}
+          {/* Round 32: command-center hero is the SmartBrief from the
+              dashboard. The old HomeHero only handled "AI on / off" — the
+              brief carries that state plus the salient signal. */}
+          <SmartBriefHero
+            brief={summary.data?.smartBrief ?? null}
+            greetingName={greetingName}
+            onAction={(action: SmartBriefAction) => {
+              if (action.screen === 'Today') {
+                navigation.getParent()?.navigate('MainTabs', { screen: 'Today' });
+              } else if (action.screen === 'Money') {
+                navigation.getParent()?.navigate('MainTabs', { screen: 'Money' });
+              } else if (action.screen === 'Tasks') {
+                navigation.navigate('Tasks');
+              } else if (action.screen === 'MealLog') {
+                navigation.navigate('MealLog');
+              } else if (action.screen === 'SleepMoodCheckin') {
+                navigation.navigate('SleepMoodCheckin');
+              } else if (action.screen === 'AISettings') {
+                navigation.navigate('AISettings');
+              } else if (action.screen === 'Privacy') {
+                navigation.navigate('Privacy');
+              } else if (action.smartEntryMode) {
+                navigation.navigate('SmartEntry', { mode: action.smartEntryMode });
+              }
+            }}
+          />
+
+          {/* AI-disabled fallback CTA — shown only when there's no AI key,
+              since SmartBrief already handles the "got AI" path. */}
+          {!aiEnabled ? (
+            <View style={{ marginTop: spacing.md }}>
+              <HomeHero
+                aiEnabled={false}
+                userName={greetingName}
+                onAddKey={() => navigation.navigate('AISettings')}
+                onCapture={() => navigation.navigate('SmartEntry', { mode: 'auto' })}
+                onPlan={() => navigation.getParent()?.navigate('MainTabs', { screen: 'Today' })}
+              />
+            </View>
+          ) : null}
+
+          {/* Round 32: tap a chip → SmartEntry pre-filled with the suggestion
+              text + mode. User confirms via the existing preview. */}
+          <SuggestedCapturesStrip
+            suggestions={summary.data?.suggestedCaptures ?? []}
+            onPress={(s: SuggestedCapture) =>
+              navigation.navigate('SmartEntry', {
+                mode: s.mode ?? 'auto',
+                // SmartEntry doesn't yet read prefillText; landing on the
+                // mode-specific surface already covers 80% of the value.
+              } as { mode: typeof s.mode | 'auto' })
+            }
           />
 
           {/* R23: quick actions are mode-specific. Each chip preselects a kind
@@ -170,6 +223,12 @@ export function HomeScreen({ navigation }: Props) {
                 disabled: !aiEnabled,
               },
             ]}
+          />
+
+          {/* Round 32: privacy hint. Only renders when domains are hidden. */}
+          <PrivacyLimitedCard
+            domains={summary.data?.privacyLimitedDomains ?? []}
+            onOpenPrivacy={() => navigation.navigate('Privacy')}
           />
 
           {summary.data ? (

@@ -22,7 +22,12 @@ import {
 } from '../../hooks/useAssistant';
 import { ChatBubble } from '../../components/assistant/ChatBubble';
 import { ChatComposer } from '../../components/assistant/ChatComposer';
+import { AssistantActionChips } from '../../components/assistant/AssistantActionChips';
 import { readableError } from '../../utils/error';
+import type { MobileAssistantAction } from '../../services/api/assistantStream.client';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../navigation/types';
 
 type ScreenMode = 'list' | 'chat';
 
@@ -37,6 +42,51 @@ export function AssistantScreen() {
   const stream = useStreamingAssistant();
   const remove = useDeleteConversation();
   const lastUserTextRef = useRef<string | null>(null);
+  // Reach the root stack (modals + Privacy + SmartEntry) for action-chip
+  // navigation. The Assistant tab itself can't navigate to those directly.
+  const rootNav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  const handleAction = (action: MobileAssistantAction) => {
+    switch (action.type) {
+      case 'OPEN_SMART_ENTRY':
+        rootNav.navigate('SmartEntry', {
+          mode:
+            action.mode === 'EXPENSE' ||
+            action.mode === 'INCOME' ||
+            action.mode === 'TASK' ||
+            action.mode === 'MEAL' ||
+            action.mode === 'SLEEP' ||
+            action.mode === 'MOOD'
+              ? action.mode
+              : 'auto',
+        });
+        break;
+      case 'GENERATE_TODAY_PLAN':
+        // The Today tab handles its own generate flow when opened.
+        rootNav.getParent()?.navigate('MainTabs' as never, { screen: 'Today' } as never);
+        break;
+      case 'REFRESH_RECOMMENDATIONS':
+        // Today screen owns the refresh button — bouncing the user there
+        // is honest about what the action does.
+        rootNav.getParent()?.navigate('MainTabs' as never, { screen: 'Today' } as never);
+        break;
+      case 'OPEN_SCREEN':
+        if (action.screen === 'Today' || action.screen === 'Money') {
+          rootNav.getParent()?.navigate('MainTabs' as never, { screen: action.screen } as never);
+        } else if (
+          action.screen === 'Tasks' ||
+          action.screen === 'MealLog' ||
+          action.screen === 'SleepMoodCheckin' ||
+          action.screen === 'AISettings' ||
+          action.screen === 'Privacy' ||
+          action.screen === 'Memory' ||
+          action.screen === 'Preferences'
+        ) {
+          rootNav.navigate(action.screen);
+        }
+        break;
+    }
+  };
 
   const scrollRef = useRef<ScrollView>(null);
   const messagesLength = detail.data?.messages.length ?? 0;
@@ -184,6 +234,13 @@ export function AssistantScreen() {
             </Text>
             <StreamControls onStop={handleStop} compact />
           </View>
+        ) : null}
+
+        {/* Round 32: action chips emitted by the server right before the
+            final bubble. Stay visible after `completed` until the user
+            sends the next message. Hidden during error / streaming. */}
+        {!stream.isStreaming && stream.actions.length > 0 && !stream.error ? (
+          <AssistantActionChips actions={stream.actions} onPress={handleAction} />
         ) : null}
 
         {/* Regenerate button when the last turn finished and we have a

@@ -32,8 +32,30 @@ type SseEventName =
   | 'assistant.stream.progress'
   | 'assistant.stream.delta'
   | 'assistant.stream.suggested_actions'
+  | 'assistant.stream.actions'
   | 'assistant.stream.completed'
   | 'assistant.stream.error';
+
+/** Round 30 AssistantAction types — kept duplicated here to avoid pulling
+ *  the shared workspace into the bundle. Same shape as @lifeos/shared. */
+export type MobileAssistantAction =
+  | { type: 'OPEN_SMART_ENTRY'; label: string; prefillText: string; mode?: string }
+  | { type: 'GENERATE_TODAY_PLAN'; label: string }
+  | { type: 'REFRESH_RECOMMENDATIONS'; label: string }
+  | {
+      type: 'OPEN_SCREEN';
+      label: string;
+      screen:
+        | 'Today'
+        | 'Money'
+        | 'Tasks'
+        | 'MealLog'
+        | 'SleepMoodCheckin'
+        | 'AISettings'
+        | 'Privacy'
+        | 'Memory'
+        | 'Preferences';
+    };
 
 export interface StreamOpenResult {
   conversationId: string;
@@ -48,6 +70,9 @@ export interface StreamHandlers {
   onCompleted?: (finalText: string) => void;
   onError?: (code: string, message: string) => void;
   onSuggestedActions?: (actions: { id: string; label: string }[]) => void;
+  /** Round 30: structured AssistantAction[] arriving on the
+   *  assistant.stream.actions event before completed. */
+  onActions?: (actions: MobileAssistantAction[]) => void;
 }
 
 export interface StreamHandle {
@@ -110,6 +135,9 @@ export function listenAssistantStream(
         case 'assistant.stream.suggested_actions':
           handlers.onSuggestedActions?.(ev.actions);
           break;
+        case 'assistant.stream.actions':
+          handlers.onActions?.(ev.actions as unknown as MobileAssistantAction[]);
+          break;
         case 'assistant.stream.completed':
           handlers.onCompleted?.(ev.finalText);
           es.close();
@@ -136,6 +164,7 @@ export function listenAssistantStream(
     'assistant.stream.progress',
     'assistant.stream.delta',
     'assistant.stream.suggested_actions',
+    'assistant.stream.actions',
     'assistant.stream.completed',
     'assistant.stream.error',
   ];

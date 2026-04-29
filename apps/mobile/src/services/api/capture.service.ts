@@ -3,6 +3,13 @@ import { apiClient } from './client';
 export type CaptureKind = 'EXPENSE' | 'INCOME' | 'MEAL' | 'TASK' | 'SLEEP' | 'MOOD' | 'UNKNOWN';
 export type ParserSource = 'RULE' | 'OPENAI' | 'HYBRID' | 'MANUAL';
 
+export interface CaptureAlternative {
+  kind: CaptureKind;
+  confidence: number;
+  label: string;
+  reason?: string;
+}
+
 export interface CaptureParseResponse {
   kind: CaptureKind;
   source: ParserSource;
@@ -12,6 +19,8 @@ export interface CaptureParseResponse {
   hint?: string;
   /** Round 21: signal that the parser is unsure — UI should highlight before save. */
   needsReview?: boolean;
+  /** Round 30: 0-3 runner-up classifications surfaced as "Hay là…?" chips. */
+  alternatives?: CaptureAlternative[];
 }
 
 export interface CaptureConfirmRequest {

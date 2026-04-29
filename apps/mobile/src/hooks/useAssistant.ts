@@ -8,6 +8,7 @@ import {
 import {
   listenAssistantStream,
   openAssistantStream,
+  type MobileAssistantAction,
   type StreamHandle,
 } from '../services/api/assistantStream.client';
 
@@ -73,6 +74,8 @@ export interface StreamingState {
   stage: string | null;
   liveText: string; // accumulated deltas
   error: { code: string; message: string } | null;
+  /** Round 32: action chips emitted by the server before the final delta. */
+  actions: MobileAssistantAction[];
 }
 
 const INITIAL_STATE: StreamingState = {
@@ -80,6 +83,7 @@ const INITIAL_STATE: StreamingState = {
   stage: null,
   liveText: '',
   error: null,
+  actions: [],
 };
 
 export function useStreamingAssistant() {
@@ -100,7 +104,7 @@ export function useStreamingAssistant() {
   const send = useCallback(
     async (content: string, conversationId?: string) => {
       // Reset visible state for a fresh turn.
-      setState({ isStreaming: true, stage: null, liveText: '', error: null });
+      setState({ isStreaming: true, stage: null, liveText: '', error: null, actions: [] });
 
       let opened: Awaited<ReturnType<typeof openAssistantStream>>;
       try {
@@ -112,6 +116,7 @@ export function useStreamingAssistant() {
           stage: null,
           liveText: '',
           error: { code: 'OPEN_FAILED', message: err.message ?? 'Mở stream thất bại' },
+          actions: [],
         });
         return null;
       }
@@ -152,6 +157,9 @@ export function useStreamingAssistant() {
           onProgress: (label) => setState((s) => ({ ...s, stage: label })),
           onDelta: (delta) =>
             setState((s) => ({ ...s, liveText: s.liveText + delta, stage: null })),
+          // Round 32: stash AssistantAction[] so the chip strip can render
+          // alongside the final assistant bubble.
+          onActions: (actions) => setState((s) => ({ ...s, actions })),
           onCompleted: (finalText) => {
             // Finalise: append the assistant bubble into the cache.
             qc.setQueryData<ConversationDetail | undefined>(
@@ -177,10 +185,24 @@ export function useStreamingAssistant() {
                   : prev,
             );
             qc.invalidateQueries({ queryKey: ASSISTANT_KEYS.list });
-            setState({ isStreaming: false, stage: null, liveText: '', error: null });
+            // Keep `actions` so the chip row stays visible until the user
+            // sends the next message; everything else resets.
+            setState((s) => ({
+              isStreaming: false,
+              stage: null,
+              liveText: '',
+              error: null,
+              actions: s.actions,
+            }));
           },
           onError: (code, message) =>
-            setState({ isStreaming: false, stage: null, liveText: '', error: { code, message } }),
+            setState({
+              isStreaming: false,
+              stage: null,
+              liveText: '',
+              error: { code, message },
+              actions: [],
+            }),
         },
       );
 

@@ -36,6 +36,43 @@ export interface MoodSleepSummary {
   lastEnergy: 'LOW' | 'MEDIUM' | 'HIGH' | null;
 }
 
+// ── Round 30 additions: smart brief + suggested captures + privacy ──────────
+
+export type SmartEntryMode = 'EXPENSE' | 'INCOME' | 'TASK' | 'MEAL' | 'SLEEP' | 'MOOD';
+export type DashboardScreen =
+  | 'Today'
+  | 'Money'
+  | 'Tasks'
+  | 'MealLog'
+  | 'SleepMoodCheckin'
+  | 'AISettings'
+  | 'Privacy';
+
+export type SmartBriefTone = 'neutral' | 'gentle' | 'urgent' | 'celebratory';
+
+export interface SmartBriefAction {
+  label: string;
+  screen?: DashboardScreen;
+  smartEntryMode?: SmartEntryMode;
+}
+
+export interface SmartBrief {
+  headline: string;
+  body?: string;
+  tone: SmartBriefTone;
+  source: 'RULE' | 'AI';
+  reasonLabels: string[];
+  primaryAction?: SmartBriefAction;
+}
+
+export interface SuggestedCapture {
+  text: string;
+  reason?: string;
+  mode?: SmartEntryMode;
+}
+
+export type PrivacyLimitedDomain = 'finance' | 'health' | 'meals' | 'tasks';
+
 export interface DashboardSummary {
   aiEnabled: boolean;
   todayPlan: TodayPlanSummary;
@@ -44,6 +81,12 @@ export interface DashboardSummary {
   topRecommendation: TopRecommendation | null;
   moodSleep: MoodSleepSummary;
   serverTime: string;
+  /** Round 30 — null when nothing salient. Older builds ignore. */
+  smartBrief?: SmartBrief | null;
+  /** Round 30 — 0-3 quick log suggestions. */
+  suggestedCaptures?: SuggestedCapture[];
+  /** Round 30 — domains the user has hidden from AI. */
+  privacyLimitedDomains?: PrivacyLimitedDomain[];
 }
 
 export const dashboardService = {

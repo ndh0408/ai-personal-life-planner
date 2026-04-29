@@ -342,6 +342,27 @@ function PreviewEditor({
         </View>
       ) : null}
 
+      {/* Round 32: alternative classifications — surfaced when the parser
+          ranked a runner-up close enough to be worth showing. Tap one and
+          the kind switches; the user still confirms via Save. */}
+      {preview.alternatives && preview.alternatives.length > 0 ? (
+        <View style={{ gap: spacing.xs }}>
+          <Text variant="caption" style={{ textTransform: 'uppercase', letterSpacing: 1 }}>
+            {t('capture.alternatives.title', { defaultValue: 'Hay là…?' })}
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+            {preview.alternatives.map((alt) => (
+              <Chip
+                key={alt.kind}
+                label={t(`capture.kinds.${alt.kind}`, { defaultValue: alt.kind })}
+                tone="accent"
+                onPress={() => onKindChange(alt.kind)}
+              />
+            ))}
+          </View>
+        </View>
+      ) : null}
+
       {/* Kind switcher — the user can say "no, this is income, not expense". */}
       <View style={{ gap: spacing.xs }}>
         <Text variant="caption" style={{ textTransform: 'uppercase', letterSpacing: 1 }}>
