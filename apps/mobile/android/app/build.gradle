@@ -4,8 +4,13 @@ apply plugin: "com.facebook.react"
 
 // react-native-vector-icons font auto-link. Bundles only the families we
 // actually use (Ionicons) into assets/fonts/ at build time.
+//
+// Monorepo: node_modules is hoisted to repo root (4 levels up), so the
+// fonts.gradle default `../../node_modules/...` is wrong — we override
+// iconFontsDir with the absolute path.
 project.ext.vectoricons = [
-    iconFontNames: ['Ionicons.ttf']
+    iconFontNames: ['Ionicons.ttf'],
+    iconFontsDir: file("../../../../node_modules/react-native-vector-icons/Fonts").absolutePath
 ]
 apply from: file("../../../../node_modules/react-native-vector-icons/fonts.gradle")
 

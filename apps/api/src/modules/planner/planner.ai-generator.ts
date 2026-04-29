@@ -22,31 +22,59 @@ template — every plan must reflect THIS specific user on THIS specific day.
 
 Return STRICT JSON: { "summary": string, "items": [...] }
 
-PERSONALIZATION RULES (most important):
-- Read the user's signals carefully. Their preferredName, mainGoals, usualWakeTime
-  and usualSleepTime are individual — anchor meals + rest around THEIR window,
-  not a default 7am/12pm/7pm template. If they wake at 9:30 and sleep at 1am,
-  breakfast is around 10am, dinner around 8–9pm.
-- For meals: look at recentMeals to see what they actually eat. Suggest specific
-  food ideas that ROTATE from what they had recently (no two phở days in a row,
-  add variety, balance protein/veg). If recentMeals is empty, suggest something
-  light and grounded in Vietnamese cuisine for VN users.
-- For activities: look at lastMood, sleepTrend, completedTaskCount. A user who
-  slept 4h with STRESSED mood needs a softer day (shorter blocks, real rest).
-  A user with high energy + GOOD sleep can take a heavier task load.
-- For finance: if topExpenseCategory dominates the week (e.g. eating out > 60%),
-  the FINANCE item should gently address THAT category, not a generic "review
-  spending" line.
-- For mainGoals: if they care about "sleep_better", emphasize the wind-down. If
-  "save_money", default to home-cooked meals. If "work", protect deep-work blocks.
+═══════════════════════════════════════════════════════════════════
+HARD ANCHORS (violate these and the plan is wrong):
+═══════════════════════════════════════════════════════════════════
+1. WAKE TIME: If profile.usualWakeTime is set (HH:mm), breakfast MUST start
+   between wake+30min and wake+90min. Example: wake 06:30 → breakfast 07:00–08:00.
+   NEVER schedule breakfast more than 2 hours after wake — that's "late
+   breakfast" not breakfast.
+2. SLEEP TIME: If profile.usualSleepTime is set, dinner ends ≥ 2.5h before sleep.
+   Wind-down REST item starts ~1h before sleep.
+3. LUNCH: 4–5h after breakfast (so wake 06:30 + breakfast 07:30 → lunch ~12:00).
+4. DINNER: 5–7h after lunch.
+5. The user's "now" timestamp is the moment the plan is generated. If
+   profile.usualWakeTime is in the past today (already woke up), plan from now
+   forward — don't schedule a 07:00 breakfast at 11:00 in the morning.
+
+═══════════════════════════════════════════════════════════════════
+PERSONALIZATION (high signal):
+═══════════════════════════════════════════════════════════════════
+- Read mainGoals + recentMeals + lastMood + sleepTrendHours + topExpenseCategory.
+- MEALS: rotate from recentMeals. Never suggest the same dish twice in 3 days.
+  Suggestions must be a SPECIFIC dish + side ("cơm gà Hải Nam + canh chua"),
+  NOT "ăn món Việt".
+- ACTIVITIES: react to mood + sleep trend. Sleep < 6h average → softer day,
+  shorter blocks (45min not 90min), an extra REST item. Mood STRESSED/SAD →
+  add a HEALTH item (walk, breath work, call a friend).
+- FINANCE item: only include if topExpenseCategory.pct > 35. Address THAT
+  category specifically ("Hôm nay tự nấu thay vì gọi đồ ăn ngoài, tiết kiệm
+  ~80k").
+- TASKS: slot openTasks into 45–60min blocks during peak hours
+  (wake+3h to wake+8h). HIGH priority first.
+
+═══════════════════════════════════════════════════════════════════
+TITLE QUALITY:
+═══════════════════════════════════════════════════════════════════
+GOOD                                          BAD
+"Bữa sáng: bánh mì ốp la + cà phê đen"        "Bữa sáng"
+"Đi bộ 15 phút quanh khu"                     "Tập thể dục"
+"Gọi báo cáo dự án X (chuẩn bị 30p trước)"    "Họp"
+"Wind-down: tắt màn hình, đọc 10 trang"       "Thư giãn"
+
+═══════════════════════════════════════════════════════════════════
+ANTI-PATTERNS (do not do):
+═══════════════════════════════════════════════════════════════════
+- Generic "Bữa sáng / trưa / tối" titles → always add the actual dish.
+- "Xem phim" or "Thư giãn 1 giờ" with no detail → say what to watch / read.
+- Same time grid every day (10:00 breakfast / 12:30 lunch / 19:00 dinner) →
+  let wake/sleep window dictate.
+- Skipping the user's open TODO tasks even if they have HIGH priority → slot them.
 
 ITEM SHAPE:
 - Each item: { "title": string, "type": one of [TASK, MEAL, REST, WORK, PERSONAL, HEALTH, FINANCE, CUSTOM],
   "startAt": ISO 8601 in user TZ, "endAt": ISO 8601 in user TZ }
 - 6–10 items, ordered by startAt.
-- Titles must be CONCRETE: "Bữa trưa: cơm gà nướng + canh chua" beats "Bữa trưa".
-  "Đi bộ 15 phút quanh khu" beats "Tập thể dục".
-- Slot the user's open tasks (HIGH priority first) into focused 45–60 min blocks.
 
 SUMMARY:
 - ONE short empathetic sentence (≤ 140 chars), second-person, addressed to the
@@ -161,7 +189,7 @@ export class PlannerAiGenerator {
             { role: 'user', content: userMsg },
           ],
           response_format: { type: 'json_object' },
-          temperature: 0.7,
+          temperature: 0.45,
           max_tokens: 1400,
         },
         { signal: ctrl.signal },
@@ -171,7 +199,12 @@ export class PlannerAiGenerator {
 
       const parsed = JSON.parse(raw) as { items?: LlmItem[]; summary?: string };
       if (!Array.isArray(parsed.items) || parsed.items.length === 0) return null;
-      const items = mapToDrafts(parsed.items);
+      let items = mapToDrafts(parsed.items);
+      // Safety net: if the AI scheduled breakfast > 2h after the user's
+      // declared wake time, slide the whole meal grid earlier proportionally.
+      // Without this the LLM consistently anchors at "10:00 bữa sáng" even
+      // for a user who wakes at 06:30 — visible to the user as "đần".
+      items = enforceWakeAnchor(items, snap.profile?.usualWakeTime ?? null, snap.tz);
       const summary =
         typeof parsed.summary === 'string' && parsed.summary.trim().length > 0
           ? parsed.summary.trim().slice(0, 240)
@@ -347,4 +380,46 @@ function mapToDrafts(items: LlmItem[]): DraftItem[] {
       return at - bt;
     })
     .map((d, i) => ({ ...d, sortOrder: i + 1 }));
+}
+
+/**
+ * Hard guarantee that the FIRST meal item in the plan starts within 2h of the
+ * user's wake time. The LLM tends to anchor breakfast at 10:00 even for early
+ * risers — we slide every item by the same delta when that drift is large.
+ */
+function enforceWakeAnchor(
+  items: DraftItem[],
+  usualWakeTime: string | null,
+  tz: string,
+): DraftItem[] {
+  if (!usualWakeTime) return items;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(usualWakeTime.trim());
+  if (!m) return items;
+  const wakeH = Math.min(23, Math.max(0, Number(m[1])));
+  const wakeMin = Math.min(59, Math.max(0, Number(m[2])));
+
+  const firstMeal = items.find((it) => it.type === 'MEAL' && it.startAt);
+  if (!firstMeal || !firstMeal.startAt) return items;
+
+  // Convert that meal's UTC time → user-local hour/minute, ignoring date.
+  const offsetMs = (tz === 'Asia/Ho_Chi_Minh' ? 7 * 60 : 0) * 60_000;
+  const local = new Date(firstMeal.startAt.getTime() + offsetMs);
+  const mealH = local.getUTCHours();
+  const mealMin = local.getUTCMinutes();
+
+  // Acceptable: breakfast in [wake+0:30, wake+2:00].
+  const wakeAbs = wakeH * 60 + wakeMin;
+  const mealAbs = mealH * 60 + mealMin;
+  const driftMin = mealAbs - wakeAbs;
+  if (driftMin >= 30 && driftMin <= 120) return items;
+
+  // Drift too high (or breakfast before wake) — slide every item so the
+  // first meal lands at wake+1h.
+  const targetAbs = wakeAbs + 60;
+  const shiftMs = (targetAbs - mealAbs) * 60_000;
+  return items.map((it) => ({
+    ...it,
+    startAt: it.startAt ? new Date(it.startAt.getTime() + shiftMs) : null,
+    endAt: it.endAt ? new Date(it.endAt.getTime() + shiftMs) : null,
+  }));
 }
