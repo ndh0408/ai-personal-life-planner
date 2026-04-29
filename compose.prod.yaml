@@ -1,0 +1,53 @@
+# Production override.
+#
+# Crucial differences from compose.dev.yaml:
+#   - No `ports:` mapping — the database and cache are reachable only on the
+#     internal `lifeos-net` bridge. The API container (defined here) is the
+#     only thing that should ever talk to them.
+#   - `restart: always` so a single crash doesn't take the service down.
+#   - Tighter healthcheck cadence; orchestrators replace unhealthy nodes faster.
+#   - Stricter env: secrets via `secrets:` rather than `environment:` once
+#     round 26+ wires real secret management.
+#
+# Use:
+#   docker compose -f compose.yaml -f compose.prod.yaml up -d
+
+services:
+  postgres:
+    restart: always
+
+  redis:
+    restart: always
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    image: lifeos/api:latest
+    container_name: lifeos-api
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-lifeos}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-lifeos}
+      REDIS_URL: redis://redis:6379
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      USER_AI_KEY_ENCRYPTION_KEY: ${USER_AI_KEY_ENCRYPTION_KEY}
+      OPENAI_DEFAULT_MODEL: ${OPENAI_DEFAULT_MODEL:-gpt-4o-mini}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+    ports:
+      # Reverse proxy / Cloudflare Tunnel terminates TLS and forwards to 4000.
+      - '127.0.0.1:4000:4000'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4000/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - lifeos

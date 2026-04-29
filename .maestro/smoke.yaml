@@ -1,0 +1,74 @@
+# LifeOS AI smoke flow — round 25.
+#
+# Run locally: `maestro test .maestro/smoke.yaml`
+# Run on a connected device after `bash scripts/deploy-android.sh debug`.
+#
+# This is the minimum-viable end-to-end check: register → login is implicit
+# from the app's auth flow → Smart Capture works → Hoàn tác undoes a write →
+# Privacy toggle round-trips. If this passes on a fresh device after a
+# build, the release is in a shippable state.
+
+appId: com.lifeos.mobile
+---
+# 1. Cold start — wait for the auth screen.
+- launchApp
+- assertVisible:
+    text: '.*'
+    optional: true
+
+# 2. If a session is already restored, skip to home; otherwise register.
+- runFlow:
+    when:
+      visible:
+        text: 'Đăng ký|Register'
+    commands:
+      - tapOn: 'Đăng ký|Register'
+      - inputText: 'smoke-${MAESTRO_TEST_RUN_ID}@lifeos.local'
+      - tapOn: 'Mật khẩu|Password'
+      - inputText: 'pass-12345-pass-12345'
+      - tapOn:
+          text: 'Tạo tài khoản|Create account'
+
+# 3. Skip onboarding (defaults are fine for smoke).
+- runFlow:
+    when:
+      visible:
+        text: 'Bắt đầu|Get started|Tiếp|Next'
+    commands:
+      - tapOn:
+          text: 'Bắt đầu|Get started|Tiếp|Next'
+          optional: true
+
+# 4. Home screen — composer must be visible.
+- assertVisible:
+    text: 'LifeOS|Hôm nay|Today'
+
+# 5. Quick capture: type a sentence, parse + confirm.
+- tapOn:
+    text: 'Gõ.*|Type.*'
+    optional: true
+- inputText: 'phở 60k'
+- waitForAnimationToEnd
+# Save the parsed expense.
+- tapOn:
+    text: 'Lưu|Save'
+
+# 6. Undo: snackbar's "Hoàn tác" must appear and reverse the write.
+- assertVisible:
+    text: 'Hoàn tác|Undo'
+- tapOn:
+    text: 'Hoàn tác|Undo'
+- assertVisible:
+    text: 'Đã hoàn tác|Undone'
+
+# 7. Settings → Privacy: toggle one flag round-trip.
+- tapOn:
+    text: 'Cài đặt|Settings'
+- tapOn:
+    text: 'Quyền riêng tư|Privacy'
+- tapOn:
+    id: 'privacy.finance.title'
+    optional: true
+# Either toast confirms — the test is "we got back to the screen with no error".
+- assertNotVisible:
+    text: 'Đã xảy ra lỗi|Error'

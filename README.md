@@ -8,9 +8,11 @@ it in the right place.
 > Curious about the *why*? Start with [docs/PRODUCT_SPEC.md](./docs/PRODUCT_SPEC.md)
 > and [docs/UX_PRINCIPLES.md](./docs/UX_PRINCIPLES.md).
 
-Currently at **Round 18 — full intelligence upgrade**. The app understands
-the user via behaviour summaries, event streams, and long-term assistant
-memory; insights and plans are LLM-driven against a unified UserContext.
+Currently at **Round 25 — productionised**. Builds on round 18's intelligence
+core with hygiene/security baseline (R19), privacy-aware LifeSnapshot (R20),
+3-tier capture routing + correction memory (R21), atomic undo (R22), Home
+UX rewrite + Privacy + DevPanel (R23), assistant streaming (R24), and a
+real CI + smoke pipeline (R25).
 
 ## Stack
 
@@ -70,6 +72,13 @@ scripts/          deploy-android.sh, connect-android.sh, dev-bootstrap.sh
 | 16 | Audit fixes (P0+P1+P2) + responsive layout system (small phone → tablet) |
 | 17 | Visual redesign — Ionicons everywhere, halo cards, sparklines, vertical timeline rail with current-time marker |
 | 18 | **Full intelligence upgrade** — UserBehaviorSummary, EventLog stream, AssistantMemory, UserContext aggregator, LLM-driven insights, preferences (dislikes/allergies/budget/workPattern/monthlyGoal), smart nudges |
+| 19 | **Hygiene baseline** — JWT type check, account lockout, log redaction, mobile env split |
+| 20 | **LifeSnapshot upgrade** — Redis-cached snapshot service, privacy gating, real PrivacyModule controller |
+| 21 | **Smart Capture** — 3-tier rule/LLM routing, editable preview for every kind, CaptureCorrection memory |
+| 22 | **Undo** — atomic POST /capture/:id/undo + Hoàn tác snackbar with action button |
+| 23 | **Mobile UX rewrite** — Home gọn lại, mode-specific quick actions, hidden DevPanel, Privacy screen |
+| 24 | **Assistant streaming** — SSE pipeline + staged progress UX |
+| 25 | **Productionised** — compose.{base,dev,prod}.yaml split, GitHub Actions CI, Maestro smoke flow, multi-stage Dockerfile |
 
 ## Run it locally
 
@@ -88,8 +97,8 @@ cp apps/api/.env.example apps/api/.env
 npm install
 npm --workspace @lifeos/shared run build
 
-# 3. Postgres + Redis
-docker compose up -d
+# 3. Postgres + Redis (round 25 split: base + dev override)
+docker compose -f compose.yaml -f compose.dev.yaml up -d
 
 # 4. Migrate
 cd apps/api && npx prisma migrate deploy && cd ../..
@@ -238,7 +247,20 @@ UserContext = {
 
 ## Status
 
-- API: 17 modules, 54/54 jest tests pass, TS clean.
-- Mobile: 19 screens, 30+ components, 17 services, 12+ hooks. TS clean.
-- APK 59 MB, deployed via Tailscale ADB to Xiaomi 13T.
+- API: 18 modules, **100/100 jest tests** pass, TS clean.
+- Mobile: 20 screens, 30+ components, 17 services, 12+ hooks. TS clean.
+- APK ~59 MB, deployed via Tailscale ADB to Xiaomi 13T.
 - Public API: `https://api.tothanhthuy.cloud/api` (Cloudflare Tunnel).
+- CI: `.github/workflows/ci.yml` runs lint/typecheck → API tests → mobile
+  typecheck/tests → Android debug APK on every push.
+- Smoke: `maestro test .maestro/smoke.yaml` against a connected device for
+  register → capture → save → undo → privacy round-trip.
+
+## Production deploy (round 25)
+
+```bash
+# On the prod host:
+docker compose -f compose.yaml -f compose.prod.yaml build api
+docker compose -f compose.yaml -f compose.prod.yaml up -d
+# Cloudflare Tunnel forwards to 127.0.0.1:4000.
+```

@@ -1,0 +1,53 @@
+# LifeOS AI base compose (round 25).
+#
+# Defines the data services every environment needs: Postgres + Redis. Does
+# NOT publish ports — the dev override layer adds those. The API container
+# itself is *not* defined here because we run it directly via `npm run dev`
+# during local development; round 26+ adds an api service for prod-like runs.
+#
+# Use:
+#   docker compose -f compose.yaml -f compose.dev.yaml up -d   # dev (host ports)
+#   docker compose -f compose.yaml -f compose.prod.yaml up -d  # prod (no host ports)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lifeos-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lifeos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-lifeos}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-lifeos} -d ${POSTGRES_DB:-lifeos}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - lifeos
+
+  redis:
+    image: redis:7-alpine
+    container_name: lifeos-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - lifeos
+
+networks:
+  lifeos:
+    name: lifeos-net
+
+volumes:
+  postgres-data:
+    name: lifeos-postgres-data
+  redis-data:
+    name: lifeos-redis-data

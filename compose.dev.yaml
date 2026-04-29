@@ -1,0 +1,13 @@
+# Dev override — publishes Postgres + Redis to the host so `npm run dev`
+# (which talks to localhost:5432 / localhost:6379) can reach them. Never
+# merge this layer into a production deploy: exposing the database to the
+# public internet is the single fastest way to lose data.
+
+services:
+  postgres:
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+
+  redis:
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
