@@ -48,3 +48,58 @@ export const ASSISTANT_ERROR_CODES = [
   'ASSISTANT_TIMEOUT',
 ] as const;
 export type AssistantErrorCode = (typeof ASSISTANT_ERROR_CODES)[number];
+
+// ── Round 24: streaming event model ─────────────────────────────────────────
+//
+// Shared event schema for the SSE endpoint (mobile starts on staged-progress
+// polling and upgrades to full streams once react-native-sse lands). Events
+// carry a monotonic `seq` so a late consumer can reorder them; `completed`
+// always carries the final assembled text so a client that missed deltas
+// can still render the reply.
+
+export const AssistantStreamStageSchema = z.enum([
+  'reading_snapshot',
+  'calling_llm',
+  'summarising',
+]);
+export type AssistantStreamStage = z.infer<typeof AssistantStreamStageSchema>;
+
+const StreamBase = z.object({
+  type: z.string(),
+  threadId: z.string(),
+  messageId: z.string(),
+  seq: z.number().int().nonnegative(),
+});
+
+export const AssistantStreamEventSchema = z.discriminatedUnion('type', [
+  StreamBase.extend({
+    type: z.literal('assistant.stream.started'),
+    snapshotVersion: z.string().optional(),
+  }),
+  StreamBase.extend({
+    type: z.literal('assistant.stream.progress'),
+    stage: AssistantStreamStageSchema,
+    label: z.string(),
+  }),
+  StreamBase.extend({
+    type: z.literal('assistant.stream.delta'),
+    delta: z.string(),
+  }),
+  StreamBase.extend({
+    type: z.literal('assistant.stream.suggested_actions'),
+    actions: z.array(z.object({ id: z.string(), label: z.string() })),
+  }),
+  StreamBase.extend({
+    type: z.literal('assistant.stream.completed'),
+    finalText: z.string(),
+    suggestedActions: z
+      .array(z.object({ id: z.string(), label: z.string() }))
+      .optional(),
+  }),
+  StreamBase.extend({
+    type: z.literal('assistant.stream.error'),
+    code: z.string(),
+    message: z.string(),
+  }),
+]);
+export type AssistantStreamEvent = z.infer<typeof AssistantStreamEventSchema>;

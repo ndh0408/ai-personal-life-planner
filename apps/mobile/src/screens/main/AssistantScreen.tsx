@@ -152,11 +152,7 @@ export function AssistantScreen() {
           <ChatBubble key={m.id} msg={m} />
         ))}
         {!activeId ? <Text variant="caption">{t('assistant.empty')}</Text> : null}
-        {send.isPending ? (
-          <View style={styles.thinking}>
-            <Text variant="caption">…</Text>
-          </View>
-        ) : null}
+        {send.isPending ? <StagedThinking /> : null}
       </ScrollView>
     </AppScreen>
   );
@@ -179,3 +175,28 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
 });
+
+/**
+ * Round 24: while the assistant turn runs, rotate through the same staged
+ * labels the streaming pipeline would emit. Once react-native-sse lands,
+ * this gets driven by real progress events instead of a setInterval.
+ */
+function StagedThinking() {
+  const { t } = useTranslation();
+  const stages = [
+    t('assistant.stages.reading_snapshot', { defaultValue: 'Đang đọc dữ liệu hôm nay…' }),
+    t('assistant.stages.calling_llm', { defaultValue: 'Đang suy nghĩ…' }),
+  ];
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const handle = setInterval(() => setI((v) => (v + 1) % stages.length), 1500);
+    return () => clearInterval(handle);
+    // stages is captured from t — don't add to deps to avoid re-running interval each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <View style={styles.thinking}>
+      <Text variant="caption">{stages[i]}</Text>
+    </View>
+  );
+}
