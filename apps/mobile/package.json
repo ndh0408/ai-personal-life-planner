@@ -2,13 +2,16 @@
   "name": "@lifeos/mobile",
   "version": "0.1.0",
   "private": true,
-  "description": "LifeOS AI mobile app — bare React Native (Android first, iOS later)",
+  "description": "LifeOS AI mobile app — bare React Native (Android + iOS)",
   "scripts": {
     "start": "react-native start",
     "android": "react-native run-android",
     "android:dev": "cd android && ./gradlew installDebug",
     "android:release": "cd android && ./gradlew assembleRelease",
     "android:clean": "cd android && ./gradlew clean",
+    "ios": "react-native run-ios",
+    "ios:pods": "cd ios && pod install",
+    "ios:clean": "cd ios && xcodebuild clean -workspace LifeOS.xcworkspace -scheme LifeOS",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
     "test": "jest --passWithNoTests"
