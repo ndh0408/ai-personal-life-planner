@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '../../theme';
 import { useResponsive } from '../../hooks/useResponsive';
+import { AuroraCanvas } from '../../aurora';
 
 interface Props {
   children: React.ReactNode;
@@ -67,36 +68,43 @@ export function AppScreen({
     <View style={[containerStyle, styles.contentVertical, styles.flex]}>{children}</View>
   );
 
+  // Round 43: wrap the v1 frame in <AuroraCanvas> so every screen using
+  // AppScreen (auth, onboarding, tasks, privacy, ai-settings, ...) inherits
+  // the Aurora living gradient background without requiring a per-screen
+  // rewrite. Existing v1 components (Text, Button, Chip, TextField) sit on
+  // top untouched — their warm-bone ink reads well on the indigo canvas.
+  // Full Aurora primitive migration for these screens lands R44+.
   return (
-    <SafeAreaView style={styles.root} edges={noBottomInset ? ['top'] : ['top', 'bottom']}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.canvas} />
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={kavBehavior}
-        // Tablet / large device: lean toward 'padding' which feels less jumpy
-        // on bigger screens.
-        keyboardVerticalOffset={device === 'tablet' ? 0 : Platform.OS === 'ios' ? 0 : 0}
-      >
-        {inner}
-        {footer ? (
-          <View style={[styles.footer, { paddingHorizontal: horizontalPad + lateralMargin }]}>
-            {footer}
-          </View>
-        ) : null}
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    <AuroraCanvas>
+      <SafeAreaView style={styles.root} edges={noBottomInset ? ['top'] : ['top', 'bottom']}>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={kavBehavior}
+          keyboardVerticalOffset={device === 'tablet' ? 0 : Platform.OS === 'ios' ? 0 : 0}
+        >
+          {inner}
+          {footer ? (
+            <View style={[styles.footer, { paddingHorizontal: horizontalPad + lateralMargin }]}>
+              {footer}
+            </View>
+          ) : null}
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </AuroraCanvas>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.canvas },
+  // Round 43: transparent so the AuroraCanvas behind shows through.
+  root: { flex: 1, backgroundColor: 'transparent' },
   flex: { flex: 1 },
   contentVertical: { paddingTop: spacing['2xl'], paddingBottom: spacing.xl, flexGrow: 1 },
   footer: {
     paddingTop: spacing.md,
     paddingBottom: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.canvas,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'transparent',
   },
 });
