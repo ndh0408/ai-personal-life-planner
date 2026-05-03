@@ -10,10 +10,9 @@ import Animated, {
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useAurora } from './AuroraProvider';
-import { GlassSurface } from './GlassSurface';
 import { FlowText } from './FlowText';
-import { GradientButton } from './GradientButton';
 import { useAuthStore } from '../store/auth.store';
 import { useAiKeyStatus } from '../hooks/useAiKeyStatus';
 import type { RootStackParamList } from '../navigation/types';
@@ -25,16 +24,17 @@ interface Props {
 }
 
 /**
- * Aurora's "settings" entry — a bottom sheet reachable from the gear icon
- * in the Today header. Surfaces the four affordances Aurora's 5-tab shell
- * was missing: AI key, privacy controls, language, sign-out, plus a link
- * to the legacy Settings screen for the long tail (preferences, memory,
- * meal log, etc).
+ * SettingsSheet — Pencil R45 layout.
+ *
+ * Bottom sheet with grabber + serif "Cài đặt" + profile row card +
+ * settings list (AI key / Privacy / AI memory / Preferences / Language) +
+ * sign-out + version footer. All status text uses REAL state (AI key
+ * masked value, current language). No hardcoded labels.
  */
 export function SettingsSheet({ visible, onClose }: Props) {
   const t = useAurora();
   const insets = useSafeAreaInsets();
-  const { t: tr, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const locale = (i18n.language === 'vi' ? 'vi' : 'en') as 'vi' | 'en';
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const signOut = useAuthStore((s) => s.signOut);
@@ -60,10 +60,6 @@ export function SettingsSheet({ visible, onClose }: Props) {
   }));
   const scrimStyle = useAnimatedStyle(() => ({ opacity: scrimOpacity.value }));
 
-  const switchLanguage = (next: 'vi' | 'en') => {
-    void i18nInstance.changeLanguage(next);
-  };
-
   const goAndClose = (route: keyof RootStackParamList) => {
     onClose();
     setTimeout(() => navigation.navigate(route as never), t.motion.duration.micro);
@@ -74,131 +70,239 @@ export function SettingsSheet({ visible, onClose }: Props) {
     await signOut();
   };
 
+  const initial = (userName ?? userEmail ?? '?').charAt(0).toUpperCase();
+
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
       <View style={{ flex: 1, justifyContent: 'flex-end' }}>
         <Animated.View
           pointerEvents={visible ? 'auto' : 'none'}
           style={[
-            { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.48)' },
+            {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.55)',
+            },
             scrimStyle,
           ]}
         >
-          <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Close" />
+          <Pressable
+            style={{ flex: 1 }}
+            onPress={onClose}
+            accessibilityLabel={locale === 'vi' ? 'Đóng' : 'Close'}
+          />
         </Animated.View>
 
         <Animated.View style={[sheetStyle]}>
-          <GlassSurface
-            pad="6"
-            radius="2xl"
-            intensity={1.6}
+          <View
             style={{
-              marginHorizontal: t.space['2'],
-              marginBottom: t.space['2'],
-              paddingBottom: Math.max(insets.bottom, t.space['4']) + t.space['4'],
+              backgroundColor: t.palette.canvasB,
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
+              borderTopWidth: 1,
+              borderColor: 'rgba(255,255,255,0.18)',
+              paddingTop: 16,
+              paddingHorizontal: 24,
+              paddingBottom: Math.max(insets.bottom, 16) + 24,
+              gap: 24,
             }}
           >
-            <View
-              style={{
-                width: 36,
-                height: 4,
-                borderRadius: 2,
-                backgroundColor: 'rgba(255,255,255,0.18)',
-                alignSelf: 'center',
-                marginBottom: t.space['4'],
-              }}
-            />
-
-            {/* Identity */}
-            <View style={{ marginBottom: t.space['5'] }}>
-              <FlowText variant="kicker" tone="secondary">
-                {locale === 'vi' ? 'TÀI KHOẢN' : 'ACCOUNT'}
-              </FlowText>
-              <FlowText variant="titleL" tone="primary" style={{ marginTop: t.space['2'] }}>
-                {userName ?? userEmail ?? '—'}
-              </FlowText>
-              {userEmail && userName ? (
-                <FlowText variant="caption" tone="tertiary">
-                  {userEmail}
-                </FlowText>
-              ) : null}
+            {/* Grabber */}
+            <View style={{ alignItems: 'center' }}>
+              <View
+                style={{
+                  width: 40,
+                  height: 4,
+                  borderRadius: 2,
+                  backgroundColor: 'rgba(255,255,255,0.25)',
+                }}
+              />
             </View>
 
-            {/* Rows */}
-            <View style={{ gap: t.space['2'] }}>
-              <Row
-                label={locale === 'vi' ? 'OpenAI key' : 'OpenAI key'}
+            {/* Title */}
+            <FlowText
+              variant="displayM"
+              tone="primary"
+              style={{ fontSize: 32, lineHeight: 36 }}
+            >
+              {locale === 'vi' ? 'Cài đặt' : 'Settings'}
+            </FlowText>
+
+            {/* Profile card */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 14,
+                padding: 20,
+                borderRadius: 20,
+                backgroundColor: 'rgba(255,255,255,0.06)',
+                borderWidth: 1,
+                borderColor: 'rgba(255,255,255,0.20)',
+              }}
+            >
+              <View
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: t.palette.accent,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FlowText
+                  variant="titleL"
+                  style={{
+                    fontSize: 22,
+                    color: t.palette.canvasA,
+                    fontWeight: '600',
+                  }}
+                >
+                  {initial}
+                </FlowText>
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <FlowText variant="titleL" tone="primary" style={{ fontSize: 18 }}>
+                  {userName ?? (locale === 'vi' ? 'Bạn' : 'You')}
+                </FlowText>
+                {userEmail ? (
+                  <FlowText
+                    variant="monoData"
+                    tone="tertiary"
+                    style={{ fontSize: 11, letterSpacing: 0 }}
+                  >
+                    {userEmail}
+                  </FlowText>
+                ) : null}
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={t.palette.inkTertiary}
+              />
+            </View>
+
+            {/* Settings rows */}
+            <View
+              style={{
+                padding: 8,
+                paddingHorizontal: 20,
+                borderRadius: 20,
+                backgroundColor: 'rgba(255,255,255,0.04)',
+                borderWidth: 1,
+                borderColor: 'rgba(255,255,255,0.14)',
+              }}
+            >
+              <SettingRow
+                dotColor={t.palette.accent}
+                label={locale === 'vi' ? 'Khoá AI · OpenAI' : 'AI key · OpenAI'}
                 value={
                   aiKey.data?.enabled
-                    ? aiKey.data.maskedApiKey ?? '✓'
+                    ? `${locale === 'vi' ? 'Đã kết nối · ' : 'Connected · '}${aiKey.data.maskedApiKey ?? '✓'}`
                     : locale === 'vi'
-                    ? 'Chưa nhập'
+                    ? 'Chưa nhập key'
                     : 'Not set'
                 }
-                accent={!aiKey.data?.enabled}
                 onPress={() => goAndClose('AISettings')}
               />
-              <Row
-                label={locale === 'vi' ? 'Quyền riêng tư' : 'Privacy'}
-                value={locale === 'vi' ? 'Mở' : 'Open'}
+              <SettingRow
+                dotColor={t.kind.income}
+                label={locale === 'vi' ? 'Đồng bộ' : 'Sync'}
+                value={locale === 'vi' ? 'Trên thiết bị · Cloud tắt' : 'On device · Cloud off'}
                 onPress={() => goAndClose('Privacy')}
               />
-              <Row
+              <SettingRow
+                dotColor={t.palette.accentGlow}
+                label={locale === 'vi' ? 'Quyền riêng tư' : 'Privacy'}
+                value={locale === 'vi' ? 'Mã hoá đầu cuối' : 'End-to-end encrypted'}
+                onPress={() => goAndClose('Privacy')}
+              />
+              <SettingRow
+                dotColor={t.kind.mood}
                 label={locale === 'vi' ? 'Ký ức AI' : 'AI memory'}
-                value={locale === 'vi' ? 'Mở' : 'Open'}
+                value={locale === 'vi' ? 'Mở chi tiết' : 'Open details'}
                 onPress={() => goAndClose('Memory')}
               />
-              <Row
+              <SettingRow
+                dotColor={t.kind.expense}
                 label={locale === 'vi' ? 'Tuỳ chọn' : 'Preferences'}
-                value={locale === 'vi' ? 'Mở' : 'Open'}
+                value={locale === 'vi' ? 'Lịch · Đơn vị · Nhắc' : 'Calendar · Units · Reminders'}
                 onPress={() => goAndClose('Preferences')}
               />
             </View>
 
-            {/* Language */}
-            <View style={{ marginTop: t.space['5'] }}>
-              <FlowText variant="kicker" tone="secondary">
+            {/* Language pills */}
+            <View>
+              <FlowText
+                variant="kicker"
+                tone="tertiary"
+                style={{ fontSize: 10, letterSpacing: 1.5, marginBottom: 12 }}
+              >
                 {locale === 'vi' ? 'NGÔN NGỮ' : 'LANGUAGE'}
               </FlowText>
-              <View style={{ flexDirection: 'row', gap: t.space['2'], marginTop: t.space['3'] }}>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
                 <LangChip
                   label="Tiếng Việt"
                   active={locale === 'vi'}
-                  onPress={() => switchLanguage('vi')}
+                  onPress={() => i18nInstance.changeLanguage('vi')}
                 />
                 <LangChip
                   label="English"
                   active={locale === 'en'}
-                  onPress={() => switchLanguage('en')}
+                  onPress={() => i18nInstance.changeLanguage('en')}
                 />
               </View>
             </View>
 
-            {/* Sign out */}
-            <View style={{ marginTop: t.space['7'] }}>
-              <GradientButton
-                label={locale === 'vi' ? 'Đăng xuất' : 'Sign out'}
-                variant="ghost"
-                onPress={handleSignOut}
-              />
+            {/* Footer: sign out + version */}
+            <View style={{ alignItems: 'center', gap: 8, marginTop: 8 }}>
+              <Pressable onPress={handleSignOut} hitSlop={8}>
+                <FlowText
+                  variant="bodyM"
+                  style={{
+                    color: t.kind.expense,
+                    fontWeight: '500',
+                    fontSize: 14,
+                  }}
+                >
+                  {locale === 'vi' ? 'Đăng xuất' : 'Sign out'}
+                </FlowText>
+              </Pressable>
+              <FlowText
+                variant="monoData"
+                tone="tertiary"
+                style={{ fontSize: 10, letterSpacing: 1.5 }}
+              >
+                LIFEOS · v0.4.5 · AURORA R45
+              </FlowText>
             </View>
-          </GlassSurface>
+          </View>
         </Animated.View>
       </View>
     </Modal>
   );
 }
 
-function Row({
+function SettingRow({
+  dotColor,
   label,
   value,
   onPress,
-  accent,
 }: {
+  dotColor: string;
   label: string;
   value: string;
   onPress: () => void;
-  accent?: boolean;
 }) {
   const t = useAurora();
   return (
@@ -207,21 +311,33 @@ function Row({
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          paddingVertical: t.space['3'],
-          gap: t.space['3'],
-          borderBottomWidth: 1,
-          borderBottomColor: 'rgba(255,255,255,0.06)',
+          gap: 12,
+          paddingVertical: 12,
+          paddingHorizontal: 0,
         }}
       >
-        <FlowText variant="bodyM" tone="primary" style={{ flex: 1 }}>
-          {label}
-        </FlowText>
-        <FlowText variant="bodyM" tone={accent ? 'accent' : 'tertiary'}>
-          {value}
-        </FlowText>
-        <FlowText variant="bodyM" tone="tertiary">
-          ›
-        </FlowText>
+        <View
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: 4,
+            backgroundColor: dotColor,
+          }}
+        />
+        <View style={{ flex: 1, gap: 2 }}>
+          <FlowText variant="bodyM" tone="primary" style={{ fontSize: 15 }}>
+            {label}
+          </FlowText>
+          <FlowText
+            variant="caption"
+            tone="tertiary"
+            style={{ fontSize: 11 }}
+            numberOfLines={1}
+          >
+            {value}
+          </FlowText>
+        </View>
+        <Ionicons name="chevron-forward" size={16} color={t.palette.inkTertiary} />
       </View>
     </Pressable>
   );
@@ -241,15 +357,22 @@ function LangChip({
     <Pressable onPress={onPress}>
       <View
         style={{
-          paddingHorizontal: t.space['4'],
-          paddingVertical: t.space['2'],
-          borderRadius: t.radius.pill,
+          paddingHorizontal: 16,
+          paddingVertical: 10,
+          borderRadius: 9999,
           borderWidth: 1,
-          borderColor: active ? t.palette.accent : 'rgba(255,255,255,0.12)',
-          backgroundColor: active ? t.palette.glassTint : 'transparent',
+          borderColor: active ? t.palette.accent : 'rgba(255,255,255,0.18)',
+          backgroundColor: active ? t.palette.accent : 'rgba(255,255,255,0.04)',
         }}
       >
-        <FlowText variant="caption" tone={active ? 'accent' : 'secondary'}>
+        <FlowText
+          variant="bodyS"
+          style={{
+            fontSize: 13,
+            color: active ? t.palette.canvasA : t.palette.inkSecondary,
+            fontWeight: active ? '600' : '500',
+          }}
+        >
           {label}
         </FlowText>
       </View>

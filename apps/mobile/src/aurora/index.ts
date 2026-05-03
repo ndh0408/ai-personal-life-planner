@@ -8,4 +8,5 @@ export { OrbDial } from './OrbDial';
 export { AuroraSparkline } from './AuroraSparkline';
 export { AuroraScreen } from './AuroraScreen';
 export { AuroraHeader } from './AuroraHeader';
+export { CaptureSheet } from './CaptureSheet';
 export { SettingsSheet } from './SettingsSheet';

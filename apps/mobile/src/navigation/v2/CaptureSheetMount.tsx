@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { CaptureSheetV2, useCapture } from '../../components/v2';
+import { useCapture } from '../../components/v2';
+import { CaptureSheet } from '../../aurora';
 import type { CaptureKind as TaxonomyKind } from '@lifeos/taxonomy';
 import { classifyCapture } from '../../intelligence/capture-classifier';
 import {
@@ -151,7 +152,7 @@ export function CaptureSheetMount() {
   };
 
   return (
-    <CaptureSheetV2
+    <CaptureSheet
       visible={capture.visible}
       onClose={capture.close}
       initialText={capture.initialText}
