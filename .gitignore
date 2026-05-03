@@ -92,3 +92,7 @@ builds/
 *.apk
 *.aab
 *.ipa
+
+# Round 43: release signing keystores must NEVER be in git.
+apps/mobile/android/app/*.keystore
+!apps/mobile/android/app/debug.keystore
