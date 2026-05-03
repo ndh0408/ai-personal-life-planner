@@ -1,72 +1,74 @@
 /**
- * Aurora palette — dawn-to-dusk dynamic.
+ * Aurora palette — muted midnight indigo with champagne pearl accent.
  *
  * The canvas is a *living* mesh gradient that morphs by hour-of-day. Five
- * named moments anchor the lerp; everything in between interpolates
- * linearly. Components reading `useAuroraScheme()` get the current
- * resolved colors — they never reach into raw hex below.
+ * named moments anchor the lerp; everything in between interpolates linearly.
+ * Components reading `useAuroraScheme()` get the resolved colors — they never
+ * reach into raw hex below.
  *
- * Design intent: ditch warm-dark luxury (Round 17-41). Aurora is futuristic,
- * reflective, breathing — closer to Apple Vision Pro / Linear / Arc than to
- * Editorial Calm.
+ * Design intent (R45): premium, restrained, sophisticated. All canvases stay
+ * in the indigo–violet family (no candy coral / neon teal). One accent —
+ * champagne pearl (#E8D5B2) — carries active states across the whole app,
+ * with soft lavender as the ambient companion. Status & kind hues are muted
+ * to magazine-like saturation.
  */
 
 /** Five anchor moments. Linear interp between them by minutes-of-day. */
 export const moments = {
-  /** 22:00–05:00. Deep indigo, silver edge — quiet hours. */
+  /** 22:00–05:00. Deepest midnight — pearl over silver-lavender. */
   night: {
-    canvasA: '#0A0B1F',
-    canvasB: '#0F0A24',
-    glassTint: 'rgba(180, 200, 255, 0.06)',
-    accent: '#C9D2F0',
-    accentGlow: '#9FA8D6',
-    inkPrimary: '#F0F2FA',
-    inkSecondary: '#9CA3C5',
-    inkTertiary: '#5C6588',
+    canvasA: '#0E0B1F',
+    canvasB: '#15113A',
+    glassTint: 'rgba(255, 255, 255, 0.06)',
+    accent: '#E8D5B2',
+    accentGlow: '#B5A8E0',
+    inkPrimary: '#F5F1E8',
+    inkSecondary: '#D5CFC0',
+    inkTertiary: '#8D88A6',
   },
-  /** 05:00–09:00. Coral sunrise, warm lift. */
+  /** 05:00–09:00. Indigo wash with first hint of warmth. */
   dawn: {
-    canvasA: '#1A0E2E',
-    canvasB: '#3A1A3E',
-    glassTint: 'rgba(255, 180, 160, 0.10)',
-    accent: '#FF8E72',
-    accentGlow: '#FFB89E',
-    inkPrimary: '#FFF4ED',
-    inkSecondary: '#D9B5A8',
-    inkTertiary: '#8C6F66',
+    canvasA: '#1A1740',
+    canvasB: '#322856',
+    glassTint: 'rgba(255, 255, 255, 0.07)',
+    accent: '#E8D5B2',
+    accentGlow: '#F0DCB8',
+    inkPrimary: '#F5F1E8',
+    inkSecondary: '#D5CFC0',
+    inkTertiary: '#8D88A6',
   },
-  /** 09:00–14:00. Crystalline midday — turquoise clarity. */
+  /** 09:00–14:00. Indigo with cool clarity, brightest glass. */
   noon: {
-    canvasA: '#0E2336',
-    canvasB: '#16384F',
-    glassTint: 'rgba(140, 220, 230, 0.10)',
-    accent: '#5DDDD5',
-    accentGlow: '#9FF0EA',
-    inkPrimary: '#EFF8FA',
-    inkSecondary: '#A5C4CC',
-    inkTertiary: '#5A7A85',
+    canvasA: '#1F1B4D',
+    canvasB: '#252148',
+    glassTint: 'rgba(255, 255, 255, 0.09)',
+    accent: '#E8D5B2',
+    accentGlow: '#B5A8E0',
+    inkPrimary: '#F5F1E8',
+    inkSecondary: '#D5CFC0',
+    inkTertiary: '#8D88A6',
   },
-  /** 14:00–19:00. Golden afternoon, warm violet shadow. */
+  /** 14:00–19:00. Plum afternoon — warmer pearl with gold halo. */
   afternoon: {
-    canvasA: '#1F1538',
-    canvasB: '#2D1A45',
-    glassTint: 'rgba(255, 200, 160, 0.10)',
-    accent: '#E5B07F',
-    accentGlow: '#F5D4A5',
-    inkPrimary: '#FBF3E8',
-    inkSecondary: '#C9B7A0',
-    inkTertiary: '#7A6B5A',
+    canvasA: '#1F1B40',
+    canvasB: '#322856',
+    glassTint: 'rgba(255, 255, 255, 0.07)',
+    accent: '#E8D5B2',
+    accentGlow: '#D4B068',
+    inkPrimary: '#F5F1E8',
+    inkSecondary: '#D5CFC0',
+    inkTertiary: '#8D88A6',
   },
   /** 19:00–22:00. Lavender dusk, contemplative. */
   dusk: {
-    canvasA: '#170E2F',
-    canvasB: '#2A1652',
-    glassTint: 'rgba(180, 150, 255, 0.10)',
-    accent: '#B89AF5',
-    accentGlow: '#D6C2FF',
-    inkPrimary: '#F4F0FF',
-    inkSecondary: '#B8A8D6',
-    inkTertiary: '#6B5F8A',
+    canvasA: '#1A1740',
+    canvasB: '#251F4D',
+    glassTint: 'rgba(255, 255, 255, 0.08)',
+    accent: '#B5A8E0',
+    accentGlow: '#E8D5B2',
+    inkPrimary: '#F5F1E8',
+    inkSecondary: '#D5CFC0',
+    inkTertiary: '#8D88A6',
   },
 } as const;
 
@@ -83,24 +85,24 @@ export function momentForHour(h: number): Moment {
   return 'night';
 }
 
-/** Status colors. Stable across moments — readability matters more than mood. */
+/** Status colors. Muted, magazine-like — no candy reds or neon greens. */
 export const status = {
-  success: '#7FE8A4',
-  warning: '#F5C566',
-  danger: '#FF8579',
-  info: '#7DB7FF',
+  success: '#8FB3A3',
+  warning: '#D4B068',
+  danger: '#C49AAB',
+  info: '#7B9DB8',
 } as const;
 
-/** Capture-kind hues — stable across moments so the badge color never shifts. */
+/** Capture-kind hues — muted family that sits next to the pearl accent. */
 export const kind = {
-  expense: '#FF8579',
-  income: '#7FE8A4',
-  task: '#7DB7FF',
-  meal: '#A5E89F',
-  sleep: '#B89AF5',
-  mood: '#F5C566',
-  note: '#C9D2F0',
-  idea: '#FFB89E',
-  event: '#5DDDD5',
-  unknown: '#7C829A',
+  expense: '#C49AAB',
+  income: '#8FB3A3',
+  task: '#7B9DB8',
+  meal: '#8FB3A3',
+  sleep: '#B5A8E0',
+  mood: '#D4B068',
+  note: '#E8D5B2',
+  idea: '#E8D5B2',
+  event: '#B5A8E0',
+  unknown: '#8D88A6',
 } as const;
