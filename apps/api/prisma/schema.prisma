@@ -184,7 +184,33 @@ model User {
   behaviorSummary UserBehaviorSummary?
   events          EventLog[]
   memories        AssistantMemory[]
+  subscription    Subscription?
 
+  @@index([status])
+}
+
+// ---------- Subscriptions / billing (Round 41) ---------------------------------
+//
+// Stored as a 1:1 row per user. Tier + status come from the active billing
+// provider's webhook (App Store / Play / Stripe). LIFETIME is special: no
+// expiry, oneTime purchase tracked separately.
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  tier                 String    @default("FREE")
+  status               String    @default("NONE")
+  provider             String    @default("none")
+  providerCustomerId   String?
+  providerSubscriptionId String?
+  currentPeriodEnd     DateTime?
+  autoRenew            Boolean   @default(false)
+  lifetimePurchasedAt  DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tier])
   @@index([status])
 }
 

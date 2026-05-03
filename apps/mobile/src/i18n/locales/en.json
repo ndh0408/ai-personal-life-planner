@@ -128,6 +128,13 @@
     "assistant": "Assistant",
     "settings": "Settings"
   },
+  "tabsV2": {
+    "today": "Today",
+    "plan": "Plan",
+    "money": "Money",
+    "health": "Body",
+    "mind": "Mind"
+  },
   "home": {
     "kicker": "Today",
     "greeting": "Hi {{name}}",

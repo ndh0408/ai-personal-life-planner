@@ -1,6 +1,7 @@
 package com.lifeos.ai
 
 import android.os.Bundle
+import androidx.core.view.WindowCompat
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -27,6 +28,10 @@ class MainActivity : ReactActivity() {
     // ReactActivity calls super.onCreate(); skipping this crashes the JS coroutine
     // the first time we ask for permissions.
     HealthConnectPermissionDelegate.setPermissionDelegate(this)
+    // Round 41: edge-to-edge. Pair with the transparent statusBarColor /
+    // navigationBarColor in styles.xml so the canvas extends behind both
+    // bars. RN's safe-area-context provides the inset padding to JS.
+    WindowCompat.setDecorFitsSystemWindows(window, false)
     super.onCreate(savedInstanceState)
   }
 }

@@ -85,3 +85,10 @@ apps/mobile/android/.gradle/
 apps/mobile/android/build/
 apps/mobile/android/app/build/
 apps/mobile/android/local.properties
+
+# Local build outputs (APKs / IPAs / aabs). These are large and reproducible
+# from source — push them to GitHub Releases or rsync to huy-server, never git.
+builds/
+*.apk
+*.aab
+*.ipa

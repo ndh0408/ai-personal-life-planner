@@ -5,7 +5,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuthStore } from '../store/auth.store';
 import { AuthStack } from './AuthStack';
 import { OnboardingStack } from './OnboardingStack';
-import { MainTabs } from './MainTabs';
+import { MainTabsV2 } from './v2/MainTabsV2';
+import { CaptureProvider } from '../components/v2';
+import { CaptureSheetMount } from './v2/CaptureSheetMount';
 import { AISettingsScreen } from '../screens/main/AISettingsScreen';
 import { SmartEntryScreen } from '../screens/main/SmartEntryScreen';
 import { TasksScreen } from '../screens/main/TasksScreen';
@@ -41,7 +43,7 @@ function MainStack() {
         animation: 'slide_from_right',
       }}
     >
-      <Stack.Screen name="MainTabs" component={MainTabs} />
+      <Stack.Screen name="MainTabs" component={MainTabsV2} />
       <Stack.Screen
         name="AISettings"
         component={AISettingsScreen}
@@ -75,13 +77,16 @@ export function RootNavigator() {
 
   return (
     <NavigationContainer theme={navTheme}>
-      {stage === 'unauthenticated' ? (
-        <AuthStack />
-      ) : stage === 'onboarding' ? (
-        <OnboardingStack />
-      ) : (
-        <MainStack />
-      )}
+      <CaptureProvider>
+        {stage === 'unauthenticated' ? (
+          <AuthStack />
+        ) : stage === 'onboarding' ? (
+          <OnboardingStack />
+        ) : (
+          <MainStack />
+        )}
+        <CaptureSheetMount />
+      </CaptureProvider>
     </NavigationContainer>
   );
 }

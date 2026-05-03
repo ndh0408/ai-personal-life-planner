@@ -128,6 +128,13 @@
     "assistant": "Trợ lý",
     "settings": "Cài đặt"
   },
+  "tabsV2": {
+    "today": "Hôm nay",
+    "plan": "Kế hoạch",
+    "money": "Tiền",
+    "health": "Cơ thể",
+    "mind": "Nội tâm"
+  },
   "home": {
     "kicker": "Hôm nay",
     "greeting": "Chào {{name}}",

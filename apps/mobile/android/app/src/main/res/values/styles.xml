@@ -7,6 +7,12 @@
              interval between SplashScreen dismissal and the first React
              paint is the same cream as the splash itself — no flash. -->
         <item name="android:windowBackground">@color/splashBackground</item>
+        <!-- Round 41: edge-to-edge. Status + nav bars become transparent so
+             the warm-dark canvas extends behind them. ScreenContainer adds
+             safe-area padding so content stays readable. -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
     <!-- Note (round 33): a custom Theme.SplashScreen style would need the
