@@ -8,13 +8,21 @@ it in the right place.
 > Curious about the *why*? Start with [docs/PRODUCT_SPEC.md](./docs/PRODUCT_SPEC.md)
 > and [docs/UX_PRINCIPLES.md](./docs/UX_PRINCIPLES.md).
 
-Currently at **Round 28 — production hardened**. Builds on round 18's
-intelligence core with hygiene/security baseline (R19), privacy-aware
-LifeSnapshot (R20), 3-tier capture routing + correction memory (R21),
-atomic undo (R22), Home UX rewrite + Privacy + DevPanel (R23), assistant
-streaming (R24), CI + smoke (R25), real mobile streaming client with
-react-native-sse (R26), 127-test suite (R27), and orchestrator-grade
-healthchecks + secrets rotation playbook (R28).
+Currently at **Round 45 — Aurora redesign**. Five glass screens
+(Today / Plan / Money / Health / Mind) over a *muted midnight indigo*
+mesh-gradient canvas with one restrained accent — champagne pearl
+(`#E8D5B2`). Lemniscate ∞ logo + serif headlines + Inter body +
+JetBrains Mono numerics. Pill tab bar with icon+label tabs + floating
+capture FAB. See [docs/AURORA_R45.md](./docs/AURORA_R45.md) for the
+design system spec and [docs/aurora-figma/](./docs/aurora-figma/) for
+the source PNG exports of all 7 screens (5 main + Capture sheet +
+Settings sheet).
+
+Built on R0–R44 foundations: bare RN 0.74 + NestJS/Prisma + per-user
+OpenAI key (AES-256-GCM at rest), Smart Capture parser →
+`/capture/parse` + `/capture/confirm`, atomic undo, dashboard summary
+endpoint, planner + journal services for sleep/mood/meals/tasks, and
+on-device taxonomy classifier with correction memory.
 
 ## Stack
 
