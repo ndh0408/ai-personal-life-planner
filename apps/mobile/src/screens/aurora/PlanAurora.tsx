@@ -1,16 +1,29 @@
-import React, { useMemo } from 'react';
-import { View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { AuroraScreen, GlassSurface, FlowText, GradientButton, useAurora } from '../../aurora';
+import {
+  AuroraScreen,
+  AuroraHeader,
+  GlassSurface,
+  FlowText,
+  GradientButton,
+  SettingsSheet,
+  useAurora,
+} from '../../aurora';
 import { useCapture } from '../../components/v2';
 import { useDashboardSummary } from '../../hooks/useDashboard';
-import { Pressable } from 'react-native';
-import { useTodayPlan, useGenerateTodayPlan, useSetItemStatus } from '../../hooks/usePlanner';
+import {
+  useTodayPlan,
+  useGenerateTodayPlan,
+  useSetItemStatus,
+} from '../../hooks/usePlanner';
+
+type Filter = 'today' | 'week' | 'month';
 
 /**
- * PlanAurora — uses useTodayPlan() (existing v1 hook backed by
- * /api/planner/today) plus dashboard.nextTask for the next-up CTA.
- * Empty state offers "AI generate plan" which calls /api/planner/today/generate.
+ * PlanAurora — Pencil R45 layout. Header + filter pills + timeline list
+ * grouped by time block. Tasks come from /api/planner/today (existing
+ * hook). Empty state offers AI generate.
  */
 export function PlanAurora() {
   const t = useAurora();
@@ -21,222 +34,257 @@ export function PlanAurora() {
   const plan = useTodayPlan();
   const generate = useGenerateTodayPlan();
   const setStatus = useSetItemStatus();
-  const days = useMemo(() => buildDayStrip(7), []);
-  const todayKey = new Date().toDateString();
+  const [filter, setFilter] = useState<Filter>('today');
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const planSummary = dash.data?.todayPlan;
-  const nextTask = dash.data?.nextTask;
+  const items = plan.data?.items ?? [];
+  const blocks = useMemo(() => groupByTimeBlock(items), [items]);
+  const doneCount = items.filter((i) => i.status === 'COMPLETED').length;
+  const totalCount = items.length;
 
   return (
     <AuroraScreen>
-      <View>
-        <FlowText variant="kicker" tone="secondary">
-          {locale === 'vi' ? 'KẾ HOẠCH' : 'PLAN'}
-        </FlowText>
-        <FlowText variant="hero" tone="primary" style={{ marginTop: t.space['2'] }}>
-          {locale === 'vi' ? 'Hôm nay' : 'Today'}
+      <AuroraHeader
+        brand={locale === 'vi' ? 'Kế hoạch' : 'Plan'}
+        iconName="options-outline"
+        onIconPress={() => setSettingsOpen(true)}
+        accessibilityLabel={locale === 'vi' ? 'Tùy chọn' : 'Filter'}
+      />
+
+      {/* Eyebrow + serif hero */}
+      <View style={{ gap: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: t.kind.mood,
+            }}
+          />
+          <FlowText
+            variant="kicker"
+            tone="secondary"
+            style={{ fontSize: 11, letterSpacing: 1.5 }}
+          >
+            {locale === 'vi'
+              ? `${totalCount} VIỆC · ${doneCount} ĐÃ XONG`
+              : `${totalCount} TASKS · ${doneCount} DONE`}
+          </FlowText>
+        </View>
+        <FlowText variant="displayM" tone="primary" style={{ lineHeight: 38 }}>
+          {totalCount === 0
+            ? locale === 'vi'
+              ? 'Chưa có việc nào.\nLên kế hoạch nhé.'
+              : 'Nothing planned.\nShape today.'
+            : locale === 'vi'
+            ? 'Tập trung\nvào ba việc lớn.'
+            : 'Focus on three\nbig things.'}
         </FlowText>
       </View>
 
-      {/* Day strip */}
-      <View style={{ flexDirection: 'row', gap: t.space['2'] }}>
-        {days.map((d) => {
-          const isToday = d.date.toDateString() === todayKey;
+      {/* Filter pills */}
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {(['today', 'week', 'month'] as Filter[]).map((f) => {
+          const active = f === filter;
+          const label = filterLabel(f, locale);
           return (
-            <GlassSurface
-              key={d.iso}
-              pad="3"
-              radius="lg"
-              intensity={isToday ? 1.6 : 0.8}
-              style={{ flex: 1, alignItems: 'center' }}
+            <Pressable
+              key={f}
+              onPress={() => setFilter(f)}
+              style={{
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 9999,
+                backgroundColor: active ? t.palette.accent : 'rgba(255,255,255,0.08)',
+                borderWidth: 1,
+                borderColor: active ? t.palette.accent : 'rgba(255,255,255,0.14)',
+              }}
             >
-              <FlowText variant="caption" tone={isToday ? 'accent' : 'tertiary'}>
-                {d.dow}
-              </FlowText>
               <FlowText
-                variant="titleM"
-                tone={isToday ? 'primary' : 'secondary'}
-                style={{ marginTop: 2, fontVariant: ['tabular-nums'] }}
+                variant="bodyS"
+                style={{
+                  fontSize: 13,
+                  fontWeight: active ? '600' : '500',
+                  color: active ? t.palette.canvasA : t.palette.inkSecondary,
+                }}
               >
-                {d.day}
+                {label}
               </FlowText>
-            </GlassSurface>
+            </Pressable>
           );
         })}
       </View>
 
-      {/* Plan progress */}
-      {planSummary ? (
-        <GlassSurface pad="6" radius="2xl" intensity={1.2}>
-          <FlowText variant="kicker" tone="secondary">
-            {locale === 'vi' ? 'TIẾN ĐỘ HÔM NAY' : "TODAY'S PROGRESS"}
-          </FlowText>
+      {/* Plan progress bar (when items exist) */}
+      {planSummary && planSummary.totalItems > 0 ? (
+        <GlassSurface pad="5" radius="xl" intensity={1.0}>
           <View
             style={{
               flexDirection: 'row',
-              alignItems: 'baseline',
-              gap: t.space['2'],
-              marginTop: t.space['3'],
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            <FlowText
-              variant="hero"
-              tone="primary"
-              style={{ fontVariant: ['tabular-nums'] }}
-            >
-              {planSummary.doneItems}
+            <FlowText variant="kicker" tone="tertiary">
+              {locale === 'vi' ? 'TIẾN ĐỘ' : 'PROGRESS'}
             </FlowText>
-            <FlowText variant="titleL" tone="tertiary">
-              / {planSummary.totalItems}
+            <FlowText
+              variant="monoData"
+              tone="primary"
+              style={{ fontSize: 12, letterSpacing: 1 }}
+            >
+              {planSummary.doneItems}/{planSummary.totalItems}
             </FlowText>
           </View>
-          <FlowText
-            variant="bodyM"
-            tone="secondary"
-            style={{ marginTop: t.space['2'] }}
+          <View
+            style={{
+              marginTop: t.space['3'],
+              height: 4,
+              backgroundColor: 'rgba(255,255,255,0.10)',
+              borderRadius: 2,
+              overflow: 'hidden',
+            }}
           >
-            {planSummary.totalItems === 0
-              ? locale === 'vi'
-                ? 'Chưa có việc nào hôm nay.'
-                : 'No tasks for today yet.'
-              : planSummary.aiGenerated
-              ? locale === 'vi'
-                ? 'AI đã tạo kế hoạch dựa trên nhịp của bạn.'
-                : 'AI generated this plan from your rhythm.'
-              : locale === 'vi'
-              ? 'Bạn tự lên kế hoạch.'
-              : 'Plan made by you.'}
-          </FlowText>
-
-          {/* Progress bar */}
-          {planSummary.totalItems > 0 ? (
             <View
               style={{
-                marginTop: t.space['4'],
+                width: `${
+                  (planSummary.doneItems / Math.max(1, planSummary.totalItems)) * 100
+                }%`,
                 height: 4,
-                backgroundColor: 'rgba(255,255,255,0.08)',
+                backgroundColor: t.palette.accent,
                 borderRadius: 2,
-                overflow: 'hidden',
               }}
-            >
-              <View
-                style={{
-                  width: `${(planSummary.doneItems / planSummary.totalItems) * 100}%`,
-                  height: 4,
-                  backgroundColor: t.palette.accent,
-                  borderRadius: 2,
-                }}
-              />
-            </View>
-          ) : null}
-
-          {planSummary.totalItems === 0 ? (
-            <View style={{ marginTop: t.space['5'] }}>
-              <GradientButton
-                label={
-                  generate.isPending
-                    ? locale === 'vi'
-                      ? 'Đang tạo…'
-                      : 'Generating…'
-                    : locale === 'vi'
-                    ? 'AI lên kế hoạch giúp tôi'
-                    : 'Let AI plan my day'
-                }
-                onPress={() => generate.mutate()}
-                disabled={generate.isPending}
-              />
-            </View>
-          ) : null}
+            />
+          </View>
         </GlassSurface>
       ) : null}
 
-      {/* Next task highlight */}
-      {nextTask ? (
-        <GlassSurface pad="5" radius="xl">
-          <FlowText variant="kicker" tone="accent">
-            {locale === 'vi' ? 'VIỆC TIẾP THEO' : 'NEXT UP'}
-          </FlowText>
-          <FlowText variant="titleM" tone="primary" style={{ marginTop: t.space['2'] }}>
-            {nextTask.title}
-          </FlowText>
-          {nextTask.dueAt ? (
-            <FlowText variant="caption" tone="secondary" style={{ marginTop: t.space['1'] }}>
-              {locale === 'vi' ? 'Hạn' : 'Due'}: {formatDueLabel(nextTask.dueAt, locale)}
-            </FlowText>
-          ) : null}
-          <FlowText variant="caption" tone="tertiary" style={{ marginTop: t.space['1'] }}>
-            {locale === 'vi'
-              ? `Mức độ: ${priorityLabel(nextTask.priority, locale)}`
-              : `Priority: ${priorityLabel(nextTask.priority, locale)}`}
-          </FlowText>
+      {/* Timeline list */}
+      {blocks.length > 0 ? (
+        <GlassSurface pad="4" radius="xl" intensity={0.9}>
+          <View style={{ gap: 0 }}>
+            {blocks.map((b, bi) => (
+              <View key={bi}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    paddingHorizontal: 8,
+                    paddingTop: bi === 0 ? 8 : 16,
+                    paddingBottom: 8,
+                  }}
+                >
+                  <FlowText
+                    variant="monoData"
+                    tone="tertiary"
+                    style={{ fontSize: 11, letterSpacing: 1.2 }}
+                  >
+                    {b.label}
+                  </FlowText>
+                  <View
+                    style={{
+                      flex: 1,
+                      height: 1,
+                      backgroundColor: 'rgba(255,255,255,0.10)',
+                    }}
+                  />
+                </View>
+                {b.items.map((item, ii) => {
+                  const isDone = item.status === 'COMPLETED';
+                  const dotColor = [
+                    t.palette.accent,
+                    t.kind.task,
+                    t.kind.expense,
+                    t.kind.mood,
+                  ][ii % 4];
+                  return (
+                    <Pressable
+                      key={item.id}
+                      onPress={() =>
+                        setStatus.mutate({
+                          id: item.id,
+                          status: isDone ? 'PENDING' : 'COMPLETED',
+                        })
+                      }
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 12,
+                        paddingVertical: 12,
+                        paddingHorizontal: 8,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: isDone ? 'rgba(255,255,255,0.18)' : dotColor,
+                        }}
+                      />
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <FlowText
+                          variant="bodyM"
+                          tone={isDone ? 'tertiary' : 'primary'}
+                          numberOfLines={1}
+                          style={
+                            isDone
+                              ? { textDecorationLine: 'line-through' as const }
+                              : undefined
+                          }
+                        >
+                          {item.title}
+                        </FlowText>
+                        <FlowText
+                          variant="caption"
+                          tone="tertiary"
+                          style={{ fontSize: 11 }}
+                        >
+                          {formatTimeRange(item.startAt, item.endAt) ?? ' '}
+                        </FlowText>
+                      </View>
+                      <FlowText variant="caption" tone="tertiary">
+                        ›
+                      </FlowText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ))}
+          </View>
         </GlassSurface>
       ) : (
-        <GlassSurface pad="5" radius="xl">
-          <FlowText variant="bodyM" tone="secondary">
-            {locale === 'vi'
-              ? 'Không có việc gấp. Tận hưởng hiện tại.'
-              : 'No urgent task. Enjoy the moment.'}
+        <GlassSurface pad="6" radius="2xl" intensity={1.0}>
+          <FlowText variant="kicker" tone="accent">
+            {locale === 'vi' ? 'CHƯA CÓ KẾ HOẠCH' : 'NO PLAN YET'}
           </FlowText>
+          <FlowText variant="titleM" tone="primary" style={{ marginTop: t.space['2'] }}>
+            {locale === 'vi'
+              ? 'Để AI gợi ý 3 việc lớn cho hôm nay?'
+              : 'Let AI shape 3 big things for today?'}
+          </FlowText>
+          <View style={{ marginTop: t.space['4'] }}>
+            <GradientButton
+              label={
+                generate.isPending
+                  ? locale === 'vi'
+                    ? 'Đang tạo…'
+                    : 'Generating…'
+                  : locale === 'vi'
+                  ? 'AI lên kế hoạch'
+                  : 'AI plan my day'
+              }
+              onPress={() => generate.mutate()}
+              disabled={generate.isPending}
+            />
+          </View>
         </GlassSurface>
       )}
 
-      {/* Plan items list */}
-      {plan.data?.items && plan.data.items.length > 0 ? (
-        <View>
-          <FlowText variant="titleL" tone="primary">
-            {locale === 'vi' ? 'Việc trong ngày' : 'Today list'}
-          </FlowText>
-          <View style={{ marginTop: t.space['4'], gap: t.space['3'] }}>
-            {plan.data.items.slice(0, 8).map((item) => (
-              <Pressable
-                key={item.id}
-                onPress={() =>
-                  setStatus.mutate({
-                    id: item.id,
-                    status: item.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED',
-                  })
-                }
-              >
-                <GlassSurface pad="4" radius="lg" intensity={0.8}>
-                <View style={{ flexDirection: 'row', gap: t.space['3'], alignItems: 'center' }}>
-                  <View
-                    style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: 9,
-                      borderWidth: 1.5,
-                      borderColor:
-                        item.status === 'COMPLETED' ? t.palette.accent : 'rgba(255,255,255,0.3)',
-                      backgroundColor:
-                        item.status === 'COMPLETED' ? t.palette.accent : 'transparent',
-                    }}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <FlowText
-                      variant="bodyM"
-                      tone={item.status === 'COMPLETED' ? 'tertiary' : 'primary'}
-                      style={
-                        item.status === 'COMPLETED'
-                          ? { textDecorationLine: 'line-through' }
-                          : undefined
-                      }
-                    >
-                      {item.title}
-                    </FlowText>
-                    {item.startAt ? (
-                      <FlowText variant="caption" tone="secondary">
-                        {formatTimeRange(item.startAt, item.endAt, locale)}
-                      </FlowText>
-                    ) : null}
-                  </View>
-                </View>
-                </GlassSurface>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      ) : null}
-
+      {/* Quick add buttons */}
       <View style={{ flexDirection: 'row', gap: t.space['3'] }}>
         <GradientButton
           label={locale === 'vi' ? '+ Việc nhanh' : '+ Quick task'}
@@ -251,33 +299,51 @@ export function PlanAurora() {
           style={{ flex: 1 }}
         />
       </View>
+
+      <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </AuroraScreen>
   );
 }
 
-function buildDayStrip(days: number) {
-  const today = new Date();
-  const dows = { vi: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'], en: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] };
-  const out: { iso: string; date: Date; dow: string; day: number }[] = [];
-  for (let i = -2; i < days - 2; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    out.push({
-      iso: d.toISOString().slice(0, 10),
-      date: d,
-      dow: dows.en[d.getDay()],
-      day: d.getDate(),
-    });
+interface PlanItem {
+  id: string;
+  title: string;
+  status: 'COMPLETED' | 'PENDING' | string;
+  startAt?: string | null;
+  endAt?: string | null;
+}
+
+function groupByTimeBlock(items: PlanItem[]): { label: string; items: PlanItem[] }[] {
+  const sorted = [...items].sort((a, b) => {
+    const ta = a.startAt ? new Date(a.startAt).getTime() : Number.MAX_SAFE_INTEGER;
+    const tb = b.startAt ? new Date(b.startAt).getTime() : Number.MAX_SAFE_INTEGER;
+    return ta - tb;
+  });
+  const groups = new Map<string, PlanItem[]>();
+  for (const it of sorted) {
+    const label = it.startAt ? hourBlockLabel(new Date(it.startAt)) : 'Bất kỳ';
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label)!.push(it);
   }
-  return out;
+  return Array.from(groups.entries()).map(([label, items]) => ({ label, items }));
 }
 
-function priorityLabel(p: 'LOW' | 'MEDIUM' | 'HIGH', locale: 'vi' | 'en'): string {
-  if (locale === 'vi') return p === 'HIGH' ? 'Cao' : p === 'MEDIUM' ? 'Vừa' : 'Thấp';
-  return p.charAt(0) + p.slice(1).toLowerCase();
+function hourBlockLabel(d: Date): string {
+  const h = d.getHours();
+  // Round to nearest hour block (3-hour buckets)
+  const block = Math.floor(h / 3) * 3;
+  return `${String(block).padStart(2, '0')}:00`;
 }
 
-function formatTimeRange(start: string, end: string | null, locale: 'vi' | 'en'): string {
+function filterLabel(f: Filter, locale: 'vi' | 'en'): string {
+  if (locale === 'vi') {
+    return f === 'today' ? 'Hôm nay' : f === 'week' ? 'Tuần này' : 'Tháng';
+  }
+  return f === 'today' ? 'Today' : f === 'week' ? 'This week' : 'Month';
+}
+
+function formatTimeRange(start?: string | null, end?: string | null): string | null {
+  if (!start) return null;
   try {
     const s = new Date(start);
     const t1 = `${String(s.getHours()).padStart(2, '0')}:${String(s.getMinutes()).padStart(2, '0')}`;
@@ -286,24 +352,6 @@ function formatTimeRange(start: string, end: string | null, locale: 'vi' | 'en')
     const t2 = `${String(e.getHours()).padStart(2, '0')}:${String(e.getMinutes()).padStart(2, '0')}`;
     return `${t1} – ${t2}`;
   } catch {
-    return start;
-  }
-}
-
-function formatDueLabel(iso: string, locale: 'vi' | 'en'): string {
-  try {
-    const due = new Date(iso);
-    const now = new Date();
-    const sameDay =
-      due.getFullYear() === now.getFullYear() &&
-      due.getMonth() === now.getMonth() &&
-      due.getDate() === now.getDate();
-    const time = `${String(due.getHours()).padStart(2, '0')}:${String(
-      due.getMinutes(),
-    ).padStart(2, '0')}`;
-    if (sameDay) return locale === 'vi' ? `hôm nay ${time}` : `today ${time}`;
-    return due.toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US');
-  } catch {
-    return iso;
+    return null;
   }
 }

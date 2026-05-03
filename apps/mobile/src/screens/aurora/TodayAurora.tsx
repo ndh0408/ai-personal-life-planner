@@ -5,11 +5,10 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   AuroraScreen,
+  AuroraHeader,
   GlassSurface,
   FlowText,
-  OrbDial,
   GradientButton,
-  BreathingDot,
   SettingsSheet,
   useAurora,
 } from '../../aurora';
@@ -21,11 +20,11 @@ import { useTodayTasks } from '../../hooks/useFeed';
 import type { RootStackParamList } from '../../navigation/types';
 
 /**
- * Round 44: TodayAurora reads the existing /api/dashboard/summary endpoint
- * (already used by the v1 HomeScreen since R30) and renders the same data
- * in the Aurora visual language — but with clearer Vietnamese copy and
- * proper empty/loading/error states. No more hardcoded "7.4h sleep"
- * placeholders.
+ * TodayAurora — Pencil R45 layout.
+ *
+ * Header (∞ + LifeOS + settings) → date eyebrow → 2-line serif greeting →
+ * (optional AI-key banner) → energy hero card (ring + delta) → mood/sleep
+ * metric row → "Now" card from smartBrief / nextTask → today's tasks list.
  */
 export function TodayAurora() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -42,58 +41,56 @@ export function TodayAurora() {
   const aiKeyMissing = aiKey.data && !aiKey.data.enabled;
   const greeting = greetingFor(t.moment, locale);
   const summary = dash.data;
+  const dateLabel = formatDateLabel(new Date(), locale);
+
+  const sleepHours =
+    summary?.moodSleep?.lastSleepMinutes != null
+      ? summary.moodSleep.lastSleepMinutes / 60
+      : null;
+  const energyScore = computeEnergyScore({
+    sleepHours,
+    sleepQuality: summary?.moodSleep?.lastSleepQuality ?? null,
+  });
 
   return (
     <AuroraScreen>
-      {/* Header: time-of-day kicker + settings gear */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: t.space['3'],
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space['3'] }}>
-          <BreathingDot color={t.palette.accent} size={6} />
-          <FlowText variant="kicker" tone="secondary">
-            {momentLabel(t.moment, locale)}
+      <AuroraHeader
+        brand="LifeOS"
+        iconName="settings-outline"
+        onIconPress={() => setSettingsOpen(true)}
+        accessibilityLabel={locale === 'vi' ? 'Cài đặt' : 'Settings'}
+      />
+
+      {/* Date eyebrow + serif hero */}
+      <View style={{ gap: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: t.palette.accent,
+            }}
+          />
+          <FlowText
+            variant="kicker"
+            tone="secondary"
+            style={{ fontSize: 11, letterSpacing: 1.5 }}
+          >
+            {dateLabel}
           </FlowText>
         </View>
-        <Pressable
-          onPress={() => setSettingsOpen(true)}
-          hitSlop={12}
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: t.palette.glassTint,
-            borderWidth: 1,
-            borderColor: 'rgba(255,255,255,0.12)',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          accessibilityLabel={locale === 'vi' ? 'Cài đặt' : 'Settings'}
+        <FlowText
+          variant="displayM"
+          tone="primary"
+          style={{ lineHeight: 38 }}
         >
-          <FlowText variant="caption" tone="primary">
-            ⚙
-          </FlowText>
-        </Pressable>
-      </View>
-
-      {/* Hero greeting */}
-      <View>
-        <FlowText variant="hero" tone="primary">
-          {greeting}
+          {greeting},{'\n'}
+          {userName ? `${userName}.` : energyHeroLine(energyScore, locale)}
         </FlowText>
-        {userName ? (
-          <FlowText variant="titleL" tone="secondary" style={{ marginTop: t.space['1'] }}>
-            {userName}.
-          </FlowText>
-        ) : null}
       </View>
 
-      {/* AI key banner — show when not configured */}
+      {/* AI key banner */}
       {aiKeyMissing ? (
         <Pressable onPress={() => navigation.navigate('AISettings')}>
           <GlassSurface pad="5" radius="xl" intensity={1.4}>
@@ -107,11 +104,6 @@ export function TodayAurora() {
                     ? 'Nhập OpenAI key để AI hiểu bạn'
                     : 'Add OpenAI key so AI knows you'}
                 </FlowText>
-                <FlowText variant="bodyS" tone="secondary" style={{ marginTop: t.space['2'] }}>
-                  {locale === 'vi'
-                    ? 'Sau đó AI sẽ học thói quen, gợi ý đúng lúc, đúng việc.'
-                    : 'Then AI learns your habits and suggests the right thing at the right time.'}
-                </FlowText>
               </View>
               <FlowText variant="titleL" tone="accent">
                 →
@@ -121,50 +113,95 @@ export function TodayAurora() {
         </Pressable>
       ) : null}
 
-      {/* Smart brief / hero card */}
-      {dash.isLoading ? (
-        <GlassSurface pad="6" radius="2xl">
-          <FlowText variant="bodyM" tone="secondary">
-            {locale === 'vi' ? 'Đang tải…' : 'Loading…'}
-          </FlowText>
-        </GlassSurface>
-      ) : dash.isError ? (
-        <GlassSurface pad="6" radius="2xl">
-          <FlowText variant="kicker" tone="secondary">
-            {locale === 'vi' ? 'KHÔNG TẢI ĐƯỢC' : "COULDN'T LOAD"}
-          </FlowText>
-          <FlowText variant="titleM" tone="primary" style={{ marginTop: t.space['2'] }}>
-            {locale === 'vi'
-              ? 'Mạng có vấn đề. Kéo xuống để thử lại.'
-              : 'Network issue. Pull to retry.'}
-          </FlowText>
-          <View style={{ marginTop: t.space['4'] }}>
-            <GradientButton
-              label={locale === 'vi' ? 'Thử lại' : 'Retry'}
-              variant="glass"
-              onPress={() => dash.refetch()}
-            />
+      {/* Energy hero card */}
+      <GlassSurface pad="5" radius="2xl" intensity={1.0}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space['5'] }}>
+          <EnergyRing value={energyScore} accent={t.palette.accentGlow} />
+          <View style={{ flex: 1, gap: 6 }}>
+            <FlowText variant="kicker" tone="tertiary">
+              {locale === 'vi' ? 'NĂNG LƯỢNG' : 'ENERGY'}
+            </FlowText>
+            <FlowText
+              variant="hero"
+              tone="primary"
+              style={{ fontSize: 56, lineHeight: 56, fontVariant: ['tabular-nums'] }}
+            >
+              {energyScore}
+            </FlowText>
+            <FlowText variant="bodyS" tone="secondary">
+              {energySubtitle(sleepHours, locale)}
+            </FlowText>
           </View>
-        </GlassSurface>
-      ) : summary?.smartBrief ? (
-        <GlassSurface pad="6" radius="2xl" intensity={1.2}>
-          <FlowText variant="kicker" tone="accent">
-            {locale === 'vi' ? 'TÓM TẮT HÔM NAY' : "TODAY'S BRIEF"}
+        </View>
+      </GlassSurface>
+
+      {/* Metric row: Mood + Sleep */}
+      <View style={{ flexDirection: 'row', gap: t.space['3'] }}>
+        <GlassSurface pad="5" radius="xl" style={{ flex: 1 }}>
+          <FlowText variant="kicker" tone="tertiary">
+            {locale === 'vi' ? 'TÂM TRẠNG' : 'MOOD'}
           </FlowText>
-          <FlowText variant="titleL" tone="primary" style={{ marginTop: t.space['3'] }}>
+          <FlowText
+            variant="displayM"
+            tone="primary"
+            style={{ marginTop: t.space['2'], fontSize: 40, lineHeight: 44, fontVariant: ['tabular-nums'] }}
+          >
+            {moodScore(summary?.moodSleep?.lastMood ?? null) ?? '—'}
+          </FlowText>
+          <FlowText variant="bodyS" tone="secondary" style={{ marginTop: t.space['1'] }}>
+            {moodSubtitle(summary?.moodSleep?.lastMood ?? null, locale)}
+          </FlowText>
+        </GlassSurface>
+        <GlassSurface pad="5" radius="xl" style={{ flex: 1 }}>
+          <FlowText variant="kicker" tone="tertiary">
+            {locale === 'vi' ? 'GIẤC NGỦ' : 'SLEEP'}
+          </FlowText>
+          <FlowText
+            variant="displayM"
+            tone="primary"
+            style={{ marginTop: t.space['2'], fontSize: 40, lineHeight: 44, fontVariant: ['tabular-nums'] }}
+          >
+            {sleepHours != null ? `${sleepHours.toFixed(1)}h` : '—'}
+          </FlowText>
+          <FlowText variant="bodyS" tone="secondary" style={{ marginTop: t.space['1'] }}>
+            {sleepQualityLabel(summary?.moodSleep?.lastSleepQuality ?? null, locale)}
+          </FlowText>
+        </GlassSurface>
+      </View>
+
+      {/* Now card — smartBrief or next task */}
+      {summary?.smartBrief ? (
+        <GlassSurface pad="5" radius="xl" intensity={1.2}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: t.palette.accentGlow,
+              }}
+            />
+            <FlowText
+              variant="kicker"
+              style={{ color: t.palette.accentGlow, letterSpacing: 1.5 }}
+            >
+              {locale === 'vi' ? `BÂY GIỜ · ${formatNow()}` : `NOW · ${formatNow()}`}
+            </FlowText>
+          </View>
+          <FlowText
+            variant="titleL"
+            tone="primary"
+            style={{ marginTop: t.space['3'], lineHeight: 28 }}
+          >
             {summary.smartBrief.headline}
           </FlowText>
           {summary.smartBrief.body ? (
-            <FlowText
-              variant="bodyM"
-              tone="secondary"
-              style={{ marginTop: t.space['3'], lineHeight: 24 }}
-            >
+            <FlowText variant="bodyM" tone="secondary" style={{ marginTop: t.space['2'] }}>
               {summary.smartBrief.body}
             </FlowText>
           ) : null}
           {summary.smartBrief.primaryAction ? (
-            <View style={{ marginTop: t.space['5'] }}>
+            <View style={{ marginTop: t.space['4'] }}>
               <GradientButton
                 label={summary.smartBrief.primaryAction.label}
                 onPress={() => {
@@ -178,218 +215,207 @@ export function TodayAurora() {
             </View>
           ) : null}
         </GlassSurface>
-      ) : (
-        <GlassSurface pad="6" radius="2xl">
-          <FlowText variant="kicker" tone="secondary">
-            {locale === 'vi' ? 'CHƯA CÓ DỮ LIỆU' : 'NO DATA YET'}
-          </FlowText>
-          <FlowText variant="titleM" tone="primary" style={{ marginTop: t.space['2'] }}>
-            {locale === 'vi'
-              ? 'Ghi vài điều để AI bắt đầu hiểu bạn'
-              : 'Capture a few things so AI can start understanding you'}
-          </FlowText>
-          <View style={{ marginTop: t.space['4'] }}>
-            <GradientButton
-              label={locale === 'vi' ? 'Ghi nhanh' : 'Quick capture'}
-              onPress={() => capture.open()}
-            />
-          </View>
-        </GlassSurface>
-      )}
-
-      {/* Two-up tiles: real sleep + real money */}
-      {summary ? (
-        <View style={{ flexDirection: 'row', gap: t.space['3'] }}>
-          <GlassSurface pad="5" radius="xl" style={{ flex: 1 }}>
-            <FlowText variant="kicker" tone="secondary">
-              {locale === 'vi' ? 'GIẤC NGỦ GẦN NHẤT' : 'LATEST SLEEP'}
-            </FlowText>
-            {summary.moodSleep.lastSleepMinutes != null ? (
-              <>
-                <FlowText
-                  variant="displayM"
-                  tone="primary"
-                  style={{ marginTop: t.space['2'], fontVariant: ['tabular-nums'] }}
-                >
-                  {(summary.moodSleep.lastSleepMinutes / 60).toFixed(1)}
-                  <FlowText variant="bodyM" tone="tertiary">
-                    {' '}
-                    h
-                  </FlowText>
-                </FlowText>
-                <FlowText variant="caption" tone="secondary" style={{ marginTop: t.space['1'] }}>
-                  {sleepQualityLabel(summary.moodSleep.lastSleepQuality, locale)}
-                </FlowText>
-              </>
-            ) : (
-              <>
-                <FlowText
-                  variant="displayM"
-                  tone="tertiary"
-                  style={{ marginTop: t.space['2'] }}
-                >
-                  —
-                </FlowText>
-                <FlowText variant="caption" tone="secondary" style={{ marginTop: t.space['1'] }}>
-                  {locale === 'vi' ? 'Chưa ghi giấc nào' : 'No sleep logged yet'}
-                </FlowText>
-              </>
-            )}
-          </GlassSurface>
-
-          <GlassSurface pad="5" radius="xl" style={{ flex: 1 }}>
-            <FlowText variant="kicker" tone="secondary">
-              {locale === 'vi' ? 'CHI TUẦN NÀY' : 'WEEK SPEND'}
-            </FlowText>
-            <FlowText
-              variant="displayM"
-              tone="primary"
-              style={{ marginTop: t.space['2'], fontVariant: ['tabular-nums'] }}
-            >
-              {formatVnd(summary.money.weekTotal)}
-            </FlowText>
-            <FlowText variant="caption" tone="secondary" style={{ marginTop: t.space['1'] }}>
-              {locale === 'vi'
-                ? `Hôm nay: ${formatVnd(summary.money.todayTotal)} ₫`
-                : `Today: ${formatVnd(summary.money.todayTotal)} ₫`}
-            </FlowText>
-          </GlassSurface>
-        </View>
-      ) : null}
-
-      {/* Next task */}
-      {summary?.nextTask ? (
-        <Pressable
-          onPress={() => {
-            navigation.navigate('Tasks');
-          }}
-        >
-          <GlassSurface pad="5" radius="xl">
-            <FlowText variant="kicker" tone="secondary">
+      ) : summary?.nextTask ? (
+        <Pressable onPress={() => navigation.navigate('Tasks')}>
+          <GlassSurface pad="5" radius="xl" intensity={1.0}>
+            <FlowText variant="kicker" tone="accent">
               {locale === 'vi' ? 'VIỆC TIẾP THEO' : 'NEXT TASK'}
             </FlowText>
-            <FlowText variant="titleM" tone="primary" style={{ marginTop: t.space['2'] }}>
+            <FlowText variant="titleL" tone="primary" style={{ marginTop: t.space['2'], lineHeight: 28 }}>
               {summary.nextTask.title}
             </FlowText>
             {summary.nextTask.dueAt ? (
-              <FlowText variant="caption" tone="secondary" style={{ marginTop: t.space['1'] }}>
-                {locale === 'vi' ? 'Hạn' : 'Due'}: {formatDueLabel(summary.nextTask.dueAt, locale)}
+              <FlowText variant="bodyS" tone="secondary" style={{ marginTop: t.space['1'] }}>
+                {locale === 'vi' ? 'Hạn: ' : 'Due: '}
+                {formatDueLabel(summary.nextTask.dueAt, locale)}
               </FlowText>
             ) : null}
           </GlassSurface>
         </Pressable>
       ) : null}
 
-      {/* Suggested captures */}
-      {summary?.suggestedCaptures && summary.suggestedCaptures.length > 0 ? (
-        <View>
-          <FlowText variant="kicker" tone="secondary">
-            {locale === 'vi' ? 'GỢI Ý GHI NHANH' : 'SUGGESTED CAPTURES'}
-          </FlowText>
-          <View style={{ marginTop: t.space['3'], gap: t.space['2'] }}>
-            {summary.suggestedCaptures.slice(0, 3).map((s, i) => (
-              <Pressable
-                key={i}
-                onPress={() =>
-                  capture.open({
-                    initialText: s.text,
-                    initialKind: (s.mode ?? null) as never,
-                  })
-                }
-              >
-                <GlassSurface pad="4" radius="lg" intensity={0.7}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space['3'] }}>
-                    <FlowText variant="bodyM" tone="primary" style={{ flex: 1 }}>
-                      {s.text}
-                    </FlowText>
-                    <FlowText variant="caption" tone="accent">
-                      +
-                    </FlowText>
-                  </View>
-                </GlassSurface>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      ) : null}
-
-      {/* Recent tasks (real data from /tasks/today) */}
+      {/* Today tasks compact list */}
       {todayTasks.data?.rows && todayTasks.data.rows.length > 0 ? (
-        <View>
-          <FlowText variant="kicker" tone="secondary">
-            {locale === 'vi' ? 'VIỆC HÔM NAY' : "TODAY'S TASKS"}
-          </FlowText>
-          <View style={{ marginTop: t.space['3'], gap: t.space['2'] }}>
-            {todayTasks.data.rows.slice(0, 5).map((task) => {
+        <GlassSurface pad="4" radius="xl" intensity={0.9}>
+          <View style={{ paddingHorizontal: 4, marginBottom: 8 }}>
+            <FlowText variant="kicker" tone="tertiary">
+              {locale === 'vi' ? 'VIỆC HÔM NAY' : "TODAY'S TASKS"}
+            </FlowText>
+          </View>
+          <View>
+            {todayTasks.data.rows.slice(0, 4).map((task, i) => {
               const isDone = task.status === 'COMPLETED';
+              const dotColor = [
+                t.palette.accent,
+                t.palette.accentGlow,
+                t.kind.task,
+                t.kind.mood,
+              ][i % 4];
               return (
-                <Pressable key={task.id} onPress={() => navigation.navigate('Tasks')}>
-                  <GlassSurface pad="4" radius="lg" intensity={0.7}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space['3'] }}>
-                      <View
-                        style={{
-                          width: 16,
-                          height: 16,
-                          borderRadius: 8,
-                          borderWidth: 1.5,
-                          borderColor: isDone ? t.palette.accent : 'rgba(255,255,255,0.3)',
-                          backgroundColor: isDone ? t.palette.accent : 'transparent',
-                        }}
-                      />
-                      <FlowText
-                        variant="bodyM"
-                        tone={isDone ? 'tertiary' : 'primary'}
-                        style={[
-                          { flex: 1 },
-                          isDone ? { textDecorationLine: 'line-through' as const } : undefined,
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {task.title}
-                      </FlowText>
-                    </View>
-                  </GlassSurface>
+                <Pressable
+                  key={task.id}
+                  onPress={() => navigation.navigate('Tasks')}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    paddingVertical: 12,
+                    paddingHorizontal: 4,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: isDone ? 'rgba(255,255,255,0.18)' : dotColor,
+                    }}
+                  />
+                  <FlowText
+                    variant="bodyM"
+                    tone={isDone ? 'tertiary' : 'primary'}
+                    numberOfLines={1}
+                    style={[
+                      { flex: 1 },
+                      isDone ? { textDecorationLine: 'line-through' as const } : undefined,
+                    ]}
+                  >
+                    {task.title}
+                  </FlowText>
+                  <FlowText variant="caption" tone="tertiary">
+                    ›
+                  </FlowText>
                 </Pressable>
               );
             })}
           </View>
-        </View>
+        </GlassSurface>
       ) : null}
-
-      {/* Always-available capture chips */}
-      <View>
-        <FlowText variant="kicker" tone="secondary">
-          {locale === 'vi' ? 'GHI NHANH' : 'CAPTURE'}
-        </FlowText>
-        <View
-          style={{
-            flexDirection: 'row',
-            gap: t.space['2'],
-            marginTop: t.space['3'],
-            flexWrap: 'wrap',
-          }}
-        >
-          {[
-            { kind: 'EXPENSE' as const, vi: 'Chi tiêu', en: 'Expense' },
-            { kind: 'TASK' as const, vi: 'Việc làm', en: 'Task' },
-            { kind: 'MEAL' as const, vi: 'Bữa ăn', en: 'Meal' },
-            { kind: 'MOOD' as const, vi: 'Tâm trạng', en: 'Mood' },
-            { kind: 'SLEEP' as const, vi: 'Giấc ngủ', en: 'Sleep' },
-          ].map((s) => (
-            <GradientButton
-              key={s.kind}
-              label={`+ ${locale === 'vi' ? s.vi : s.en}`}
-              variant="glass"
-              onPress={() => capture.open({ initialKind: s.kind })}
-              style={{ minWidth: 110 }}
-            />
-          ))}
-        </View>
-      </View>
 
       <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </AuroraScreen>
   );
+}
+
+/** Concentric ring rendered with overlapping circles (no SVG dep). */
+function EnergyRing({ value, accent }: { value: number; accent: string }) {
+  // Simple ring: outer circle stroke + inner mask
+  const SIZE = 96;
+  const STROKE = 6;
+  return (
+    <View
+      style={{
+        width: SIZE,
+        height: SIZE,
+        borderRadius: SIZE / 2,
+        borderWidth: STROKE,
+        borderColor: accent,
+        opacity: 0.85,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <View
+        style={{
+          position: 'absolute',
+          right: -STROKE,
+          top: SIZE / 2 - STROKE,
+          width: STROKE * 2,
+          height: STROKE * 2,
+          borderRadius: STROKE,
+          backgroundColor: 'transparent',
+          // Visual hint that ring is "in progress" — leave a small transparent gap
+        }}
+      />
+      <FlowText variant="bodyS" tone="tertiary" style={{ fontSize: 10, letterSpacing: 1 }}>
+        {value}%
+      </FlowText>
+    </View>
+  );
+}
+
+function computeEnergyScore({
+  sleepHours,
+  sleepQuality,
+}: {
+  sleepHours: number | null;
+  sleepQuality: 'BAD' | 'OK' | 'GOOD' | null;
+}): number {
+  let score = 60;
+  if (sleepHours != null) {
+    if (sleepHours >= 7.5) score += 18;
+    else if (sleepHours >= 6.5) score += 10;
+    else if (sleepHours < 5) score -= 12;
+  }
+  if (sleepQuality === 'GOOD') score += 8;
+  if (sleepQuality === 'BAD') score -= 8;
+  return Math.max(20, Math.min(99, Math.round(score)));
+}
+
+function energyHeroLine(energy: number, locale: 'vi' | 'en'): string {
+  if (locale === 'vi') {
+    if (energy >= 80) return 'năng lượng đang lên.';
+    if (energy >= 60) return 'một ngày vào nhịp.';
+    return 'nhẹ nhàng từng bước.';
+  }
+  if (energy >= 80) return 'energy is rising.';
+  if (energy >= 60) return 'finding rhythm.';
+  return 'one step at a time.';
+}
+
+function energySubtitle(sleepHours: number | null, locale: 'vi' | 'en'): string {
+  if (sleepHours == null) return locale === 'vi' ? 'Ghi giấc ngủ để theo dõi' : 'Log sleep to track';
+  if (sleepHours >= 7.5) {
+    return locale === 'vi'
+      ? `+${(sleepHours - 7).toFixed(1)}h vs lý tưởng  ↑`
+      : `+${(sleepHours - 7).toFixed(1)}h vs ideal  ↑`;
+  }
+  return locale === 'vi'
+    ? `Ngủ ${sleepHours.toFixed(1)}h đêm qua`
+    : `${sleepHours.toFixed(1)}h sleep last night`;
+}
+
+type MoodLabel = 'GREAT' | 'GOOD' | 'OK' | 'TIRED' | 'STRESSED' | 'SAD';
+
+function moodScore(m: MoodLabel | null): string | null {
+  if (!m) return null;
+  const map: Record<MoodLabel, string> = {
+    GREAT: '9.0',
+    GOOD: '7.5',
+    OK: '6.0',
+    TIRED: '4.5',
+    STRESSED: '3.5',
+    SAD: '2.5',
+  };
+  return map[m];
+}
+
+function moodSubtitle(m: MoodLabel | null, locale: 'vi' | 'en'): string {
+  if (m == null) return locale === 'vi' ? 'Chưa ghi mood' : 'No mood logged';
+  if (locale === 'vi') {
+    return m === 'GREAT'
+      ? 'Tuyệt vời'
+      : m === 'GOOD'
+      ? 'Lạc quan, ổn định'
+      : m === 'OK'
+      ? 'Bình thường'
+      : m === 'TIRED'
+      ? 'Hơi mệt'
+      : m === 'STRESSED'
+      ? 'Căng thẳng'
+      : 'Cần nghỉ ngơi';
+  }
+  return m === 'GREAT'
+    ? 'Great'
+    : m === 'GOOD'
+    ? 'Optimistic'
+    : m === 'OK'
+    ? 'Balanced'
+    : m === 'TIRED'
+    ? 'Tired'
+    : m === 'STRESSED'
+    ? 'Stressed'
+    : 'Low';
 }
 
 function greetingFor(moment: string, locale: 'vi' | 'en'): string {
@@ -423,23 +449,25 @@ function greetingFor(moment: string, locale: 'vi' | 'en'): string {
   }
 }
 
-function momentLabel(moment: string, locale: 'vi' | 'en'): string {
+function formatDateLabel(d: Date, locale: 'vi' | 'en'): string {
+  const dows = {
+    vi: ['CHỦ NHẬT', 'THỨ HAI', 'THỨ BA', 'THỨ TƯ', 'THỨ NĂM', 'THỨ SÁU', 'THỨ BẢY'],
+    en: ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'],
+  };
+  const months = {
+    vi: 'THÁNG',
+    en: ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'],
+  };
+  const dow = dows[locale][d.getDay()];
   if (locale === 'vi') {
-    switch (moment) {
-      case 'dawn':
-        return 'BÌNH MINH';
-      case 'noon':
-        return 'GIỮA TRƯA';
-      case 'afternoon':
-        return 'CHIỀU';
-      case 'dusk':
-        return 'TỐI';
-      case 'night':
-      default:
-        return 'ĐÊM';
-    }
+    return `${dow} · ${String(d.getDate()).padStart(2, '0')} ${months.vi} ${d.getMonth() + 1}`;
   }
-  return moment.toUpperCase();
+  return `${dow} · ${months.en[d.getMonth()]} ${d.getDate()}`;
+}
+
+function formatNow(): string {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
 function sleepQualityLabel(
@@ -451,12 +479,6 @@ function sleepQualityLabel(
     return q === 'GOOD' ? 'Ngủ ngon' : q === 'OK' ? 'Tạm ổn' : 'Khó ngủ';
   }
   return q === 'GOOD' ? 'Slept well' : q === 'OK' ? 'OK' : 'Poor';
-}
-
-function formatVnd(amount: number): string {
-  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M`;
-  if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}k`;
-  return String(amount);
 }
 
 function formatDueLabel(iso: string, locale: 'vi' | 'en'): string {
@@ -471,13 +493,6 @@ function formatDueLabel(iso: string, locale: 'vi' | 'en'): string {
       due.getMinutes(),
     ).padStart(2, '0')}`;
     if (sameDay) return locale === 'vi' ? `hôm nay ${time}` : `today ${time}`;
-    const tomorrow = new Date(now);
-    tomorrow.setDate(now.getDate() + 1);
-    const isTomorrow =
-      due.getFullYear() === tomorrow.getFullYear() &&
-      due.getMonth() === tomorrow.getMonth() &&
-      due.getDate() === tomorrow.getDate();
-    if (isTomorrow) return locale === 'vi' ? `mai ${time}` : `tomorrow ${time}`;
     return due.toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US');
   } catch {
     return iso;
