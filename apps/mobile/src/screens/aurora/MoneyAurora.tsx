@@ -1,25 +1,33 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   AuroraScreen,
   GlassSurface,
   FlowText,
-  AuroraSparkline,
   GradientButton,
   useAurora,
 } from '../../aurora';
 import { useCapture } from '../../components/v2';
+import { useDashboardSummary } from '../../hooks/useDashboard';
+import type { RootStackParamList } from '../../navigation/types';
 
+/**
+ * MoneyAurora — uses /dashboard/summary's money block as the canonical
+ * money snapshot (todayTotal + weekTotal + walletBalance). When user has
+ * no wallet / no expenses yet, shows a clear empty state pointing to
+ * quick-capture.
+ */
 export function MoneyAurora() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const t = useAurora();
   const { i18n } = useTranslation();
   const locale = (i18n.language === 'vi' ? 'vi' : 'en') as 'vi' | 'en';
   const capture = useCapture();
-  const data30d = [
-    320, 180, 240, 90, 410, 280, 150, 200, 370, 110, 90, 220, 340, 180, 260, 130, 90, 410,
-    290, 240, 170, 380, 120, 80, 220, 310, 170, 100, 240, 190,
-  ];
+  const dash = useDashboardSummary();
+  const m = dash.data?.money;
 
   return (
     <AuroraScreen>
@@ -28,95 +36,108 @@ export function MoneyAurora() {
           {locale === 'vi' ? 'TIỀN' : 'MONEY'}
         </FlowText>
         <FlowText variant="hero" tone="primary" style={{ marginTop: t.space['2'] }}>
-          {locale === 'vi' ? 'Tháng 5.' : 'May.'}
+          {locale === 'vi' ? 'Tài chính' : 'Finance'}
         </FlowText>
       </View>
 
-      <GlassSurface pad="7" radius="3xl" intensity={1.2}>
-        <FlowText variant="kicker" tone="secondary">
-          {locale === 'vi' ? 'CHI THÁNG' : 'MONTH SPEND'}
-        </FlowText>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: t.space['2'], marginTop: t.space['3'] }}>
-          <FlowText variant="hero" tone="primary" style={{ fontVariant: ['tabular-nums'] }}>
-            6.42
+      {dash.isLoading ? (
+        <GlassSurface pad="6" radius="2xl">
+          <FlowText variant="bodyM" tone="secondary">
+            {locale === 'vi' ? 'Đang tải…' : 'Loading…'}
           </FlowText>
-          <FlowText variant="titleL" tone="tertiary">
-            triệu ₫
+        </GlassSurface>
+      ) : dash.isError ? (
+        <GlassSurface pad="6" radius="2xl">
+          <FlowText variant="titleM" tone="primary">
+            {locale === 'vi' ? 'Không tải được. Thử lại?' : "Couldn't load. Retry?"}
           </FlowText>
-        </View>
-        <FlowText variant="bodyM" tone="secondary" style={{ marginTop: t.space['3'], lineHeight: 24 }}>
-          {locale === 'vi'
-            ? 'Dự báo cuối tháng 9.1M ₫ — −4% so với tháng trước.'
-            : 'End-of-month forecast 9.1M ₫ — −4% vs last month.'}
-        </FlowText>
-        <View style={{ marginTop: t.space['5'] }}>
-          <AuroraSparkline data={data30d} width={300} height={88} color={t.kind.expense} />
-        </View>
-      </GlassSurface>
+          <View style={{ marginTop: t.space['4'] }}>
+            <GradientButton
+              label={locale === 'vi' ? 'Thử lại' : 'Retry'}
+              variant="glass"
+              onPress={() => dash.refetch()}
+            />
+          </View>
+        </GlassSurface>
+      ) : m ? (
+        <>
+          <GlassSurface pad="7" radius="3xl" intensity={1.2}>
+            <FlowText variant="kicker" tone="secondary">
+              {locale === 'vi' ? 'CHI HÔM NAY' : 'TODAY SPEND'}
+            </FlowText>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'baseline',
+                gap: t.space['2'],
+                marginTop: t.space['3'],
+              }}
+            >
+              <FlowText
+                variant="hero"
+                tone="primary"
+                style={{ fontVariant: ['tabular-nums'] }}
+              >
+                {formatVnd(m.todayTotal)}
+              </FlowText>
+              <FlowText variant="titleL" tone="tertiary">
+                ₫
+              </FlowText>
+            </View>
+            <FlowText
+              variant="bodyM"
+              tone="secondary"
+              style={{ marginTop: t.space['3'], lineHeight: 24 }}
+            >
+              {locale === 'vi'
+                ? m.todayTotal === 0
+                  ? 'Chưa ghi chi tiêu nào hôm nay.'
+                  : `Tuần này: ${formatVnd(m.weekTotal)} ₫`
+                : m.todayTotal === 0
+                ? 'No expenses logged today yet.'
+                : `This week: ${formatVnd(m.weekTotal)} ₫`}
+            </FlowText>
+          </GlassSurface>
 
-      <View>
-        <FlowText variant="titleL" tone="primary">
-          {locale === 'vi' ? 'Theo danh mục' : 'By category'}
-        </FlowText>
-        <View style={{ marginTop: t.space['4'], gap: t.space['3'] }}>
-          {[
-            { vi: 'Ăn uống', en: 'Food', amount: '2.1M', pct: 0.34 },
-            { vi: 'Đi lại', en: 'Transport', amount: '850k', pct: 0.13 },
-            { vi: 'Nhà cửa', en: 'Home', amount: '1.4M', pct: 0.22 },
-            { vi: 'Sức khoẻ', en: 'Health', amount: '420k', pct: 0.07 },
-          ].map((c, i) => (
-            <GlassSurface key={i} pad="5" radius="xl">
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space['4'] }}>
-                <View style={{ flex: 1 }}>
-                  <FlowText variant="titleM" tone="primary">
-                    {locale === 'vi' ? c.vi : c.en}
-                  </FlowText>
-                  <View
-                    style={{
-                      marginTop: t.space['3'],
-                      height: 3,
-                      backgroundColor: 'rgba(255,255,255,0.08)',
-                      borderRadius: 2,
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: `${c.pct * 100}%`,
-                        height: 3,
-                        backgroundColor: t.palette.accent,
-                        borderRadius: 2,
-                      }}
-                    />
-                  </View>
-                </View>
-                <FlowText variant="titleL" tone="primary" style={{ fontVariant: ['tabular-nums'] }}>
-                  {c.amount}
-                </FlowText>
-              </View>
+          <View style={{ flexDirection: 'row', gap: t.space['3'] }}>
+            <GlassSurface pad="5" radius="xl" style={{ flex: 1 }}>
+              <FlowText variant="kicker" tone="secondary">
+                {locale === 'vi' ? 'TUẦN NÀY' : 'THIS WEEK'}
+              </FlowText>
+              <FlowText
+                variant="displayM"
+                tone="primary"
+                style={{ marginTop: t.space['2'], fontVariant: ['tabular-nums'] }}
+              >
+                {formatVnd(m.weekTotal)}
+              </FlowText>
+              <FlowText variant="caption" tone="tertiary">
+                ₫
+              </FlowText>
             </GlassSurface>
-          ))}
-        </View>
-      </View>
+            <GlassSurface pad="5" radius="xl" style={{ flex: 1 }}>
+              <FlowText variant="kicker" tone="secondary">
+                {locale === 'vi' ? 'SỐ DƯ VÍ' : 'WALLET'}
+              </FlowText>
+              <FlowText
+                variant="displayM"
+                tone="primary"
+                style={{ marginTop: t.space['2'], fontVariant: ['tabular-nums'] }}
+              >
+                {formatVnd(m.walletBalance)}
+              </FlowText>
+              <FlowText variant="caption" tone="tertiary">
+                ₫
+              </FlowText>
+            </GlassSurface>
+          </View>
+        </>
+      ) : null}
 
-      <GlassSurface pad="6" radius="2xl" intensity={1.4}>
-        <FlowText variant="kicker" tone="accent">
-          {locale === 'vi' ? 'CHÚ Ý' : 'NOTE'}
-        </FlowText>
-        <FlowText variant="titleL" tone="primary" style={{ marginTop: t.space['3'] }}>
-          {locale === 'vi' ? 'Ăn uống tuần này +28% baseline' : 'Food +28% vs baseline this week'}
-        </FlowText>
-        <FlowText variant="bodyM" tone="secondary" style={{ marginTop: t.space['3'], lineHeight: 24 }}>
-          {locale === 'vi'
-            ? '5 lần ăn ngoài, 3 lần giao tận nơi. Có thể đặt 2 bữa nấu cuối tuần?'
-            : '5 dine-outs, 3 deliveries. Could you batch-cook 2 meals this weekend?'}
-        </FlowText>
-      </GlassSurface>
-
+      {/* Quick add */}
       <View style={{ flexDirection: 'row', gap: t.space['3'] }}>
         <GradientButton
           label={locale === 'vi' ? '+ Chi tiêu' : '+ Expense'}
-          variant="glass"
           onPress={() => capture.open({ initialKind: 'EXPENSE' })}
           style={{ flex: 1 }}
         />
@@ -127,6 +148,43 @@ export function MoneyAurora() {
           style={{ flex: 1 }}
         />
       </View>
+
+      {m && m.todayTotal === 0 && m.weekTotal === 0 ? (
+        <GlassSurface pad="6" radius="2xl">
+          <FlowText variant="kicker" tone="accent">
+            {locale === 'vi' ? 'BẮT ĐẦU' : 'GET STARTED'}
+          </FlowText>
+          <FlowText variant="titleM" tone="primary" style={{ marginTop: t.space['2'] }}>
+            {locale === 'vi'
+              ? 'Ghi vài chi tiêu để xem bức tranh'
+              : 'Log a few expenses to see the picture'}
+          </FlowText>
+          <FlowText variant="bodyM" tone="secondary" style={{ marginTop: t.space['2'], lineHeight: 22 }}>
+            {locale === 'vi'
+              ? 'Cứ ghi như nhắn tin: "cà phê 35k" hay "điện 320k". AI sẽ tự phân loại.'
+              : 'Type like a message: "coffee 35k" or "electricity 320k". AI auto-classifies.'}
+          </FlowText>
+        </GlassSurface>
+      ) : null}
+
+      <Pressable onPress={() => navigation.navigate('Tasks')}>
+        <GlassSurface pad="5" radius="xl" intensity={0.7}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space['3'] }}>
+            <FlowText variant="bodyM" tone="primary" style={{ flex: 1 }}>
+              {locale === 'vi' ? 'Mở chi tiết tài chính (v1)' : 'Open finance details (v1)'}
+            </FlowText>
+            <FlowText variant="bodyM" tone="accent">
+              →
+            </FlowText>
+          </View>
+        </GlassSurface>
+      </Pressable>
     </AuroraScreen>
   );
+}
+
+function formatVnd(amount: number): string {
+  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(2)}M`;
+  if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}k`;
+  return String(amount);
 }

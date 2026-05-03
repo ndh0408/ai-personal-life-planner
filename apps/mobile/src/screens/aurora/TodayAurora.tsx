@@ -8,7 +8,6 @@ import {
   GlassSurface,
   FlowText,
   OrbDial,
-  AuroraSparkline,
   GradientButton,
   BreathingDot,
   useAurora,
@@ -16,27 +15,33 @@ import {
 import { useAuthStore } from '../../store/auth.store';
 import { useCapture } from '../../components/v2';
 import { useAiKeyStatus } from '../../hooks/useAiKeyStatus';
+import { useDashboardSummary } from '../../hooks/useDashboard';
 import type { RootStackParamList } from '../../navigation/types';
 
+/**
+ * Round 44: TodayAurora reads the existing /api/dashboard/summary endpoint
+ * (already used by the v1 HomeScreen since R30) and renders the same data
+ * in the Aurora visual language — but with clearer Vietnamese copy and
+ * proper empty/loading/error states. No more hardcoded "7.4h sleep"
+ * placeholders.
+ */
 export function TodayAurora() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const aiKey = useAiKeyStatus();
   const t = useAurora();
   const { i18n } = useTranslation();
   const locale = (i18n.language === 'vi' ? 'vi' : 'en') as 'vi' | 'en';
   const userName = useAuthStore((s) => s.user?.displayName ?? null);
   const capture = useCapture();
-  const greeting = greetingFor(t.moment, locale);
-  const sleep7d = [6.8, 7.1, 6.4, 7.8, 7.2, 7.6, 7.4];
+  const aiKey = useAiKeyStatus();
+  const dash = useDashboardSummary();
 
-  // Round 43.2: top-right gear icon for the AI key + settings entry. Without
-  // this, users on the new Aurora nav had no way to reach AISettings (no
-  // Settings tab in Aurora's 5-tab shell). The gear sits in the same spot
-  // as the breathing-dot row so it never competes with the hero.
   const aiKeyMissing = aiKey.data && !aiKey.data.enabled;
+  const greeting = greetingFor(t.moment, locale);
+  const summary = dash.data;
 
   return (
     <AuroraScreen>
+      {/* Header: time-of-day kicker + settings gear */}
       <View
         style={{
           flexDirection: 'row',
@@ -48,7 +53,7 @@ export function TodayAurora() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space['3'] }}>
           <BreathingDot color={t.palette.accent} size={6} />
           <FlowText variant="kicker" tone="secondary">
-            {locale === 'vi' ? 'BÂY GIỜ' : 'NOW'} · {t.moment.toUpperCase()}
+            {momentLabel(t.moment, locale)}
           </FlowText>
         </View>
         <Pressable
@@ -64,7 +69,7 @@ export function TodayAurora() {
             alignItems: 'center',
             justifyContent: 'center',
           }}
-          accessibilityLabel={locale === 'vi' ? 'Cài đặt AI' : 'AI settings'}
+          accessibilityLabel={locale === 'vi' ? 'Cài đặt' : 'Settings'}
         >
           <FlowText variant="caption" tone="primary">
             ⚙
@@ -72,23 +77,36 @@ export function TodayAurora() {
         </Pressable>
       </View>
 
+      {/* Hero greeting */}
+      <View>
+        <FlowText variant="hero" tone="primary">
+          {greeting}
+        </FlowText>
+        {userName ? (
+          <FlowText variant="titleL" tone="secondary" style={{ marginTop: t.space['1'] }}>
+            {userName}.
+          </FlowText>
+        ) : null}
+      </View>
+
+      {/* AI key banner — show when not configured */}
       {aiKeyMissing ? (
         <Pressable onPress={() => navigation.navigate('AISettings')}>
           <GlassSurface pad="5" radius="xl" intensity={1.4}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space['4'] }}>
               <View style={{ flex: 1 }}>
                 <FlowText variant="kicker" tone="accent">
-                  {locale === 'vi' ? 'KHỞI ĐỘNG AI' : 'ACTIVATE AI'}
+                  {locale === 'vi' ? 'BẬT AI' : 'ACTIVATE AI'}
                 </FlowText>
                 <FlowText variant="titleM" tone="primary" style={{ marginTop: t.space['2'] }}>
                   {locale === 'vi'
-                    ? 'Nhập OpenAI key để cá nhân hoá'
-                    : 'Add your OpenAI key to personalize'}
+                    ? 'Nhập OpenAI key để AI hiểu bạn'
+                    : 'Add OpenAI key so AI knows you'}
                 </FlowText>
                 <FlowText variant="bodyS" tone="secondary" style={{ marginTop: t.space['2'] }}>
                   {locale === 'vi'
-                    ? 'Khi có key, AI sẽ học thói quen + chủ động gợi ý cho bạn.'
-                    : "Once set, the AI learns your patterns and proactively suggests."}
+                    ? 'Sau đó AI sẽ học thói quen, gợi ý đúng lúc, đúng việc.'
+                    : 'Then AI learns your habits and suggests the right thing at the right time.'}
                 </FlowText>
               </View>
               <FlowText variant="titleL" tone="accent">
@@ -99,124 +117,224 @@ export function TodayAurora() {
         </Pressable>
       ) : null}
 
-      <FlowText variant="hero" tone="primary" style={{ marginTop: -t.space['2'] }}>
-        {greeting}
-      </FlowText>
-      {userName ? (
-        <FlowText variant="titleL" tone="secondary" style={{ marginTop: -t.space['5'] }}>
-          {userName}.
-        </FlowText>
-      ) : null}
-
-      <GlassSurface pad="6" radius="2xl">
-        <View style={{ alignItems: 'center', gap: t.space['4'] }}>
-          <OrbDial score={72} label="72" caption={locale === 'vi' ? 'năng lượng' : 'energy'} />
-          <FlowText variant="bodyL" tone="primary" style={{ textAlign: 'center', maxWidth: 320 }}>
-            {locale === 'vi'
-              ? 'Bạn đang ở đỉnh nhịp. Việc khó nên xử lý ngay — 11:30 sẽ là khung tốt nhất.'
-              : 'You are at the peak of your rhythm. Hard work belongs here — until 11:30.'}
-          </FlowText>
-          <FlowText variant="caption" tone="tertiary" style={{ textAlign: 'center' }}>
-            {locale === 'vi' ? 'Dựa trên 3 ngày giấc ngủ + lịch hôm nay' : 'Based on 3 days of sleep + today\'s calendar'}
-          </FlowText>
-        </View>
-      </GlassSurface>
-
-      <View style={{ flexDirection: 'row', gap: t.space['3'] }}>
-        <GlassSurface pad="5" radius="xl" style={{ flex: 1 }}>
-          <FlowText variant="kicker" tone="secondary">
-            {locale === 'vi' ? 'GIẤC NGỦ' : 'SLEEP'}
-          </FlowText>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: t.space['1'], marginTop: t.space['2'] }}>
-            <FlowText variant="displayL" tone="primary" style={{ fontVariant: ['tabular-nums'] }}>
-              7.4
-            </FlowText>
-            <FlowText variant="bodyM" tone="tertiary">
-              h
-            </FlowText>
-          </View>
-          <View style={{ marginTop: t.space['3'] }}>
-            <AuroraSparkline data={sleep7d} width={140} height={40} color={t.kind.sleep} />
-          </View>
-          <FlowText variant="caption" tone="secondary" style={{ marginTop: t.space['2'] }}>
-            {locale === 'vi' ? '+0:30 vs baseline' : '+0:30 vs baseline'}
+      {/* Smart brief / hero card */}
+      {dash.isLoading ? (
+        <GlassSurface pad="6" radius="2xl">
+          <FlowText variant="bodyM" tone="secondary">
+            {locale === 'vi' ? 'Đang tải…' : 'Loading…'}
           </FlowText>
         </GlassSurface>
-
-        <GlassSurface pad="5" radius="xl" style={{ flex: 1 }}>
+      ) : dash.isError ? (
+        <GlassSurface pad="6" radius="2xl">
           <FlowText variant="kicker" tone="secondary">
-            {locale === 'vi' ? 'CHI 7 NGÀY' : 'SPEND 7D'}
+            {locale === 'vi' ? 'KHÔNG TẢI ĐƯỢC' : "COULDN'T LOAD"}
           </FlowText>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: t.space['1'], marginTop: t.space['2'] }}>
-            <FlowText variant="displayL" tone="primary" style={{ fontVariant: ['tabular-nums'] }}>
-              1.24
-            </FlowText>
-            <FlowText variant="bodyM" tone="tertiary">
-              M ₫
-            </FlowText>
-          </View>
-          <View style={{ marginTop: t.space['3'] }}>
-            <AuroraSparkline
-              data={[180, 220, 90, 340, 180, 120, 110]}
-              width={140}
-              height={40}
-              color={t.kind.expense}
+          <FlowText variant="titleM" tone="primary" style={{ marginTop: t.space['2'] }}>
+            {locale === 'vi'
+              ? 'Mạng có vấn đề. Kéo xuống để thử lại.'
+              : 'Network issue. Pull to retry.'}
+          </FlowText>
+          <View style={{ marginTop: t.space['4'] }}>
+            <GradientButton
+              label={locale === 'vi' ? 'Thử lại' : 'Retry'}
+              variant="glass"
+              onPress={() => dash.refetch()}
             />
           </View>
-          <FlowText variant="caption" tone="secondary" style={{ marginTop: t.space['2'] }}>
-            {locale === 'vi' ? '−12% so với tuần trước' : '−12% vs last week'}
-          </FlowText>
         </GlassSurface>
-      </View>
+      ) : summary?.smartBrief ? (
+        <GlassSurface pad="6" radius="2xl" intensity={1.2}>
+          <FlowText variant="kicker" tone="accent">
+            {locale === 'vi' ? 'TÓM TẮT HÔM NAY' : "TODAY'S BRIEF"}
+          </FlowText>
+          <FlowText variant="titleL" tone="primary" style={{ marginTop: t.space['3'] }}>
+            {summary.smartBrief.headline}
+          </FlowText>
+          {summary.smartBrief.body ? (
+            <FlowText
+              variant="bodyM"
+              tone="secondary"
+              style={{ marginTop: t.space['3'], lineHeight: 24 }}
+            >
+              {summary.smartBrief.body}
+            </FlowText>
+          ) : null}
+          {summary.smartBrief.primaryAction ? (
+            <View style={{ marginTop: t.space['5'] }}>
+              <GradientButton
+                label={summary.smartBrief.primaryAction.label}
+                onPress={() => {
+                  const action = summary.smartBrief?.primaryAction;
+                  if (!action) return;
+                  if (action.smartEntryMode) {
+                    capture.open({ initialKind: action.smartEntryMode as never });
+                  }
+                }}
+              />
+            </View>
+          ) : null}
+        </GlassSurface>
+      ) : (
+        <GlassSurface pad="6" radius="2xl">
+          <FlowText variant="kicker" tone="secondary">
+            {locale === 'vi' ? 'CHƯA CÓ DỮ LIỆU' : 'NO DATA YET'}
+          </FlowText>
+          <FlowText variant="titleM" tone="primary" style={{ marginTop: t.space['2'] }}>
+            {locale === 'vi'
+              ? 'Ghi vài điều để AI bắt đầu hiểu bạn'
+              : 'Capture a few things so AI can start understanding you'}
+          </FlowText>
+          <View style={{ marginTop: t.space['4'] }}>
+            <GradientButton
+              label={locale === 'vi' ? 'Ghi nhanh' : 'Quick capture'}
+              onPress={() => capture.open()}
+            />
+          </View>
+        </GlassSurface>
+      )}
 
-      <GlassSurface pad="6" radius="2xl" intensity={1.2}>
-        <FlowText variant="kicker" tone="accent">
-          {locale === 'vi' ? 'GỢI Ý' : 'NUDGE'} · CONFIDENCE 0.78
-        </FlowText>
-        <FlowText variant="titleL" tone="primary" style={{ marginTop: t.space['3'] }}>
-          {locale === 'vi'
-            ? 'Còn 2 giờ trước cuộc họp. Một block sâu?'
-            : 'Two hours before the meeting. Deep work block?'}
-        </FlowText>
-        <FlowText variant="bodyM" tone="secondary" style={{ marginTop: t.space['3'], lineHeight: 24 }}>
-          {locale === 'vi'
-            ? 'Lịch trống và năng lượng đang đỉnh. Pattern tuần trước cho thấy tỉ lệ hoàn thành cao nhất ở khung này.'
-            : 'Calendar is open and energy is high. Last week, completion rate peaked in this slot.'}
-        </FlowText>
-        <View style={{ flexDirection: 'row', gap: t.space['3'], marginTop: t.space['5'] }}>
-          <GradientButton
-            label={locale === 'vi' ? 'Đặt block 90 phút' : 'Block 90 min'}
-            onPress={() => undefined}
-            style={{ flex: 1 }}
-          />
-          <GradientButton
-            label={locale === 'vi' ? 'Bỏ qua' : 'Skip'}
-            variant="ghost"
-            onPress={() => undefined}
-          />
+      {/* Two-up tiles: real sleep + real money */}
+      {summary ? (
+        <View style={{ flexDirection: 'row', gap: t.space['3'] }}>
+          <GlassSurface pad="5" radius="xl" style={{ flex: 1 }}>
+            <FlowText variant="kicker" tone="secondary">
+              {locale === 'vi' ? 'GIẤC NGỦ GẦN NHẤT' : 'LATEST SLEEP'}
+            </FlowText>
+            {summary.moodSleep.lastSleepMinutes != null ? (
+              <>
+                <FlowText
+                  variant="displayM"
+                  tone="primary"
+                  style={{ marginTop: t.space['2'], fontVariant: ['tabular-nums'] }}
+                >
+                  {(summary.moodSleep.lastSleepMinutes / 60).toFixed(1)}
+                  <FlowText variant="bodyM" tone="tertiary">
+                    {' '}
+                    h
+                  </FlowText>
+                </FlowText>
+                <FlowText variant="caption" tone="secondary" style={{ marginTop: t.space['1'] }}>
+                  {sleepQualityLabel(summary.moodSleep.lastSleepQuality, locale)}
+                </FlowText>
+              </>
+            ) : (
+              <>
+                <FlowText
+                  variant="displayM"
+                  tone="tertiary"
+                  style={{ marginTop: t.space['2'] }}
+                >
+                  —
+                </FlowText>
+                <FlowText variant="caption" tone="secondary" style={{ marginTop: t.space['1'] }}>
+                  {locale === 'vi' ? 'Chưa ghi giấc nào' : 'No sleep logged yet'}
+                </FlowText>
+              </>
+            )}
+          </GlassSurface>
+
+          <GlassSurface pad="5" radius="xl" style={{ flex: 1 }}>
+            <FlowText variant="kicker" tone="secondary">
+              {locale === 'vi' ? 'CHI TUẦN NÀY' : 'WEEK SPEND'}
+            </FlowText>
+            <FlowText
+              variant="displayM"
+              tone="primary"
+              style={{ marginTop: t.space['2'], fontVariant: ['tabular-nums'] }}
+            >
+              {formatVnd(summary.money.weekTotal)}
+            </FlowText>
+            <FlowText variant="caption" tone="secondary" style={{ marginTop: t.space['1'] }}>
+              {locale === 'vi'
+                ? `Hôm nay: ${formatVnd(summary.money.todayTotal)} ₫`
+                : `Today: ${formatVnd(summary.money.todayTotal)} ₫`}
+            </FlowText>
+          </GlassSurface>
         </View>
-      </GlassSurface>
+      ) : null}
 
+      {/* Next task */}
+      {summary?.nextTask ? (
+        <Pressable
+          onPress={() => {
+            navigation.navigate('Tasks');
+          }}
+        >
+          <GlassSurface pad="5" radius="xl">
+            <FlowText variant="kicker" tone="secondary">
+              {locale === 'vi' ? 'VIỆC TIẾP THEO' : 'NEXT TASK'}
+            </FlowText>
+            <FlowText variant="titleM" tone="primary" style={{ marginTop: t.space['2'] }}>
+              {summary.nextTask.title}
+            </FlowText>
+            {summary.nextTask.dueAt ? (
+              <FlowText variant="caption" tone="secondary" style={{ marginTop: t.space['1'] }}>
+                {locale === 'vi' ? 'Hạn' : 'Due'}: {formatDueLabel(summary.nextTask.dueAt, locale)}
+              </FlowText>
+            ) : null}
+          </GlassSurface>
+        </Pressable>
+      ) : null}
+
+      {/* Suggested captures */}
+      {summary?.suggestedCaptures && summary.suggestedCaptures.length > 0 ? (
+        <View>
+          <FlowText variant="kicker" tone="secondary">
+            {locale === 'vi' ? 'GỢI Ý GHI NHANH' : 'SUGGESTED CAPTURES'}
+          </FlowText>
+          <View style={{ marginTop: t.space['3'], gap: t.space['2'] }}>
+            {summary.suggestedCaptures.slice(0, 3).map((s, i) => (
+              <Pressable
+                key={i}
+                onPress={() =>
+                  capture.open({
+                    initialText: s.text,
+                    initialKind: (s.mode ?? null) as never,
+                  })
+                }
+              >
+                <GlassSurface pad="4" radius="lg" intensity={0.7}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space['3'] }}>
+                    <FlowText variant="bodyM" tone="primary" style={{ flex: 1 }}>
+                      {s.text}
+                    </FlowText>
+                    <FlowText variant="caption" tone="accent">
+                      +
+                    </FlowText>
+                  </View>
+                </GlassSurface>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ) : null}
+
+      {/* Always-available capture chips */}
       <View>
         <FlowText variant="kicker" tone="secondary">
           {locale === 'vi' ? 'GHI NHANH' : 'CAPTURE'}
         </FlowText>
-        <FlowText variant="titleL" tone="primary" style={{ marginTop: t.space['2'] }}>
-          {locale === 'vi' ? 'Một thao tác' : 'One tap'}
-        </FlowText>
-        <View style={{ flexDirection: 'row', gap: t.space['2'], marginTop: t.space['4'], flexWrap: 'wrap' }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: t.space['2'],
+            marginTop: t.space['3'],
+            flexWrap: 'wrap',
+          }}
+        >
           {[
-            { kind: 'MEAL' as const, vi: 'Bữa trưa', en: 'Lunch' },
-            { kind: 'EXPENSE' as const, vi: 'Cà phê', en: 'Coffee' },
+            { kind: 'EXPENSE' as const, vi: 'Chi tiêu', en: 'Expense' },
+            { kind: 'TASK' as const, vi: 'Việc làm', en: 'Task' },
+            { kind: 'MEAL' as const, vi: 'Bữa ăn', en: 'Meal' },
             { kind: 'MOOD' as const, vi: 'Tâm trạng', en: 'Mood' },
-            { kind: 'TASK' as const, vi: 'Việc', en: 'Task' },
+            { kind: 'SLEEP' as const, vi: 'Giấc ngủ', en: 'Sleep' },
           ].map((s) => (
             <GradientButton
               key={s.kind}
               label={`+ ${locale === 'vi' ? s.vi : s.en}`}
               variant="glass"
               onPress={() => capture.open({ initialKind: s.kind })}
-              style={{ minWidth: 120 }}
+              style={{ minWidth: 110 }}
             />
           ))}
         </View>
@@ -229,29 +347,90 @@ function greetingFor(moment: string, locale: 'vi' | 'en'): string {
   if (locale === 'vi') {
     switch (moment) {
       case 'dawn':
-        return 'Một bình minh mới.';
+        return 'Chào buổi sáng';
       case 'noon':
-        return 'Đỉnh trưa.';
+        return 'Chào buổi trưa';
       case 'afternoon':
-        return 'Chiều vàng.';
+        return 'Chào buổi chiều';
       case 'dusk':
-        return 'Hoàng hôn.';
+        return 'Chào buổi tối';
       case 'night':
       default:
-        return 'Đêm sâu.';
+        return 'Đêm khuya rồi';
     }
   }
   switch (moment) {
     case 'dawn':
-      return 'A new dawn.';
+      return 'Good morning';
     case 'noon':
-      return 'High noon.';
+      return 'Good afternoon';
     case 'afternoon':
-      return 'Golden hour.';
+      return 'Good afternoon';
     case 'dusk':
-      return 'Soft dusk.';
+      return 'Good evening';
     case 'night':
     default:
-      return 'Deep night.';
+      return 'Late night';
+  }
+}
+
+function momentLabel(moment: string, locale: 'vi' | 'en'): string {
+  if (locale === 'vi') {
+    switch (moment) {
+      case 'dawn':
+        return 'BÌNH MINH';
+      case 'noon':
+        return 'GIỮA TRƯA';
+      case 'afternoon':
+        return 'CHIỀU';
+      case 'dusk':
+        return 'TỐI';
+      case 'night':
+      default:
+        return 'ĐÊM';
+    }
+  }
+  return moment.toUpperCase();
+}
+
+function sleepQualityLabel(
+  q: 'BAD' | 'OK' | 'GOOD' | null,
+  locale: 'vi' | 'en',
+): string {
+  if (q == null) return locale === 'vi' ? 'Chưa đánh giá' : 'Not rated';
+  if (locale === 'vi') {
+    return q === 'GOOD' ? 'Ngủ ngon' : q === 'OK' ? 'Tạm ổn' : 'Khó ngủ';
+  }
+  return q === 'GOOD' ? 'Slept well' : q === 'OK' ? 'OK' : 'Poor';
+}
+
+function formatVnd(amount: number): string {
+  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M`;
+  if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}k`;
+  return String(amount);
+}
+
+function formatDueLabel(iso: string, locale: 'vi' | 'en'): string {
+  try {
+    const due = new Date(iso);
+    const now = new Date();
+    const sameDay =
+      due.getFullYear() === now.getFullYear() &&
+      due.getMonth() === now.getMonth() &&
+      due.getDate() === now.getDate();
+    const time = `${String(due.getHours()).padStart(2, '0')}:${String(
+      due.getMinutes(),
+    ).padStart(2, '0')}`;
+    if (sameDay) return locale === 'vi' ? `hôm nay ${time}` : `today ${time}`;
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    const isTomorrow =
+      due.getFullYear() === tomorrow.getFullYear() &&
+      due.getMonth() === tomorrow.getMonth() &&
+      due.getDate() === tomorrow.getDate();
+    if (isTomorrow) return locale === 'vi' ? `mai ${time}` : `tomorrow ${time}`;
+    return due.toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US');
+  } catch {
+    return iso;
   }
 }
