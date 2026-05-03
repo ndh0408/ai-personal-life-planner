@@ -1,35 +1,31 @@
-import { Body, Controller, Get, Patch, Req } from '@nestjs/common';
-import type { Request } from 'express';
+import { Body, Controller, Get, Patch } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { z } from 'zod';
-import { PrivacyTierService } from './privacy-tier.service';
 import { SetPrivacyTierRequestSchema } from '@lifeos/shared';
+import { CurrentUser, type AuthenticatedUser } from '../../common/decorators/current-user.decorator';
+import { PrivacyTierService } from './privacy-tier.service';
 
-interface AuthedRequest extends Request {
-  user?: { sub: string };
-}
-
+@ApiTags('privacy')
+@ApiBearerAuth()
 @Controller('privacy/tier')
 export class PrivacyTierController {
   constructor(private readonly service: PrivacyTierService) {}
 
   @Get()
-  async get(@Req() req: AuthedRequest) {
-    const userId = req.user!.sub;
-    return this.service.get(userId);
+  get(@CurrentUser() user: AuthenticatedUser) {
+    return this.service.get(user.id);
   }
 
   @Patch()
-  async set(@Req() req: AuthedRequest, @Body() body: unknown) {
-    const userId = req.user!.sub;
+  set(@CurrentUser() user: AuthenticatedUser, @Body() body: unknown) {
     const parsed = SetPrivacyTierRequestSchema.parse(body);
-    return this.service.set(userId, parsed);
+    return this.service.set(user.id, parsed);
   }
 
   @Patch('on-device-llm')
-  async setOnDeviceReady(@Req() req: AuthedRequest, @Body() body: unknown) {
-    const userId = req.user!.sub;
+  async setOnDeviceReady(@CurrentUser() user: AuthenticatedUser, @Body() body: unknown) {
     const parsed = z.object({ ready: z.boolean() }).parse(body);
-    await this.service.markOnDeviceLlmReady(userId, parsed.ready);
+    await this.service.markOnDeviceLlmReady(user.id, parsed.ready);
     return { ok: true };
   }
 }
