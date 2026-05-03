@@ -12,7 +12,17 @@ import {
 } from '../../aurora';
 import { useCapture } from '../../components/v2';
 import { useDashboardSummary } from '../../hooks/useDashboard';
+import { useQuery } from '@tanstack/react-query';
+import { financeService } from '../../services/api/finance.service';
 import type { RootStackParamList } from '../../navigation/types';
+
+function useTodayExpenses() {
+  return useQuery({
+    queryKey: ['expenses', 'today'],
+    queryFn: () => financeService.list('today'),
+    staleTime: 30_000,
+  });
+}
 
 /**
  * MoneyAurora — uses /dashboard/summary's money block as the canonical
@@ -27,6 +37,7 @@ export function MoneyAurora() {
   const locale = (i18n.language === 'vi' ? 'vi' : 'en') as 'vi' | 'en';
   const capture = useCapture();
   const dash = useDashboardSummary();
+  const expenses = useTodayExpenses();
   const m = dash.data?.money;
 
   return (
@@ -167,6 +178,37 @@ export function MoneyAurora() {
         </GlassSurface>
       ) : null}
 
+      {expenses.data?.rows && expenses.data.rows.length > 0 ? (
+        <View>
+          <FlowText variant="kicker" tone="secondary">
+            {locale === 'vi' ? 'CHI TIÊU HÔM NAY' : 'TODAY EXPENSES'}
+          </FlowText>
+          <View style={{ marginTop: t.space['3'], gap: t.space['2'] }}>
+            {expenses.data.rows.slice(0, 8).map((e) => (
+              <GlassSurface key={e.id} pad="4" radius="lg" intensity={0.7}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space['3'] }}>
+                  <View style={{ flex: 1 }}>
+                    <FlowText variant="bodyM" tone="primary" numberOfLines={1}>
+                      {e.title}
+                    </FlowText>
+                    <FlowText variant="caption" tone="tertiary">
+                      {e.category} · {formatTimeShort(e.expenseDate)}
+                    </FlowText>
+                  </View>
+                  <FlowText
+                    variant="titleM"
+                    tone="primary"
+                    style={{ fontVariant: ['tabular-nums'] }}
+                  >
+                    {formatVnd(e.amount)} ₫
+                  </FlowText>
+                </View>
+              </GlassSurface>
+            ))}
+          </View>
+        </View>
+      ) : null}
+
       <Pressable onPress={() => navigation.navigate('Tasks')}>
         <GlassSurface pad="5" radius="xl" intensity={0.7}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space['3'] }}>
@@ -181,6 +223,15 @@ export function MoneyAurora() {
       </Pressable>
     </AuroraScreen>
   );
+}
+
+function formatTimeShort(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  } catch {
+    return iso;
+  }
 }
 
 function formatVnd(amount: number): string {

@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { AuroraScreen, GlassSurface, FlowText, GradientButton, useAurora } from '../../aurora';
 import { useCapture } from '../../components/v2';
 import { useDashboardSummary } from '../../hooks/useDashboard';
-import { useTodayPlan, useGenerateTodayPlan } from '../../hooks/usePlanner';
+import { Pressable } from 'react-native';
+import { useTodayPlan, useGenerateTodayPlan, useSetItemStatus } from '../../hooks/usePlanner';
 
 /**
  * PlanAurora — uses useTodayPlan() (existing v1 hook backed by
@@ -19,6 +20,7 @@ export function PlanAurora() {
   const dash = useDashboardSummary();
   const plan = useTodayPlan();
   const generate = useGenerateTodayPlan();
+  const setStatus = useSetItemStatus();
   const days = useMemo(() => buildDayStrip(7), []);
   const todayKey = new Date().toDateString();
 
@@ -186,7 +188,16 @@ export function PlanAurora() {
           </FlowText>
           <View style={{ marginTop: t.space['4'], gap: t.space['3'] }}>
             {plan.data.items.slice(0, 8).map((item) => (
-              <GlassSurface key={item.id} pad="4" radius="lg" intensity={0.8}>
+              <Pressable
+                key={item.id}
+                onPress={() =>
+                  setStatus.mutate({
+                    id: item.id,
+                    status: item.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED',
+                  })
+                }
+              >
+                <GlassSurface pad="4" radius="lg" intensity={0.8}>
                 <View style={{ flexDirection: 'row', gap: t.space['3'], alignItems: 'center' }}>
                   <View
                     style={{
@@ -219,7 +230,8 @@ export function PlanAurora() {
                     ) : null}
                   </View>
                 </View>
-              </GlassSurface>
+                </GlassSurface>
+              </Pressable>
             ))}
           </View>
         </View>

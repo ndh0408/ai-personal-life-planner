@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
@@ -10,12 +10,14 @@ import {
   OrbDial,
   GradientButton,
   BreathingDot,
+  SettingsSheet,
   useAurora,
 } from '../../aurora';
 import { useAuthStore } from '../../store/auth.store';
 import { useCapture } from '../../components/v2';
 import { useAiKeyStatus } from '../../hooks/useAiKeyStatus';
 import { useDashboardSummary } from '../../hooks/useDashboard';
+import { useTodayTasks } from '../../hooks/useFeed';
 import type { RootStackParamList } from '../../navigation/types';
 
 /**
@@ -34,6 +36,8 @@ export function TodayAurora() {
   const capture = useCapture();
   const aiKey = useAiKeyStatus();
   const dash = useDashboardSummary();
+  const todayTasks = useTodayTasks();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const aiKeyMissing = aiKey.data && !aiKey.data.enabled;
   const greeting = greetingFor(t.moment, locale);
@@ -57,7 +61,7 @@ export function TodayAurora() {
           </FlowText>
         </View>
         <Pressable
-          onPress={() => navigation.navigate('AISettings')}
+          onPress={() => setSettingsOpen(true)}
           hitSlop={12}
           style={{
             width: 36,
@@ -309,6 +313,49 @@ export function TodayAurora() {
         </View>
       ) : null}
 
+      {/* Recent tasks (real data from /tasks/today) */}
+      {todayTasks.data?.rows && todayTasks.data.rows.length > 0 ? (
+        <View>
+          <FlowText variant="kicker" tone="secondary">
+            {locale === 'vi' ? 'VIỆC HÔM NAY' : "TODAY'S TASKS"}
+          </FlowText>
+          <View style={{ marginTop: t.space['3'], gap: t.space['2'] }}>
+            {todayTasks.data.rows.slice(0, 5).map((task) => {
+              const isDone = task.status === 'COMPLETED';
+              return (
+                <Pressable key={task.id} onPress={() => navigation.navigate('Tasks')}>
+                  <GlassSurface pad="4" radius="lg" intensity={0.7}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space['3'] }}>
+                      <View
+                        style={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: 8,
+                          borderWidth: 1.5,
+                          borderColor: isDone ? t.palette.accent : 'rgba(255,255,255,0.3)',
+                          backgroundColor: isDone ? t.palette.accent : 'transparent',
+                        }}
+                      />
+                      <FlowText
+                        variant="bodyM"
+                        tone={isDone ? 'tertiary' : 'primary'}
+                        style={[
+                          { flex: 1 },
+                          isDone ? { textDecorationLine: 'line-through' as const } : undefined,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {task.title}
+                      </FlowText>
+                    </View>
+                  </GlassSurface>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
+
       {/* Always-available capture chips */}
       <View>
         <FlowText variant="kicker" tone="secondary">
@@ -339,6 +386,8 @@ export function TodayAurora() {
           ))}
         </View>
       </View>
+
+      <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </AuroraScreen>
   );
 }
