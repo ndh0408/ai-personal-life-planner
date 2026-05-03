@@ -2,6 +2,13 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Round 43.1: VIBRATE required by the haptics module added in R41.
+         Without this declaration the Vibration RN module throws a
+         SecurityException on the first haptic() call (FloatingCaptureButton
+         mount on Today screen) and the app crashes immediately. Normal-level
+         permission, no runtime prompt needed. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <!-- Round 36: Health Connect read permissions. The user is asked
          in-app via requestPermission(); these declarations let the OS
          know what we may request. We never write to Health Connect. -->

@@ -1,6 +1,8 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   AuroraScreen,
   GlassSurface,
@@ -13,8 +15,12 @@ import {
 } from '../../aurora';
 import { useAuthStore } from '../../store/auth.store';
 import { useCapture } from '../../components/v2';
+import { useAiKeyStatus } from '../../hooks/useAiKeyStatus';
+import type { RootStackParamList } from '../../navigation/types';
 
 export function TodayAurora() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const aiKey = useAiKeyStatus();
   const t = useAurora();
   const { i18n } = useTranslation();
   const locale = (i18n.language === 'vi' ? 'vi' : 'en') as 'vi' | 'en';
@@ -23,14 +29,75 @@ export function TodayAurora() {
   const greeting = greetingFor(t.moment, locale);
   const sleep7d = [6.8, 7.1, 6.4, 7.8, 7.2, 7.6, 7.4];
 
+  // Round 43.2: top-right gear icon for the AI key + settings entry. Without
+  // this, users on the new Aurora nav had no way to reach AISettings (no
+  // Settings tab in Aurora's 5-tab shell). The gear sits in the same spot
+  // as the breathing-dot row so it never competes with the hero.
+  const aiKeyMissing = aiKey.data && !aiKey.data.enabled;
+
   return (
     <AuroraScreen>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space['3'] }}>
-        <BreathingDot color={t.palette.accent} size={6} />
-        <FlowText variant="kicker" tone="secondary">
-          {locale === 'vi' ? 'BÂY GIỜ' : 'NOW'} · {t.moment.toUpperCase()}
-        </FlowText>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: t.space['3'],
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space['3'] }}>
+          <BreathingDot color={t.palette.accent} size={6} />
+          <FlowText variant="kicker" tone="secondary">
+            {locale === 'vi' ? 'BÂY GIỜ' : 'NOW'} · {t.moment.toUpperCase()}
+          </FlowText>
+        </View>
+        <Pressable
+          onPress={() => navigation.navigate('AISettings')}
+          hitSlop={12}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: t.palette.glassTint,
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.12)',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          accessibilityLabel={locale === 'vi' ? 'Cài đặt AI' : 'AI settings'}
+        >
+          <FlowText variant="caption" tone="primary">
+            ⚙
+          </FlowText>
+        </Pressable>
       </View>
+
+      {aiKeyMissing ? (
+        <Pressable onPress={() => navigation.navigate('AISettings')}>
+          <GlassSurface pad="5" radius="xl" intensity={1.4}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space['4'] }}>
+              <View style={{ flex: 1 }}>
+                <FlowText variant="kicker" tone="accent">
+                  {locale === 'vi' ? 'KHỞI ĐỘNG AI' : 'ACTIVATE AI'}
+                </FlowText>
+                <FlowText variant="titleM" tone="primary" style={{ marginTop: t.space['2'] }}>
+                  {locale === 'vi'
+                    ? 'Nhập OpenAI key để cá nhân hoá'
+                    : 'Add your OpenAI key to personalize'}
+                </FlowText>
+                <FlowText variant="bodyS" tone="secondary" style={{ marginTop: t.space['2'] }}>
+                  {locale === 'vi'
+                    ? 'Khi có key, AI sẽ học thói quen + chủ động gợi ý cho bạn.'
+                    : "Once set, the AI learns your patterns and proactively suggests."}
+                </FlowText>
+              </View>
+              <FlowText variant="titleL" tone="accent">
+                →
+              </FlowText>
+            </View>
+          </GlassSurface>
+        </Pressable>
+      ) : null}
 
       <FlowText variant="hero" tone="primary" style={{ marginTop: -t.space['2'] }}>
         {greeting}
