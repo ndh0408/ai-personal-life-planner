@@ -1,8 +1,8 @@
 {
-  "name": "@lifeos/shared",
+  "name": "@lifeos/prompts",
   "version": "0.1.0",
   "private": true,
-  "description": "Shared types and Zod schemas between @lifeos/api and @lifeos/mobile",
+  "description": "Versioned prompt registry for LifeOS AI. Prompts are code: typed inputs, semver, eval suites in tooling/prompts-eval.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": ["dist", "src"],
@@ -13,7 +13,6 @@
     "prepare": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@lifeos/taxonomy": "*",
     "zod": "^3.23.4"
   },
   "devDependencies": {

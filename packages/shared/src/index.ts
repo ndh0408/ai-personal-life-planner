@@ -7,5 +7,7 @@ export * from './dashboard';
 export * from './device-data';
 export * from './planner';
 export * from './privacy';
+export * from './privacy-tier';
+export * from './billing';
 export * from './profile';
 export * from './recommendations';

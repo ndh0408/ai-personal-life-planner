@@ -663,6 +663,15 @@ model PrivacySetting {
   useTasksForAI            Boolean  @default(true)
   aiMemoryEnabled          Boolean  @default(true)
   proactiveRecommendations Boolean  @default(true)
+
+  // Round 40: macro privacy tier (CLOUD / HYBRID / LOCAL). When LOCAL, the
+  // server effectively becomes read-only for this user — no LLM calls, no
+  // memory writes. The string enum is intentional so client + API stay in
+  // sync via @lifeos/taxonomy without a separate Postgres enum migration.
+  tier                     String   @default("CLOUD")
+  e2eeKeyFingerprint       String?
+  onDeviceLlmReady         Boolean  @default(false)
+
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 

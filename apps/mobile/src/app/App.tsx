@@ -10,6 +10,7 @@ import { ToastProvider } from '../components/ui/Toast';
 import { useAuthStore } from '../store/auth.store';
 import { RootNavigator } from '../navigation/RootNavigator';
 import { syncOrchestrator } from '../services/device/sync-orchestrator';
+import { ThemeProvider } from '../theme/v2';
 
 export function App() {
   const bootstrap = useAuthStore((s) => s.bootstrap);
@@ -35,13 +36,15 @@ export function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
-          <I18nextProvider i18n={i18n}>
-            <ToastProvider>
-              <RootNavigator />
-            </ToastProvider>
-          </I18nextProvider>
-        </QueryClientProvider>
+        <ThemeProvider>
+          <QueryClientProvider client={queryClient}>
+            <I18nextProvider i18n={i18n}>
+              <ToastProvider>
+                <RootNavigator />
+              </ToastProvider>
+            </I18nextProvider>
+          </QueryClientProvider>
+        </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

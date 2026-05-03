@@ -5,7 +5,9 @@
     "rootDir": "./src",
     "declaration": true,
     "declarationMap": true,
-    "module": "commonjs"
+    "module": "commonjs",
+    "baseUrl": ".",
+    "paths": {}
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

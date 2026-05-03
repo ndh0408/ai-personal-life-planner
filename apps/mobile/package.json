@@ -18,6 +18,9 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "@lifeos/design-tokens": "*",
+    "@lifeos/shared": "*",
+    "@lifeos/taxonomy": "*",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/bottom-tabs": "^6.6.1",
     "@react-navigation/native": "^6.1.18",

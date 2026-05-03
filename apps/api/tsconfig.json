@@ -12,7 +12,11 @@
     "strictPropertyInitialization": false,
     "paths": {
       "@lifeos/shared": ["../../packages/shared/src/index.ts"],
-      "@lifeos/shared/*": ["../../packages/shared/src/*"]
+      "@lifeos/shared/*": ["../../packages/shared/src/*"],
+      "@lifeos/prompts": ["../../packages/prompts/src/index.ts"],
+      "@lifeos/prompts/*": ["../../packages/prompts/src/*"],
+      "@lifeos/taxonomy": ["../../packages/taxonomy/src/index.ts"],
+      "@lifeos/taxonomy/*": ["../../packages/taxonomy/src/*"]
     }
   },
   "include": ["src/**/*"],
