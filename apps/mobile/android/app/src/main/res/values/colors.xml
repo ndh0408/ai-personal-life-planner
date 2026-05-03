@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Brand colours referenced by adaptive-icon + splash (round 33).
+  Brand colours referenced by adaptive-icon + splash.
 
-  Keep these in sync with apps/mobile/src/theme/colors.ts:
-    icBackground   = canvas (#F4EFE7 cream)
-    splashBackground = same cream (Android 12+ window background)
+  Round 42 Aurora: switched from cream warm-luxury to deep-indigo gradient
+  base. Adaptive-icon background is solid indigo so the lemniscate
+  foreground sits over a calm dark canvas. Splash matches the AuroraCanvas
+  upper hue so the OS-rendered splash → app handoff has no flash.
 -->
 <resources>
-    <color name="icBackground">#F4EFE7</color>
-    <color name="splashBackground">#F4EFE7</color>
-    <color name="brandSienna">#C97B4A</color>
+    <color name="icBackground">#1A0E2E</color>
+    <color name="splashBackground">#0E0A1F</color>
+    <color name="brandAccent">#FF8E72</color>
+    <color name="brandViolet">#B89AF5</color>
 </resources>

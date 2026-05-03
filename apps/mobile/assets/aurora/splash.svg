@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Splash screen — same gradient canvas as the live app, plus the
+  lemniscate mark centred and proportionally smaller (≈40% of width).
+  The tagline "LifeOS" is rendered as text so the OS-bundled font picks
+  up; we deliberately don't ship Fraunces here to keep splash fast.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1242 2688" width="1242" height="2688">
+  <defs>
+    <linearGradient id="splashBg" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#1A0E2E"/>
+      <stop offset="0.5" stop-color="#2A1652"/>
+      <stop offset="1" stop-color="#0A0B1F"/>
+    </linearGradient>
+    <radialGradient id="splashGlow" cx="50%" cy="40%" r="55%">
+      <stop offset="0" stop-color="#FF8E72" stop-opacity="0.20"/>
+      <stop offset="0.6" stop-color="#B89AF5" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#0A0B1F" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="splashMark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF8E72"/>
+      <stop offset="0.45" stop-color="#E5B07F"/>
+      <stop offset="0.75" stop-color="#B89AF5"/>
+      <stop offset="1" stop-color="#5DDDD5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1242" height="2688" fill="url(#splashBg)"/>
+  <rect width="1242" height="2688" fill="url(#splashGlow)"/>
+
+  <g transform="translate(371, 1080) scale(0.488)">
+    <path
+      d="
+        M 512 512
+        C 720 312, 856 348, 856 512
+        C 856 676, 720 696, 512 512
+        C 304 312, 168 348, 168 512
+        C 168 676, 304 696, 512 512
+        Z
+      "
+      fill="none"
+      stroke="url(#splashMark)"
+      stroke-width="80"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <circle cx="512" cy="512" r="22" fill="#FFF4ED"/>
+  </g>
+
+  <text
+    x="621" y="1820"
+    text-anchor="middle"
+    font-family="Times New Roman, serif"
+    font-size="96"
+    font-style="italic"
+    fill="#F0F2FA"
+    opacity="0.85"
+  >
+    LifeOS
+  </text>
+  <text
+    x="621" y="1880"
+    text-anchor="middle"
+    font-family="Helvetica Neue, sans-serif"
+    font-size="28"
+    letter-spacing="6"
+    fill="#9CA3C5"
+  >
+    AURORA
+  </text>
+</svg>

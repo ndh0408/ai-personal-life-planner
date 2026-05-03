@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Aurora — LifeOS AI logo (Round 42).
+
+  Concept: a flowing lemniscate (∞) drawn as one unbroken stroke, filled
+  with a coral→violet gradient. The crossing point is the "now" — the
+  loop on the left is the past you've lived, the loop on the right is
+  the path the AI helps you shape forward. Reads as a hand-drawn brush
+  stroke; not corporate.
+
+  Designed at 1024×1024 so a single rsvg-convert pass produces every iOS
+  size + Android adaptive foreground. Background is transparent so the
+  Android adaptive layer composites over a separate gradient drawable.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="auroraStroke" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF8E72"/>
+      <stop offset="0.45" stop-color="#E5B07F"/>
+      <stop offset="0.75" stop-color="#B89AF5"/>
+      <stop offset="1" stop-color="#5DDDD5"/>
+    </linearGradient>
+    <radialGradient id="auroraGlow" cx="50%" cy="50%" r="55%">
+      <stop offset="0" stop-color="#FFB89E" stop-opacity="0.55"/>
+      <stop offset="0.6" stop-color="#B89AF5" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#0A0B1F" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Soft halo behind the mark -->
+  <circle cx="512" cy="512" r="430" fill="url(#auroraGlow)"/>
+
+  <!--
+    Lemniscate as a single cubic path. Two lobes meet at the centre (512,512)
+    with a tangent that crosses through itself, hand-drawn feel achieved
+    by slight asymmetry between the lobes (left is fuller, right tapers).
+  -->
+  <path
+    d="
+      M 512 512
+      C 720 280, 880 320, 880 512
+      C 880 700, 720 720, 512 512
+      C 304 320, 144 320, 144 512
+      C 144 720, 304 720, 512 512
+      Z
+    "
+    fill="none"
+    stroke="url(#auroraStroke)"
+    stroke-width="76"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    opacity="0.96"
+  />
+
+  <!-- Crossing-point dot — the "now". -->
+  <circle cx="512" cy="512" r="22" fill="#FFF4ED" opacity="0.95"/>
+</svg>

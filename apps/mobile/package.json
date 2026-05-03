@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "@lifeos/aurora": "*",
     "@lifeos/design-tokens": "*",
     "@lifeos/shared": "*",
     "@lifeos/taxonomy": "*",

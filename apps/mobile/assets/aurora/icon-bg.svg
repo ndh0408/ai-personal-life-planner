@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  iOS App Icon background — solid mesh-gradient that the lemniscate sits
+  on. iOS doesn't use the Android adaptive split (foreground/background),
+  so we render the icon flat with this gradient as the canvas.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bgPrimary" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1A0E2E"/>
+      <stop offset="0.5" stop-color="#2A1652"/>
+      <stop offset="1" stop-color="#0E2336"/>
+    </linearGradient>
+    <radialGradient id="bgGlow" cx="22%" cy="20%" r="80%">
+      <stop offset="0" stop-color="#FF8E72" stop-opacity="0.32"/>
+      <stop offset="0.6" stop-color="#B89AF5" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#0A0B1F" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bgPrimary)"/>
+  <rect width="1024" height="1024" fill="url(#bgGlow)"/>
+</svg>

@@ -8,6 +8,8 @@
       "@lifeos/shared/*": ["../../packages/shared/src/*"],
       "@lifeos/design-tokens": ["../../packages/design-tokens/src/index.ts"],
       "@lifeos/design-tokens/*": ["../../packages/design-tokens/src/*"],
+      "@lifeos/aurora": ["../../packages/aurora/src/index.ts"],
+      "@lifeos/aurora/*": ["../../packages/aurora/src/*"],
       "@lifeos/taxonomy": ["../../packages/taxonomy/src/index.ts"],
       "@lifeos/taxonomy/*": ["../../packages/taxonomy/src/*"]
     }
